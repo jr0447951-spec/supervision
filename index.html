@@ -3,194 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Electric Site Table</title>
+    <title>Executive Site Report Pro v5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #bd00ff; --secondary: #00d4ff; --accent: #ff007a;
-            --dark: #0f0c29; --glass: rgba(255, 255, 255, 0.1);
+            --primary: #bd00ff; --secondary: #00d4ff; --dark-blue: #0a0b1e;
+            --glass-bg: rgba(255, 255, 255, 0.03); --border-glass: rgba(255, 255, 255, 0.12);
+            --success: #00ffcc; --danger: #ff4d4d; --warning: #ffcc00; --info: #00d4ff;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            background-attachment: fixed; color: white; margin: 0; padding: 15px;
-            display: flex; flex-direction: column; align-items: center;
+            font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1e1e3f, #0a0b1e);
+            background-attachment: fixed; color: #e0e0e0; margin: 0; padding: 15px;
+            display: flex; flex-direction: column; align-items: center; padding-bottom: 80px;
         }
 
-        .form-card {
-            width: 100%; max-width: 600px; background: var(--glass);
-            backdrop-filter: blur(15px); border-radius: 15px; padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2); box-sizing: border-box;
-            margin-bottom: 20px;
+        .glass-panel {
+            width: 100%; max-width: 650px; background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px); border-radius: 16px; padding: 20px;
+            border: 1px solid var(--border-glass); margin-bottom: 25px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
         input, select, textarea {
-            width: 100%; padding: 10px; margin: 8px 0;
-            border-radius: 8px; border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0, 0, 0, 0.5); color: white; font-size: 0.9rem;
+            width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px;
+            border: 1px solid var(--border-glass); background: rgba(0, 0, 0, 0.4); color: white;
         }
 
-        .suggestions {
-            background: #1a1a2e; border: 1px solid var(--secondary);
-            border-radius: 8px; max-height: 150px; overflow-y: auto;
+        .mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
+        .mode-btn { 
+            flex: 1; padding: 10px; border: 1px solid var(--secondary); border-radius: 8px; 
+            background: transparent; color: white; cursor: pointer; font-size: 0.8rem;
         }
+        .mode-btn.active { background: var(--secondary); color: black; font-weight: bold; }
 
-        .suggestion-item { padding: 10px; border-bottom: 1px solid #333; font-size: 0.8rem; cursor: pointer; }
-
-        /* Estilo de la Tabla de Excel Electric */
         #capture-area {
-            width: 100%; max-width: 800px; background: #0f0c29; padding: 20px; border-radius: 10px;
+            width: 100%; max-width: 950px; padding: 35px; background: #0a0b1e;
+            border: 1px solid rgba(255,255,255,0.05); position: relative;
         }
 
-        .excel-table {
-            width: 100%; border-collapse: collapse; margin-top: 15px;
-            font-size: 0.8rem; color: white; border: 1px solid var(--primary);
+        .report-header { border-bottom: 2px solid var(--secondary); padding-bottom: 15px; margin-bottom: 25px; }
+        .report-header h2 { font-family: 'Rajdhani', sans-serif; margin: 0; letter-spacing: 2px; color: white; text-transform: uppercase; }
+
+        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
+        .excel-table th { 
+            font-family: 'Rajdhani', sans-serif; color: var(--secondary); font-size: 0.85rem; 
+            padding: 12px; border-bottom: 1px solid rgba(0, 212, 255, 0.2); text-align: left;
         }
+        .excel-table td { background: var(--glass-bg); padding: 12px; border-top: 1px solid var(--border-glass); font-size: 0.8rem; }
 
-        .excel-table th {
-            background: linear-gradient(90deg, var(--primary), var(--secondary));
-            color: white; padding: 10px; text-transform: uppercase; font-family: 'Orbitron';
-            border: 1px solid rgba(255,255,255,0.2); text-align: left;
-        }
+        .status-cell { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.75rem; }
 
-        .excel-table td {
-            padding: 10px; border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(255,255,255,0.03); vertical-align: top;
-        }
-
-        .btn-add {
-            width: 100%; padding: 12px; border-radius: 8px; border: none;
-            background: var(--secondary); color: #000; font-weight: bold; cursor: pointer;
-        }
-
-        .btn-snapshot {
-            position: fixed; bottom: 20px; right: 20px; background: var(--accent);
-            color: white; border: none; padding: 15px 20px; border-radius: 50px;
-            font-weight: bold; box-shadow: 0 0 20px var(--accent);
-        }
-    </style>
-</head>
-<body>
-
-    <h1 style="font-family:'Orbitron'; font-size:1.2rem; color:var(--secondary);">SITE REPORT MANAGER</h1>
-
-    <div class="form-card">
-        <label>Buscar Sitio (ID + Nombre):</label>
-        <input type="text" id="site-search" placeholder="Escriba para buscar..." autocomplete="off">
-        <div id="suggestions" class="suggestions" style="display:none;"></div>
-
-        <div id="details" style="display:none;">
-            <p style="font-size:0.8rem;">Torrero: <b id="label-torrero"></b></p>
-            <select id="select-estado">
-                <option value="OPERATIVO">OPERATIVO</option>
-                <option value="PDR">PDR</option>
-                <option value="LPU">LPU</option>
-                <option value="PENDIENTE CELECT">PENDIENTE CELECT</option>
-            </select>
-            <textarea id="text-comentario" rows="2" placeholder="Comentario..."></textarea>
-            <button class="btn-add" onclick="addEntry()">AÑADIR A LA TABLA</button>
-        </div>
-    </div>
-
-    <div id="capture-area">
-        <div style="text-align:center; margin-bottom:10px;">
-            <h2 style="margin:0; font-family:'Orbitron'; font-size:1rem; color:var(--secondary);">CUADRO RESUMEN DE ACTIVIDADES</h2>
-            <small id="date-display"></small>
-        </div>
-        
-        <table class="excel-table" id="main-table">
-            <thead>
-                <tr>
-                    <th style="width: 25%;">Sitio</th>
-                    <th style="width: 15%;">Torrero</th>
-                    <th style="width: 15%;">ESTADO</th>
-                    <th style="width: 45%;">COMENTARIO</th>
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                </tbody>
-        </table>
-    </div>
-
-    <button class="btn-snapshot" onclick="downloadImage()">📸 DESCARGAR TABLA</button>
-
-    <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        let database = [];
-        let currentSelection = null;
-
-        document.getElementById('date-display').innerText = new Date().toLocaleDateString();
-
-        Papa.parse(CSV_URL, {
-            download: true, header: true,
-            complete: function(results) {
-                database = results.data.map(row => ({
-                    ...row,
-                    fullLabel: `${row.SITEID || ''} - ${row['NOMBRE DE SITIO'] || ''}`,
-                    torrero: row['Propietario']
-                })).filter(row => row.SITEID);
-            }
-        });
-
-        const searchInput = document.getElementById('site-search');
-        const sugBox = document.getElementById('suggestions');
-
-        searchInput.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
-            sugBox.innerHTML = '';
-            if (val.length < 2) { sugBox.style.display = 'none'; return; }
-            const matches = database.filter(item => item.fullLabel.toLowerCase().includes(val)).slice(0, 5);
-            if (matches.length > 0) {
-                sugBox.style.display = 'block';
-                matches.forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = 'suggestion-item';
-                    div.innerText = m.fullLabel;
-                    div.onclick = () => {
-                        currentSelection = m;
-                        searchInput.value = m.fullLabel;
-                        document.getElementById('label-torrero').innerText = m.torrero || 'N/A';
-                        document.getElementById('details').style.display = 'block';
-                        sugBox.style.display = 'none';
-                    };
-                    sugBox.appendChild(div);
-                });
-            }
-        });
-
-        function addEntry() {
-            const estado = document.getElementById('select-estado').value;
-            const comentario = document.getElementById('text-comentario').value;
-            const tableBody = document.getElementById('table-body');
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${currentSelection.fullLabel}</td>
-                <td>${currentSelection.torrero || 'N/A'}</td>
-                <td style="font-weight:bold; color:${estado === 'OPERATIVO' ? '#00ff88' : '#ff3333'}">${estado}</td>
-                <td>${comentario}</td>
-            `;
-            tableBody.appendChild(row);
-
-            // Reset
-            document.getElementById('details').style.display = 'none';
-            searchInput.value = '';
-            document.getElementById('text-comentario').value = '';
-        }
-
-        function downloadImage() {
-            html2canvas(document.getElementById('capture-area'), { 
-                backgroundColor: '#0f0c29', scale: 3 
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Tabla_Reporte_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        }
-    </script>
-</body>
-</html>
+        .final-status-container {
+            margin-top: 30px; padding: 15px; border-radius: 8px;
+            text-align: center; font-family: 'Rajdhani', sans-serif;
+            text-transform: uppercase; letter-spacing: 4px; font-size: 1.2rem;
+            border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
