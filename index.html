@@ -3,60 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executive Site Report Pro v5</title>
+    <title>Site Operations Report Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #bd00ff; --secondary: #00d4ff; --dark-blue: #0a0b1e;
-            --glass-bg: rgba(255, 255, 255, 0.03); --border-glass: rgba(255, 255, 255, 0.12);
-            --success: #00ffcc; --danger: #ff4d4d; --warning: #ffcc00; --info: #00d4ff;
+            --primary: #bd00ff; --secondary: #00d4ff; --bg: #05060f;
+            --glass: rgba(255, 255, 255, 0.03); --border: rgba(0, 212, 255, 0.2);
         }
 
         body {
-            font-family: 'Inter', sans-serif; background: radial-gradient(circle at top right, #1e1e3f, #0a0b1e);
-            background-attachment: fixed; color: #e0e0e0; margin: 0; padding: 15px;
-            display: flex; flex-direction: column; align-items: center; padding-bottom: 80px;
+            font-family: 'Inter', sans-serif; background: #05060f; color: white;
+            margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center;
         }
 
-        .glass-panel {
-            width: 100%; max-width: 650px; background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px); border-radius: 16px; padding: 20px;
-            border: 1px solid var(--border-glass); margin-bottom: 25px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        /* Panel de Control */
+        .control-panel {
+            width: 100%; max-width: 650px; background: rgba(20, 20, 40, 0.8);
+            border-radius: 12px; padding: 20px; border: 1px solid var(--border);
+            margin-bottom: 20px; box-sizing: border-box;
         }
 
         input, select, textarea {
-            width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px;
-            border: 1px solid var(--border-glass); background: rgba(0, 0, 0, 0.4); color: white;
+            width: 100%; padding: 10px; margin: 8px 0; border-radius: 6px;
+            border: 1px solid var(--border); background: rgba(0,0,0,0.5); color: white;
         }
 
-        .mode-selector { display: flex; gap: 10px; margin-bottom: 15px; }
-        .mode-btn { 
-            flex: 1; padding: 10px; border: 1px solid var(--secondary); border-radius: 8px; 
-            background: transparent; color: white; cursor: pointer; font-size: 0.8rem;
-        }
-        .mode-btn.active { background: var(--secondary); color: black; font-weight: bold; }
-
+        /* ÁREA DE REPORTE (LA IMAGEN) */
         #capture-area {
-            width: 100%; max-width: 950px; padding: 35px; background: #0a0b1e;
-            border: 1px solid rgba(255,255,255,0.05); position: relative;
+            width: 100%; max-width: 900px; padding: 30px;
+            background: linear-gradient(145deg, #0a0b1e, #161b33);
+            border: 2px solid var(--secondary); border-radius: 4px;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
         }
 
-        .report-header { border-bottom: 2px solid var(--secondary); padding-bottom: 15px; margin-bottom: 25px; }
-        .report-header h2 { font-family: 'Rajdhani', sans-serif; margin: 0; letter-spacing: 2px; color: white; text-transform: uppercase; }
-
-        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
-        .excel-table th { 
-            font-family: 'Rajdhani', sans-serif; color: var(--secondary); font-size: 0.85rem; 
-            padding: 12px; border-bottom: 1px solid rgba(0, 212, 255, 0.2); text-align: left;
+        .report-header {
+            border-bottom: 1px solid var(--secondary);
+            padding-bottom: 15px; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .excel-table td { background: var(--glass-bg); padding: 12px; border-top: 1px solid var(--border-glass); font-size: 0.8rem; }
 
-        .status-cell { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.75rem; }
+        .report-header h2 {
+            font-family: 'Rajdhani', sans-serif; margin: 0;
+            color: var(--secondary); letter-spacing: 2px;
+        }
 
-        .final-status-container {
-            margin-top: 30px; padding: 15px; border-radius: 8px;
+        .excel-table {
+            width: 100%; border-collapse: collapse; background: transparent;
+        }
+
+        .excel-table th {
+            font-family: 'Rajdhani', sans-serif; background: rgba(0, 212, 255, 0.1);
+            color: var(--secondary); padding: 12px; border: 1px solid var(--border);
+            text-align: left; font-size: 0.9rem;
+        }
+
+        .excel-table td {
+            padding: 12px; border: 1px solid var(--border);
+            background: var(--glass); font-size: 0.85rem;
+        }
+
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-weight: 600; padding: 2px 8px; border-radius: 4px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .final-banner {
+            margin-top: 25px; padding: 15px; border-radius: 4px;
             text-align: center; font-family: 'Rajdhani', sans-serif;
-            text-transform: uppercase; letter-spacing: 4px; font-size: 1.2rem;
-            border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.2rem; border-width: 1px; border-style: solid;
+        }
+
+        .btn-snapshot {
+            position: fixed; bottom: 20px; right: 20px; background: var(--secondary);
+            color: black; border: none; padding: 15px 30px; border-radius: 50px;
+            font-weight: bold; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="control-panel">
+        <h3 style="margin:0; font-family:'Rajdhani'; color:var(--secondary)">CONFIGURACIÓN DE REPORTE</h3>
+        
+        <select id="report-mode" onchange="updateUI()">
+            <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
+            <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
+        </select>
+        
+        <input type="date" id="prog-date" style="display:none;" onchange="updateUI()">
+        
+        <hr style="opacity:0.1;">
+        
+        <input type="text" id="search" placeholder="Escriba ID o Nombre de Sitio..." autocomplete="off">
+        <div id="results" style="background:#111; max-height:120px; overflow-y:auto; display:none; border:1px solid var(--secondary);"></div>
+
+        <div id="form-site" style="display:none; margin-top:15px; padding:10px; border:1px solid var(--border);">
+            <p id="cur-torrero" style="font-size:0.8rem; color:var(--secondary); font-weight:bold;"></p>
+            <select id="cur-status">
+                <option value="OPERATIVO">OPERATIVO</option>
+                <option value="EN RUTA">EN RUTA</option>
+                <option value="EN SITIO">EN SITIO</option>
+                <option value="PDR">PDR</option>
+                <option value="LPU">LPU</option>
+            </select>
+            <textarea id="cur-comment" placeholder="Comentario técnico..."></textarea>
+            <button onclick="addRow()" style="width:100%; padding:10px; background:var(--primary); color:white; border:none; border-radius:4px; font-weight:bold;">AÑADIR FILA</button>
+        </div>
+
+        <h3 style="margin:15px 0 5px 0; font-family:'Rajdhani'; color:var(--secondary)">RESUMEN GENERAL</h3>
+        <select id="global-status" onchange="updateGlobal()">
+            <option value="OPERATIVO">OPERATIVO</option>
+            <option value="AFECTADO">AFECTADO</option>
+        </select>
+    </div>
+
+    <div id="capture-area">
+        <div class="report-header">
+            <div>
+                <h2 id="title-display">VISITAS REALIZADAS</h2>
+                <div style="font-size:0.6rem; opacity:0.6; letter-spacing:1px; color:var(--secondary);">NETWORK MAINTENANCE REPORT</div>
+            </div>
+            <div id="date-display" style="font-size:0.8rem; opacity:0.8; font-family:'Rajdhani';"></div>
+        </div>
+
+        <table class="excel-table">
+            <thead>
+                <tr>
+                    <th style="width:30%">Sitio</th>
+                    <th style="width:20%">Torrero</th>
+                    <th style="width:20%">Estado</th>
+                    <th style="width:25%">Comentario</th>
+                    <th class="no-capture" style="width:5%"></th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                </tbody>
+        </table>
+
+        <div id="final-banner" class="final-banner" style="color:#00ffcc; border-color:#00ffcc; background:rgba(0,255,204,0.05);">
+            ESTADO FINAL: OPERATIVO ✅
+        </div>
+    </div>
+
+    <button class="btn-snapshot" onclick="download()">📸 DESCARGAR PNG</button>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        let db = [];
+        let selected = null;
+
+        document.getElementById('date-display').innerText = new Date().toLocaleDateString();
+
+        Papa.parse(CSV_URL, {
+            download: true, header: true,
+            complete: (r) => { db = r.data.map(row => ({ label: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, torrero: row.Propietario })).filter(x => x.label.length > 5); }
+        });
+
+        function updateUI() {
+            const mode = document.getElementById('report-mode').value;
+            const date = document.getElementById('prog-date').value;
+            document.getElementById('prog-date').style.display = mode === 'PROGRAMACIÓN' ? 'block' : 'none';
+            document.getElementById('title-display').innerText = (mode === 'PROGRAMACIÓN' && date) ? `PROGRAMACIÓN: ${date}` : mode;
+        }
+
+        function updateGlobal() {
+            const val = document.getElementById('global-status').value;
+            const b = document.getElementById('final-banner');
+            b.innerText = `ESTADO FINAL: ${val} ${val === 'OPERATIVO' ? '✅' : '❌'}`;
+            b.style.color = val === 'OPERATIVO' ? '#00ffcc' : '#ff4d4d';
+            b.style.borderColor = val === 'OPERATIVO' ? '#00ffcc' : '#ff4d4d';
+            b.style.background = val === 'OPERATIVO' ? 'rgba(0,255,204,0.05)' : 'rgba(255,77,77,0.05)';
+        }
+
+        document.getElementById('search').addEventListener('input', (e) => {
+            const v = e.target.value.toLowerCase();
+            const res = document.getElementById('results');
+            res.innerHTML = '';
+            if(v.length < 2) { res.style.display = 'none'; return; }
+            const matches = db.filter(x => x.label.toLowerCase().includes(v)).slice(0,5);
+            if(matches.length > 0) {
+                res.style.display = 'block';
+                matches.forEach(m => {
+                    const d = document.createElement('div');
+                    d.style.padding = '8px'; d.style.cursor = 'pointer'; d.innerText = m.label;
+                    d.onclick = () => {
+                        selected = m;
+                        document.getElementById('search').value = m.label;
+                        document.getElementById('cur-torrero').innerText = `Propietario: ${m.torrero}`;
+                        document.getElementById('form-site').style.display = 'block';
+                        res.style.display = 'none';
+                    };
+                    res.appendChild(d);
+                });
+            }
+        });
+
+        function addRow() {
+            const st = document.getElementById('cur-status').value;
+            const co = document.getElementById('cur-comment').value;
+            const body = document.getElementById('table-body');
+            const icons = { 'OPERATIVO':'✅', 'EN RUTA':'🚗', 'EN SITIO':'📍', 'PDR':'⏸️', 'LPU':'❌', 'PENDIENTE CELECT':'❌' };
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><b>${selected.label}</b></td>
+                <td>${selected.torrero || 'N/A'}</td>
+                <td><span class="status-pill">${icons[st]} ${st}</span></td>
+                <td style="font-size:0.75rem; opacity:0.8;">${co}</td>
+                <td class="no-capture" style="text-align:center; color:red; cursor:pointer;" onclick="this.parentElement.remove()">×</td>
+            `;
+            body.appendChild(tr);
+            document.getElementById('form-site').style.display = 'none';
+            document.getElementById('search').value = '';
+        }
+
+        function download() {
+            const nc = document.querySelectorAll('.no-capture');
+            nc.forEach(n => n.style.display = 'none');
+            html2canvas(document.getElementById('capture-area'), { backgroundColor:'#0a0b1e', scale:3 }).then(canvas => {
+                const a = document.createElement('a');
+                a.download = `Reporte_${Date.now()}.png`;
+                a.href = canvas.toDataURL();
+                a.click();
+                nc.forEach(n => n.style.display = 'table-cell');
+            });
+        }
+    </script>
+</body>
+</html>
