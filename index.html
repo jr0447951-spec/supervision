@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Campo Inteligente</title>
+    <title>Reporte de Campo Profesional</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -26,11 +26,10 @@
             border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; font-size: 0.9rem;
         }
 
-        /* Botones de Fecha Rápida */
-        .date-quick-btns { display: flex; gap: 8px; margin-bottom: 15px; display: none; }
+        .date-quick-btns { display: flex; gap: 8px; margin-bottom: 10px; }
         .btn-date { 
-            flex: 1; padding: 8px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #00d4ff;
-            background: transparent; color: #00d4ff; cursor: pointer; transition: 0.2s;
+            flex: 1; padding: 10px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #00d4ff;
+            background: rgba(0, 212, 255, 0.1); color: #00d4ff; cursor: pointer; font-weight: 600;
         }
         .btn-date:hover { background: #00d4ff; color: #003366; }
 
@@ -45,7 +44,7 @@
 
         button.btn-add {
             background: linear-gradient(90deg, #00d4ff, #0077ff); color: white; border: none; padding: 15px;
-            width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer;
+            width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px;
         }
 
         /* CUADRO DE CAPTURA */
@@ -56,21 +55,33 @@
 
         .report-header { 
             border-bottom: 4px solid #004488; padding-bottom: 12px; margin-bottom: 20px;
-            display: flex; justify-content: space-between; align-items: flex-end;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        .report-header h1 { margin: 0; font-size: 1.5rem; color: #004488; }
+        .report-header h1 { margin: 0; font-size: 1.4rem; color: #004488; font-weight: 800; text-transform: uppercase; }
 
         .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #b3d9ff; }
-        .excel-table th { background: #004488; color: #ffffff; padding: 12px; font-size: 0.75rem; text-align: left; border: 1px solid #003366; }
-        .excel-table td { border: 1px solid #cce6ff; padding: 12px; font-size: 0.8rem; color: #003366; word-wrap: break-word; }
+        .excel-table th { 
+            background: #004488; color: #ffffff; padding: 12px; 
+            font-size: 0.75rem; text-align: left; border: 1px solid #003366;
+            text-transform: uppercase;
+        }
+        .excel-table td { 
+            border: 1px solid #cce6ff; padding: 12px; font-size: 0.8rem; 
+            color: #003366; word-wrap: break-word; vertical-align: middle;
+        }
+        
         .excel-table tbody tr:nth-child(even) { background: #f0f7ff; }
 
         .status-cell { display: flex; align-items: center; gap: 8px; font-weight: 700; }
         .btn-remove { color: #ff3333; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 1.2rem; }
 
         .actions { display: flex; gap: 10px; margin-top: 20px; width: 100%; max-width: 800px; }
-        .btn-action { flex: 1; padding: 15px; border-radius: 50px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-action { 
+            flex: 1; padding: 15px; border-radius: 50px; border: none; 
+            font-weight: 700; cursor: pointer; display: flex; align-items: center; 
+            justify-content: center; gap: 8px; transition: 0.3s;
+        }
         .btn-download { background: #ffffff; color: #004488; border: 2px solid #004488; }
         .btn-whatsapp { background: #25d366; color: white; }
     </style>
@@ -78,20 +89,20 @@
 <body>
 
     <div class="config-card">
-        <h3>1. Tipo de Informe</h3>
-        <select id="sel-tipo" onchange="toggleMode()">
+        <h3>1. Tipo de Informe y Fecha</h3>
+        <select id="sel-tipo" onchange="updateHeader()">
             <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
             <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
         </select>
 
-        <div id="date-logic" class="date-quick-btns">
+        <div class="date-quick-btns">
             <button class="btn-date" onclick="setQuickDate(0)">HOY</button>
             <button class="btn-date" onclick="setQuickDate(1)">MAÑANA</button>
             <button class="btn-date" onclick="setQuickDate(2)">PASADO MAÑANA</button>
         </div>
-        <input type="date" id="sel-fecha" style="display:none;" onchange="updateHeader()">
+        <input type="date" id="sel-fecha" onchange="updateHeader()">
 
-        <h3>2. Agregar Fila</h3>
+        <h3>2. Detalles del Sitio</h3>
         <div class="search-container">
             <input type="text" id="site-search" placeholder="ID o Nombre de sitio..." autocomplete="off">
             <div id="suggestions"></div>
@@ -100,6 +111,7 @@
         <div id="form-site" style="display:none; margin-top:10px; padding:15px; border:1px solid #0059b3; border-radius:10px; background: rgba(255,255,255,0.05);">
             <p style="font-size: 0.8rem; color:#00d4ff;">Torrero: <span id="label-torrero" style="color:white; font-weight:bold;"></span></p>
             
+            <label style="font-size: 0.7rem; color: #b3e6ff;">Tipo de Falla:</label>
             <select id="sel-falla">
                 <option value="FDS">FDS</option>
                 <option value="LTE FDS">LTE FDS</option>
@@ -113,6 +125,7 @@
                 <option value="ALTA TEMPERATURA">ALTA TEMPERATURA</option>
             </select>
 
+            <label style="font-size: 0.7rem; color: #b3e6ff;">Estado:</label>
             <select id="sel-estado-fila">
                 <option value="OPERATIVO">OPERATIVO</option>
                 <option value="EN RUTA">EN RUTA</option>
@@ -122,8 +135,8 @@
                 <option value="LPU">LPU</option>
             </select>
 
-            <textarea id="txt-comentario" rows="2" placeholder="Comentarios..."></textarea>
-            <button class="btn-add" onclick="addRow()">AGREGAR FILA</button>
+            <textarea id="txt-comentario" rows="2" placeholder="Detalles técnicos..."></textarea>
+            <button class="btn-add" onclick="addRow()">AGREGAR A TABLA</button>
         </div>
     </div>
 
@@ -134,7 +147,7 @@
                 <span style="font-size:0.65rem; color:#0077ff; font-weight: 700; text-transform: uppercase;">Equipo técnico de zonas paracentrales</span>
             </div>
             <div style="text-align: right;">
-                <div id="h-fecha" style="font-weight:700; color: #004488; font-size: 0.95rem;"></div>
+                <div id="h-fecha-display" style="font-weight:700; color: #004488; font-size: 1.1rem; border-left: 3px solid #00d4ff; padding-left: 10px;"></div>
             </div>
         </div>
 
@@ -155,7 +168,7 @@
 
     <div class="actions">
         <button class="btn-action btn-download" onclick="downloadImg()">💾 DESCARGAR PNG</button>
-        <button class="btn-action btn-whatsapp" onclick="sendWhatsapp()">📱 WHATSAPP</button>
+        <button class="btn-action btn-whatsapp" onclick="sendWhatsapp()">📱 ENVIAR WHATSAPP</button>
     </div>
 
     <script>
@@ -163,7 +176,15 @@
         let db = [];
         let siteSelected = null;
 
-        
+        // Establecer hoy por defecto al cargar
+        window.onload = () => {
+            const today = new Date();
+            const y = today.getFullYear();
+            const m = String(today.getMonth() + 1).padStart(2, '0');
+            const d = String(today.getDate()).padStart(2, '0');
+            document.getElementById('sel-fecha').value = `${y}-${m}-${d}`;
+            updateHeader();
+        };
 
         Papa.parse(CSV_URL, {
             download: true, header: true,
@@ -175,19 +196,13 @@
             }
         });
 
-        function toggleMode() {
-            const mode = document.getElementById('sel-tipo').value;
-            const isProg = (mode === 'PROGRAMACIÓN');
-            document.getElementById('date-logic').style.display = isProg ? 'flex' : 'none';
-            document.getElementById('sel-fecha').style.display = isProg ? 'block' : 'none';
-            updateHeader();
-        }
-
         function setQuickDate(daysToAdd) {
             const date = new Date();
             date.setDate(date.getDate() + daysToAdd);
-            const formatted = date.toISOString().split('T')[0];
-            document.getElementById('sel-fecha').value = formatted;
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            document.getElementById('sel-fecha').value = `${y}-${m}-${d}`;
             updateHeader();
         }
 
@@ -195,16 +210,14 @@
             const mode = document.getElementById('sel-tipo').value;
             const dateInput = document.getElementById('sel-fecha').value;
             
-            if (mode === 'PROGRAMACIÓN' && dateInput) {
-                // Formatear fecha para el título (DD/MM/AAAA)
+            let dateStr = "Sin fecha";
+            if (dateInput) {
                 const parts = dateInput.split('-');
-                const dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
-                document.getElementById('h-titulo').innerText = `PROGRAMACIÓN: ${dateStr}`;
-                document.getElementById('h-fecha').innerText = dateStr;
-            } else {
-                document.getElementById('h-titulo').innerText = mode;
-                document.getElementById('h-fecha').innerText = new Date().toLocaleDateString('es-ES');
+                dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
             }
+            
+            document.getElementById('h-titulo').innerText = mode;
+            document.getElementById('h-fecha-display').innerText = dateStr;
         }
 
         document.getElementById('site-search').addEventListener('input', (e) => {
@@ -232,6 +245,7 @@
         });
 
         function addRow() {
+            if(!siteSelected) return;
             const falla = document.getElementById('sel-falla').value;
             const estadoTexto = document.getElementById('sel-estado-fila').value;
             const comment = document.getElementById('txt-comentario').value;
@@ -243,22 +257,27 @@
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-weight:700; color: #004488;">${siteSelected.site}</td>
-                <td>${siteSelected.torrero || 'N/A'}</td>
-                <td style="font-weight:600; font-size: 0.75rem; color: #0059b3;">${falla}</td>
+                <td style="color: #0059b3;">${siteSelected.torrero || 'N/A'}</td>
+                <td style="font-weight:600; font-size: 0.75rem; color: #0077ff;">${falla}</td>
                 <td><div class="status-cell"><span>${emoji}</span><span>${estadoTexto}</span></div></td>
-                <td style="font-size: 0.75rem; white-space: pre-wrap;">${comment}</td>
+                <td style="font-size: 0.75rem; white-space: pre-wrap; color: #002244;">${comment}</td>
                 <td class="no-capture" style="text-align:center;"><button class="btn-remove" onclick="this.parentElement.parentElement.remove()">×</button></td>
             `;
             body.appendChild(tr);
+            
             document.getElementById('form-site').style.display = 'none';
             document.getElementById('site-search').value = '';
             document.getElementById('txt-comentario').value = '';
+            siteSelected = null;
         }
 
         function downloadImg() {
             const nc = document.querySelectorAll('.no-capture');
             nc.forEach(el => el.style.display = 'none');
-            html2canvas(document.getElementById('capture-area'), { scale: 3 }).then(canvas => {
+            html2canvas(document.getElementById('capture-area'), { 
+                scale: 3,
+                backgroundColor: "#ffffff"
+            }).then(canvas => {
                 const a = document.createElement('a');
                 a.download = `Reporte_${Date.now()}.png`;
                 a.href = canvas.toDataURL("image/png");
