@@ -131,7 +131,7 @@
         <div class="report-header">
             <div>
                 <h1 id="h-titulo">VISITAS REALIZADAS</h1>
-                <span style="font-size:0.65rem; color:#0077ff; font-weight: 700; text-transform: uppercase;">Infrastructure Field Operations</span>
+                <span style="font-size:0.65rem; color:#0077ff; font-weight: 700; text-transform: uppercase;">Equipo técnico de zonas paracentrales</span>
             </div>
             <div style="text-align: right;">
                 <div id="h-fecha" style="font-weight:700; color: #004488; font-size: 0.95rem;"></div>
@@ -163,9 +163,7 @@
         let db = [];
         let siteSelected = null;
 
-        // Fecha de hoy por defecto
-        const today = new Date();
-        document.getElementById('h-fecha').innerText = today.toLocaleDateString('es-ES');
+        
 
         Papa.parse(CSV_URL, {
             download: true, header: true,
