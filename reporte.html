@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electric Site Reporter v2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #bd00ff; --secondary: #00d4ff; --accent: #ff007a;
+            --dark: #0f0c29; --glass: rgba(255, 255, 255, 0.1);
+            --operativo: #00ff88; --pdr: #ff3333; --lpu: #ffbb00;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background-attachment: fixed; color: white; margin: 0; padding: 15px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .form-card {
+            width: 100%; max-width: 450px; background: var(--glass);
+            backdrop-filter: blur(15px); border-radius: 20px; padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2); box-sizing: border-box;
+        }
+
+        input, select, textarea {
+            width: 100%; padding: 12px; margin: 8px 0 12px 0;
+            border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0, 0, 0, 0.4); color: white; font-size: 1rem; box-sizing: border-box;
+        }
+
+        .suggestions {
+            background: #1a1a2e; border-radius: 10px; max-height: 200px; 
+            overflow-y: auto; margin-top: -10px; margin-bottom: 15px; border: 1px solid var(--secondary);
+        }
+
+        .suggestion-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.85rem; }
+
+        .btn-add {
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white; font-weight: bold; font-family: 'Orbitron';
+        }
+
+        /* Cuadro Resumen (Imagen) */
+        #capture-area {
+            width: 100%; max-width: 450px; margin-top: 30px;
+            background: #0f0c29; padding: 20px; border-radius: 15px; border: 2px solid var(--primary);
+        }
+
+        .report-header { text-align: center; border-bottom: 2px solid var(--secondary); padding-bottom: 10px; margin-bottom: 15px; }
+
+        .site-entry {
+            background: rgba(255,255,255,0.05); margin-bottom: 10px;
+            padding: 12px; border-radius: 8px; border-left: 4px solid var(--secondary);
+        }
+
+        .status-pill {
+            padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;
+        }
+
+        .btn-snapshot {
+            position: fixed; bottom: 20px; right: 20px; background: var(--accent);
+            color: white; border: none; padding: 15px 20px; border-radius: 50px;
+            font-weight: bold; box-shadow: 0 0 20px var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="font-family:'Orbitron'; font-size:1.1rem; color:var(--secondary);">SITE REPORT PRO</h1>
+
+    <div class="form-card">
+        <label style="font-size:0.8rem; color:var(--secondary);">BUSCAR SITEID O NOMBRE:</label>
+        <input type="text" id="site-search" placeholder="Escriba ID..." autocomplete="off">
+        <div id="suggestions" class="suggestions" style="display:none;"></div>
+
+        <div id="details" style="display:none;">
+            <p style="font-size: 0.85rem;">Propietario (Torrero): <span id="label-torrero" style="color: var(--secondary); font-weight: bold;"></span></p>
+            
+            <label style="font-size:0.8rem;">ESTADO:</label>
+            <select id="select-estado">
+                <option value="OPERATIVO">OPERATIVO</option>
+                <option value="PDR">PDR</option>
+                <option value="LPU">LPU</option>
+                <option value="PENDIENTE CELECT">PENDIENTE CELECT</option>
+            </select>
+
+            <label style="font-size:0.8rem;">COMENTARIO:</label>
+            <textarea id="text-comentario" rows="2" placeholder="Nota de campo..."></textarea>
+            
+            <button class="btn-add" onclick="addEntry()">AÑADIR AL CUADRO</button>
+        </div>
+    </div>
+
+    <div id="capture-area">
+        <div class="report-header">
+            <h2 style="margin:0; font-family:'Orbitron'; font-size: 0.9rem;">RESUMEN DE SITIOS</h2>
+            <small id="date-display" style="color: var(--secondary);"></small>
+        </div>
+        <div id="report-body"></div>
+    </div>
+
+    <button class="btn-snapshot" onclick="downloadImage()">📸 GENERAR PNG</button>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        let database = [];
+        let currentSelection = null;
+
+        document.getElementById('date-display').innerText = new Date().toLocaleDateString();
+
+        Papa.parse(CSV_URL, {
+            download: true, header: true,
+            complete: function(results) {
+                database = results.data.map(row => ({
+                    ...row,
+                    fullLabel: `${row.SITEID || ''} - ${row['NOMBRE DE SITIO'] || ''}`,
+                    torrero: row['Propietario'] // Extrae de la columna P (Propietario)
+                })).filter(row => row.SITEID);
+            }
+        });
+
+        const searchInput = document.getElementById('site-search');
+        const sugBox = document.getElementById('suggestions');
+
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            sugBox.innerHTML = '';
+            if (val.length < 2) { sugBox.style.display = 'none'; return; }
+
+            const matches = database.filter(item => item.fullLabel.toLowerCase().includes(val)).slice(0, 5);
+            
+            if (matches.length > 0) {
+                sugBox.style.display = 'block';
+                matches.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.innerText = m.fullLabel;
+                    div.onclick = () => {
+                        currentSelection = m;
+                        searchInput.value = m.fullLabel;
+                        document.getElementById('label-torrero').innerText = m.torrero || 'N/A';
+                        document.getElementById('details').style.display = 'block';
+                        sugBox.style.display = 'none';
+                    };
+                    sugBox.appendChild(div);
+                });
+            }
+        });
+
+        function addEntry() {
+            const estado = document.getElementById('select-estado').value;
+            const comentario = document.getElementById('text-comentario').value;
+            const body = document.getElementById('report-body');
+
+            // Color del estado
+            let color = 'var(--secondary)';
+            if(estado === 'OPERATIVO') color = 'var(--operativo)';
+            if(estado === 'PDR') color = 'var(--pdr)';
+            if(estado === 'LPU') color = 'var(--lpu)';
+
+            const entry = document.createElement('div');
+            entry.className = 'site-entry';
+            entry.style.borderLeftColor = color;
+            entry.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="font-size:0.85rem;">${currentSelection.fullLabel}</b>
+                    <span class="status-pill" style="background:${color}; color:#000;">${estado}</span>
+                </div>
+                <p style="margin-top:5px; font-size:0.75rem;">TORRERO: ${currentSelection.torrero || 'N/A'}</p>
+                <p style="opacity:0.8; font-style:italic;">${comentario}</p>
+            `;
+            body.appendChild(entry);
+            document.getElementById('details').style.display = 'none';
+            searchInput.value = '';
+            document.getElementById('text-comentario').value = '';
+        }
+
+        function downloadImage() {
+            const area = document.getElementById('capture-area');
+            html2canvas(area, { backgroundColor: '#0f0c29', scale: 3 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Reporte_${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>
