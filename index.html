@@ -3,94 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Campo Profesional</title>
+    <title>Reporte Técnico Dual-DB</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif; background: #001a33; color: #e6f2ff;
-            margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
-        }
-
-        .config-card {
-            background: #003366; width: 100%; max-width: 800px;
-            padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 20px; border: 1px solid #0059b3; box-sizing: border-box;
-        }
-
-        h3 { margin: 15px 0 5px 0; color: #00d4ff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-
-        input, select, textarea {
-            width: 100%; padding: 12px; margin: 5px 0 10px 0; border-radius: 8px;
-            border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; font-size: 0.9rem;
-        }
-
-        .date-quick-btns { display: flex; gap: 8px; margin-bottom: 10px; }
-        .btn-date { 
-            flex: 1; padding: 10px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #00d4ff;
-            background: rgba(0, 212, 255, 0.1); color: #00d4ff; cursor: pointer; font-weight: 600;
-        }
-        .btn-date:hover { background: #00d4ff; color: #003366; }
-
-        .search-container { position: relative; }
-        #suggestions {
-            position: absolute; top: 100%; left: 0; width: 100%;
-            background: #003366; border: 1px solid #00d4ff; border-radius: 0 0 8px 8px;
-            max-height: 200px; overflow-y: auto; z-index: 100; display: none;
-        }
-        .sug-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #004080; color: #b3e6ff; }
-        .sug-item:hover { background: #0059b3; color: white; }
-
-        button.btn-add {
-            background: linear-gradient(90deg, #00d4ff, #0077ff); color: white; border: none; padding: 15px;
-            width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px;
-        }
-
-        /* CUADRO DE CAPTURA */
-        #capture-area {
-            background: #ffffff; color: #002244; padding: 35px; border-radius: 2px;
-            width: 100%; max-width: 1100px; box-sizing: border-box;
-        }
-
-        .report-header { 
-            border-bottom: 4px solid #004488; padding-bottom: 12px; margin-bottom: 20px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .report-header h1 { margin: 0; font-size: 1.4rem; color: #004488; font-weight: 800; text-transform: uppercase; }
-
-        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #b3d9ff; }
-        .excel-table th { 
-            background: #004488; color: #ffffff; padding: 12px; 
-            font-size: 0.75rem; text-align: left; border: 1px solid #003366;
-            text-transform: uppercase;
-        }
-        .excel-table td { 
-            border: 1px solid #cce6ff; padding: 12px; font-size: 0.8rem; 
-            color: #003366; word-wrap: break-word; vertical-align: middle;
-        }
+        :root { --blue-dark: #001a33; --blue-mid: #003366; --blue-light: #00d4ff; --white: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background: var(--blue-dark); color: #e6f2ff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        .config-card { background: var(--blue-mid); width: 100%; max-width: 500px; padding: 20px; border-radius: 16px; border: 1px solid #0059b3; box-sizing: border-box; margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 15px 0; border-radius: 8px; border: 1px solid #0059b3; background: var(--blue-dark); color: white; font-size: 16px; }
         
-        .excel-table tbody tr:nth-child(even) { background: #f0f7ff; }
+        .date-quick-btns { display: flex; gap: 5px; margin-bottom: 10px; }
+        .btn-date { flex: 1; padding: 10px 5px; font-size: 0.7rem; border-radius: 6px; border: 1px solid var(--blue-light); background: rgba(0, 212, 255, 0.1); color: var(--blue-light); cursor: pointer; font-weight: 700; }
+        
+        .tech-tag { background: var(--blue-light); color: var(--blue-dark); padding: 4px 10px; border-radius: 4px; margin: 3px; display: inline-block; font-weight: bold; font-size: 0.75rem; }
+        .btn-clear-tech { background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; margin-top: 5px; }
 
-        .status-cell { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-        .btn-remove { color: #ff3333; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 1.2rem; }
+        .table-overflow { width: 100%; max-width: 100vw; overflow-x: auto; background: var(--white); border-radius: 4px; margin-bottom: 20px; }
+        #capture-area { background: var(--white); color: #002244; padding: 25px; width: 1100px; }
+        .report-header { border-bottom: 4px solid #004488; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #b3d9ff; }
+        .excel-table th { background: #004488; color: white; padding: 10px; font-size: 11px; border: 1px solid #003366; text-align: left; text-transform: uppercase; }
+        .excel-table td { border: 1px solid #cce6ff; padding: 10px; font-size: 12px; color: #003366; word-wrap: break-word; vertical-align: middle; }
+        .excel-table tr:nth-child(even) { background: #f0f7ff; }
 
-        .actions { display: flex; gap: 10px; margin-top: 20px; width: 100%; max-width: 800px; }
-        .btn-action { 
-            flex: 1; padding: 15px; border-radius: 50px; border: none; 
-            font-weight: 700; cursor: pointer; display: flex; align-items: center; 
-            justify-content: center; gap: 8px; transition: 0.3s;
-        }
-        .btn-download { background: #ffffff; color: #004488; border: 2px solid #004488; }
+        #suggestions { background: var(--blue-mid); border: 1px solid var(--blue-light); max-height: 150px; overflow-y: auto; position: absolute; width: 100%; z-index: 10; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .sug-item { padding: 12px; border-bottom: 1px solid #004080; cursor: pointer; }
+        .actions { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 10px; }
+        .btn-action { padding: 18px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-download { background: var(--white); color: #004488; border: 2px solid #004488; }
         .btn-whatsapp { background: #25d366; color: white; }
     </style>
 </head>
 <body>
 
     <div class="config-card">
-        <h3>1. Tipo de Informe y Fecha</h3>
-        <select id="sel-tipo" onchange="updateHeader()">
+        <h3 style="color:var(--blue-light); font-size:0.8rem;">1. INFORME Y FECHA</h3>
+        <select id="sel-tipo" onchange="handleModeChange()">
             <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
             <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
         </select>
@@ -98,199 +47,204 @@
         <div class="date-quick-btns">
             <button class="btn-date" onclick="setQuickDate(0)">HOY</button>
             <button class="btn-date" onclick="setQuickDate(1)">MAÑANA</button>
-            <button class="btn-date" onclick="setQuickDate(2)">PASADO MAÑANA</button>
+            <button class="btn-date" onclick="setQuickDate(2)">PASADO</button>
         </div>
         <input type="date" id="sel-fecha" onchange="updateHeader()">
 
-        <h3>2. Detalles del Sitio</h3>
-        <div class="search-container">
-            <input type="text" id="site-search" placeholder="ID o Nombre de sitio..." autocomplete="off">
+        <h3 style="color:var(--blue-light); font-size:0.8rem;">2. BUSCAR SITIO</h3>
+        <div style="position:relative;">
+            <input type="text" id="site-search" placeholder="ID o Nombre..." autocomplete="off">
             <div id="suggestions"></div>
         </div>
 
-        <div id="form-site" style="display:none; margin-top:10px; padding:15px; border:1px solid #0059b3; border-radius:10px; background: rgba(255,255,255,0.05);">
-            <p style="font-size: 0.8rem; color:#00d4ff;">Torrero: <span id="label-torrero" style="color:white; font-weight:bold;"></span></p>
+        <div id="form-site" style="display:none;">
+            <p style="font-size:0.8rem; margin: 10px 0;">Torrero: <span id="label-torrero" style="font-weight:bold; color:var(--blue-light)"></span></p>
             
-            <label style="font-size: 0.7rem; color: #b3e6ff;">Tipo de Falla:</label>
             <select id="sel-falla">
                 <option value="FDS">FDS</option>
-                <option value="LTE FDS">LTE FDS</option>
-                <option value="3G FDS">3G FDS</option>
-                <option value="2G FDS">2G FDS</option>
-                <option value="PARCIAL">PARCIAL</option>
                 <option value="FALLA DE AC">FALLA DE AC</option>
-                <option value="ALARMAS EXTERNAS">ALARMAS EXTERNAS</option>
-                <option value="REVISIÓN DE MOTOGENERADOR">REVISION DE MOTOGENERADOR</option>
-                <option value="VISITA TÉCNICA">VISITA TECNICA</option>
+                <option value="VISITA TÉCNICA">VISITA TÉCNICA</option>
                 <option value="ALTA TEMPERATURA">ALTA TEMPERATURA</option>
+                <option value="REVISIÓN DE MOTOGENERADOR">REVISIÓN DE MOTOGENERADOR</option>
             </select>
 
-            <label style="font-size: 0.7rem; color: #b3e6ff;">Estado:</label>
             <select id="sel-estado-fila">
                 <option value="OPERATIVO">OPERATIVO</option>
                 <option value="EN RUTA">EN RUTA</option>
                 <option value="EN SITIO">EN SITIO</option>
                 <option value="PDR">PDR</option>
                 <option value="AFECTADO">AFECTADO</option>
-                <option value="LPU">LPU</option>
-                <option value="PENDIENTE">PENDIENTE CELECT</option>
             </select>
 
-            <textarea id="txt-comentario" rows="2" placeholder="Detalles técnicos..."></textarea>
-            <button class="btn-add" onclick="addRow()">AGREGAR A TABLA</button>
+            <div id="div-tecnicos" style="display:none; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <label style="font-size:0.75rem; color:var(--blue-light); font-weight: bold;">ASIGNAR PERSONAL TÉCNICO:</label>
+                <select id="sel-tech-csv" onchange="addTechToList()" style="margin-bottom: 5px;">
+                    <option value="">-- Seleccionar de la lista --</option>
+                </select>
+                <div id="selected-techs" style="min-height: 30px; margin-top: 5px;"></div>
+                <button class="btn-clear-tech" onclick="clearTechList()">Limpiar Lista</button>
+            </div>
+
+            <textarea id="txt-comentario" rows="2" placeholder="Notas técnicas adicionales..."></textarea>
+            <button onclick="addRow()" style="background:var(--blue-light); color:var(--blue-dark); border:none; padding:18px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;">AÑADIR AL REPORTE</button>
         </div>
     </div>
 
-    <div id="capture-area">
-        <div class="report-header">
-            <div>
-                <h1 id="h-titulo">VISITAS REALIZADAS</h1>
-                <span style="font-size:0.65rem; color:#0077ff; font-weight: 700; text-transform: uppercase;">Equipo técnico de zonas paracentrales</span>
+    <div class="table-overflow">
+        <div id="capture-area">
+            <div class="report-header">
+                <div>
+                    <h1 id="h-titulo">VISITAS REALIZADAS</h1>
+                    <p style="margin:0; font-size:12px; color:#0077ff; font-weight:bold;">OPERACIONES DE CAMPO PARACENTRAL</p>
+                </div>
+                <div id="h-fecha-display" style="font-weight:bold; color:#004488; font-size:1.2rem; border-left:4px solid #00d4ff; padding-left:10px;"></div>
             </div>
-            <div style="text-align: right;">
-                <div id="h-fecha-display" style="font-weight:700; color: #004488; font-size: 1.1rem; border-left: 3px solid #00d4ff; padding-left: 10px;"></div>
-            </div>
-        </div>
 
-        <table class="excel-table">
-            <thead>
-                <tr>
-                    <th style="width:25%">Sitio / Nodo</th>
-                    <th style="width:15%">Torrero</th>
-                    <th style="width:18%">Tipo de Falla</th>
-                    <th style="width:17%">Estado</th>
-                    <th style="width:20%">Comentarios</th>
-                    <th class="no-capture" style="width:5%"></th>
-                </tr>
-            </thead>
-            <tbody id="table-body"></tbody>
-        </table>
+            <table class="excel-table">
+                <thead>
+                    <tr id="header-row">
+                        <th style="width:20%">SITIO / NODO</th>
+                        <th style="width:12%">TORRERO</th>
+                        <th style="width:15%">FALLA</th>
+                        <th style="width:13%">ESTADO</th>
+                        <th id="th-tecnico" style="width:18%; display:none;">TÉCNICOS</th>
+                        <th style="width:22%">COMENTARIOS</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
     </div>
 
     <div class="actions">
-        <button class="btn-action btn-download" onclick="downloadImg()">💾 DESCARGAR PNG</button>
-        <button class="btn-action btn-whatsapp" onclick="sendWhatsapp()">📱 ENVIAR WHATSAPP</button>
+        <button class="btn-action btn-download" onclick="downloadImg()">💾 DESCARGAR REPORTE (PNG)</button>
+        <button class="btn-action btn-whatsapp" onclick="sendWhatsapp()">📱 COMPARTIR EN WHATSAPP</button>
     </div>
 
     <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        let db = [];
-        let siteSelected = null;
+        // --- CONFIGURACIÓN DE URLS ---
+        const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        const TECNICOS_CSV = 'URL_DE_TU_CSV_DE_TECNICOS_AQUI'; // <--- PEGA AQUÍ EL CSV DE TÉCNICOS
 
-        // Establecer hoy por defecto al cargar
-        window.onload = () => {
-            const today = new Date();
-            const y = today.getFullYear();
-            const m = String(today.getMonth() + 1).padStart(2, '0');
-            const d = String(today.getDate()).padStart(2, '0');
-            document.getElementById('sel-fecha').value = `${y}-${m}-${d}`;
+        let dbSitios = [], dbTecnicos = [], selectedTechs = [], siteSelected = null;
+
+        window.onload = () => { setQuickDate(0); loadData(); };
+
+        function loadData() {
+            // Cargar Sitios
+            Papa.parse(SITIOS_CSV, {
+                download: true, header: true,
+                complete: (r) => { 
+                    dbSitios = r.data.map(row => ({ 
+                        site: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, 
+                        torrero: row.Propietario 
+                    })).filter(x => x.site.length > 5); 
+                }
+            });
+
+            // Cargar Técnicos (tecnicos.csv)
+            Papa.parse(TECNICOS_CSV, {
+                download: true, header: true,
+                complete: (r) => { 
+                    const raw = r.data.map(row => row.TECNICO).filter(t => t && t.trim() !== "");
+                    dbTecnicos = [...new Set(raw)].sort();
+                    const combo = document.getElementById('sel-tech-csv');
+                    dbTecnicos.forEach(t => {
+                        const opt = document.createElement('option');
+                        opt.value = t; opt.innerText = t;
+                        combo.appendChild(opt);
+                    });
+                }
+            });
+        }
+
+        function handleModeChange() {
+            const isProg = document.getElementById('sel-tipo').value === 'PROGRAMACIÓN';
+            document.getElementById('div-tecnicos').style.display = isProg ? 'block' : 'none';
+            document.getElementById('th-tecnico').style.display = isProg ? 'table-cell' : 'none';
+            if(!isProg) clearTechList();
             updateHeader();
-        };
+        }
 
-        Papa.parse(CSV_URL, {
-            download: true, header: true,
-            complete: (r) => { 
-                db = r.data.map(row => ({ 
-                    site: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, 
-                    torrero: row.Propietario 
-                })).filter(x => x.site.length > 5); 
+        function addTechToList() {
+            const val = document.getElementById('sel-tech-csv').value;
+            if(val && !selectedTechs.includes(val)) {
+                selectedTechs.push(val);
+                renderTechTags();
             }
-        });
+            document.getElementById('sel-tech-csv').value = "";
+        }
 
-        function setQuickDate(daysToAdd) {
-            const date = new Date();
-            date.setDate(date.getDate() + daysToAdd);
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            document.getElementById('sel-fecha').value = `${y}-${m}-${d}`;
+        function renderTechTags() {
+            const container = document.getElementById('selected-techs');
+            container.innerHTML = selectedTechs.map(t => `<span class="tech-tag">${t}</span>`).join('');
+        }
+
+        function clearTechList() { selectedTechs = []; renderTechTags(); }
+
+        function setQuickDate(days) {
+            const d = new Date(); d.setDate(d.getDate() + days);
+            document.getElementById('sel-fecha').value = d.toISOString().split('T')[0];
             updateHeader();
         }
 
         function updateHeader() {
             const mode = document.getElementById('sel-tipo').value;
-            const dateInput = document.getElementById('sel-fecha').value;
-            
-            let dateStr = "Sin fecha";
-            if (dateInput) {
-                const parts = dateInput.split('-');
-                dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-            
+            const date = document.getElementById('sel-fecha').value.split('-').reverse().join('/');
             document.getElementById('h-titulo').innerText = mode;
-            document.getElementById('h-fecha-display').innerText = dateStr;
+            document.getElementById('h-fecha-display').innerText = date;
         }
 
         document.getElementById('site-search').addEventListener('input', (e) => {
             const v = e.target.value.toLowerCase();
             const sug = document.getElementById('suggestions');
-            sug.innerHTML = '';
-            if(v.length < 2) { sug.style.display = 'none'; return; }
-            const matches = db.filter(x => x.site.toLowerCase().includes(v)).slice(0,5);
-            if(matches.length > 0) {
-                sug.style.display = 'block';
-                matches.forEach(m => {
-                    const d = document.createElement('div');
-                    d.className = 'sug-item';
-                    d.innerText = m.site;
-                    d.onclick = () => {
-                        siteSelected = m;
-                        document.getElementById('site-search').value = m.site;
-                        document.getElementById('label-torrero').innerText = m.torrero || 'N/A';
-                        document.getElementById('form-site').style.display = 'block';
-                        sug.style.display = 'none';
-                    };
-                    sug.appendChild(d);
-                });
-            }
+            sug.innerHTML = ''; if(v.length < 2) return;
+            const matches = dbSitios.filter(x => x.site.toLowerCase().includes(v)).slice(0,5);
+            matches.forEach(m => {
+                const d = document.createElement('div'); d.className = 'sug-item'; d.innerText = m.site;
+                d.onclick = () => {
+                    siteSelected = m; document.getElementById('site-search').value = m.site;
+                    document.getElementById('label-torrero').innerText = m.torrero || 'N/A';
+                    document.getElementById('form-site').style.display = 'block';
+                    sug.innerHTML = '';
+                };
+                sug.appendChild(d);
+            });
         });
 
         function addRow() {
             if(!siteSelected) return;
-            const falla = document.getElementById('sel-falla').value;
-            const estadoTexto = document.getElementById('sel-estado-fila').value;
-            const comment = document.getElementById('txt-comentario').value;
-            const body = document.getElementById('table-body');
+            const isProg = document.getElementById('sel-tipo').value === 'PROGRAMACIÓN';
+            const emojis = { "OPERATIVO":"✅", "EN RUTA":"🚗", "EN SITIO":"📍", "PDR":"⏸️", "AFECTADO":"❌" };
             
-            const emojis = { "OPERATIVO":"✅", "EN RUTA":"🚗", "EN SITIO":"📍", "PDR":"⏸️", "AFECTADO":"❌", "LPU":"❌" };
-            const emoji = emojis[estadoTexto] || "🔹";
-
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="font-weight:700; color: #004488;">${siteSelected.site}</td>
-                <td style="color: #0059b3;">${siteSelected.torrero || 'N/A'}</td>
-                <td style="font-weight:600; font-size: 0.75rem; color: #0077ff;">${falla}</td>
-                <td><div class="status-cell"><span>${emoji}</span><span>${estadoTexto}</span></div></td>
-                <td style="font-size: 0.75rem; white-space: pre-wrap; color: #002244;">${comment}</td>
-                <td class="no-capture" style="text-align:center;"><button class="btn-remove" onclick="this.parentElement.parentElement.remove()">×</button></td>
+                <td style="font-weight:bold">${siteSelected.site}</td>
+                <td>${siteSelected.torrero || 'N/A'}</td>
+                <td style="color:#0077ff; font-weight:600">${document.getElementById('sel-falla').value}</td>
+                <td>${emojis[document.getElementById('sel-estado-fila').value] || "🔹"} ${document.getElementById('sel-estado-fila').value}</td>
+                ${isProg ? `<td>${selectedTechs.join(', ')}</td>` : ""}
+                <td style="font-size:11px">${document.getElementById('txt-comentario').value}</td>
             `;
-            body.appendChild(tr);
+            document.getElementById('table-body').appendChild(tr);
             
+            // Reset parcial
             document.getElementById('form-site').style.display = 'none';
             document.getElementById('site-search').value = '';
             document.getElementById('txt-comentario').value = '';
+            clearTechList();
             siteSelected = null;
         }
 
         function downloadImg() {
-            const nc = document.querySelectorAll('.no-capture');
-            nc.forEach(el => el.style.display = 'none');
-            html2canvas(document.getElementById('capture-area'), { 
-                scale: 3,
-                backgroundColor: "#ffffff"
-            }).then(canvas => {
-                const a = document.createElement('a');
-                a.download = `Reporte_${Date.now()}.png`;
-                a.href = canvas.toDataURL("image/png");
-                a.click();
-                nc.forEach(el => el.style.display = 'table-cell');
+            html2canvas(document.getElementById('capture-area'), { scale: 2.5, width: 1100 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Reporte_${Date.now()}.png`;
+                link.href = canvas.toDataURL(); link.click();
             });
         }
 
-        function sendWhatsapp() {
-            const msg = encodeURIComponent("Adjunto reporte de campo.");
-            window.open(`https://wa.me/?text=${msg}`, '_blank');
-        }
+        function sendWhatsapp() { window.open(`https://wa.me/?text=${encodeURIComponent("Envío reporte de operaciones.")}`, '_blank'); }
     </script>
 </body>
 </html>
