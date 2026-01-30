@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Pro - Buscador de Inicio Exacto</title>
+    <title>Reporte Pro - Captura Corregida</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -16,19 +16,38 @@
         
         .lbl-custom { font-size: 0.7rem; color: #b3e6ff; font-weight: bold; display: block; margin-top: 5px; }
 
-        /* BUSCADOR ULTRA-OPTIMIZADO */
         #suggestions { background: #ffffff; border: 2px solid var(--blue-light); max-height: 300px; overflow-y: auto; position: absolute; width: 100%; z-index: 100; border-radius: 8px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .sug-item { padding: 14px; border-bottom: 1px solid #eee; cursor: pointer; color: #003366; font-size: 0.95rem; font-weight: 500; }
-        .sug-item:hover { background: #e6f7ff; color: #004488; }
-        .match-highlight { color: #ff6600; font-weight: 800; } /* Resalta lo que vas escribiendo */
+        .sug-item { padding: 14px; border-bottom: 1px solid #eee; cursor: pointer; color: #003366; font-size: 0.95rem; }
 
-        .table-overflow { width: 100%; max-width: 100vw; overflow-x: auto; background: var(--white); border-radius: 4px; margin-bottom: 20px; }
-        #capture-area { background: var(--white); color: #002244; padding: 30px; width: 1250px; }
-        .excel-table { width: 100%; border-collapse: collapse; border: 2px solid #b3d9ff; }
-        .excel-table th { background: #004488; color: white; padding: 12px; font-size: 11px; text-align: left; text-transform: uppercase; }
-        .excel-table td { border: 1px solid #cce6ff; padding: 12px; font-size: 12px; color: #003366; vertical-align: middle; }
+        /* AREA DE CAPTURA - FIJA PARA EVITAR CORTES */
+        .table-overflow { width: 100%; overflow-x: auto; background: var(--blue-dark); padding: 20px 0; }
         
-        .btn-delete-row { background: var(--danger); color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #capture-area { 
+            background: var(--white); 
+            color: #002244; 
+            padding: 40px; 
+            width: 1250px; /* Ancho fijo para la imagen */
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .report-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            margin-bottom: 25px; 
+            border-bottom: 3px solid #004488;
+            padding-bottom: 10px;
+        }
+
+        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .excel-table th { background: #004488; color: white; padding: 12px; font-size: 13px; text-align: left; }
+        .excel-table td { border: 1px solid #cce6ff; padding: 12px; font-size: 13px; color: #003366; word-wrap: break-word; }
+        
+        /* Columna de Acción con ancho reservado */
+        .col-action { width: 50px; text-align: center; border: none !important; }
+        .btn-delete-row { background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
         .btn-action { padding: 18px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; width: 100%; max-width: 500px; margin-bottom: 10px; }
         .btn-reset { background: none; color: var(--danger); border: 2px solid var(--danger); font-size: 0.8rem; padding: 10px; margin-top: 10px; width: 100%; max-width: 500px; border-radius: 8px; cursor: pointer; }
         .tech-tag { background: var(--blue-light); color: var(--blue-dark); padding: 4px 8px; border-radius: 4px; margin: 2px; display: inline-block; font-weight: bold; font-size: 0.7rem; }
@@ -37,7 +56,7 @@
 <body>
 
     <div class="config-card">
-        <h3 style="color:var(--blue-light); font-size:0.8rem; text-align: center; border-bottom: 1px solid #0059b3; padding-bottom: 10px;">REPORTE OPERATIVO</h3>
+        <h3 style="color:var(--blue-light); font-size:0.8rem; text-align: center;">REPORTE OPERATIVO PARACENTRAL</h3>
         
         <label class="lbl-custom">TIPO:</label>
         <select id="sel-tipo" onchange="handleModeChange(); saveState();">
@@ -45,83 +64,72 @@
             <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
         </select>
 
-        <label class="lbl-custom">FECHA SELECCIONADA:</label>
+        <label class="lbl-custom">FECHA:</label>
         <select id="sel-fecha-smart" onchange="updateHeader(); saveState();"></select>
 
         <div style="position:relative; margin-top: 15px;">
-            <label class="lbl-custom">BUSCAR SITIO (ESCRIBA EL NOMBRE):</label>
-            <input type="text" id="site-search" placeholder="Ej: ama..." autocomplete="off">
+            <label class="lbl-custom">BUSCAR SITIO:</label>
+            <input type="text" id="site-search" placeholder="Escriba nombre del sitio..." autocomplete="off">
             <div id="suggestions"></div>
         </div>
 
         <div id="form-site" style="display:none;">
-            <p style="font-size:0.8rem; margin: 10px 0;">Dueño de Sitio: <span id="label-torrero" style="font-weight:bold; color:var(--blue-light)"></span></p>
+            <p style="font-size:0.8rem; margin: 10px 0;">Dueño: <span id="label-torrero" style="font-weight:bold; color:var(--blue-light)"></span></p>
             
             <label class="lbl-custom">FALLA:</label>
             <select id="sel-falla">
-                <option value="FDS">FDS</option>
-                <option value="LTE FDS">LTE FDS</option>
-                <option value="3G FDS">3G FDS</option>
-                <option value="2G FDS">2G FDS</option>
-                <option value="PARCIAL">PARCIAL</option>
-                <option value="FALLA DE AC">FALLA DE AC</option>
-                <option value="ALARMAS EXTERNAS">ALARMAS EXTERNAS</option>
-                <option value="REVISIÓN DE MOTOGENERADOR">REVISIÓN DE MOTOGENERADOR</option>
-                <option value="VISITA TÉCNICA">VISITA TÉCNICA</option>
-                <option value="ALTA TEMPERATURA">ALTA TEMPERATURA</option>
+                <option value="FDS">FDS</option><option value="LTE FDS">LTE FDS</option><option value="3G FDS">3G FDS</option><option value="2G FDS">2G FDS</option>
+                <option value="PARCIAL">PARCIAL</option><option value="FALLA DE AC">FALLA DE AC</option><option value="ALARMAS EXTERNAS">ALARMAS EXTERNAS</option>
+                <option value="REVISIÓN DE MOTOGENERADOR">REVISIÓN DE MOTOGENERADOR</option><option value="VISITA TÉCNICA">VISITA TÉCNICA</option><option value="ALTA TEMPERATURA">ALTA TEMPERATURA</option>
             </select>
 
-            <label class="lbl-custom">ESTADO ACTUAL:</label>
+            <label class="lbl-custom">ESTADO:</label>
             <select id="sel-estado-fila">
-                <option value="OPERATIVO">OPERATIVO</option>
-                <option value="EN RUTA">EN RUTA</option>
-                <option value="EN SITIO">EN SITIO</option>
-                <option value="PDR">PDR</option>
-                <option value="AFECTADO">AFECTADO</option>
-                <option value="LPU">LPU</option>
-                <option value="PENDIENTE CELECT">PENDIENTE CELECT</option>
+                <option value="OPERATIVO">OPERATIVO</option><option value="EN RUTA">EN RUTA</option><option value="EN SITIO">EN SITIO</option>
+                <option value="PDR">PDR</option><option value="AFECTADO">AFECTADO</option><option value="LPU">LPU</option><option value="PENDIENTE CELECT">PENDIENTE CELECT</option>
             </select>
 
             <div id="div-tecnicos" style="display:none; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                <label class="lbl-custom">ASIGNAR PERSONAL:</label>
+                <label class="lbl-custom">PERSONAL:</label>
                 <select id="sel-tech-local" onchange="addTechToList()"><option value="">-- Seleccionar --</option></select>
                 <div id="selected-techs" style="margin: 5px 0;"></div>
             </div>
 
-            <label class="lbl-custom">COMENTARIOS / OBSERVACIONES:</label>
-            <textarea id="txt-comentario" rows="2" placeholder="Detalles de la gestión..."></textarea>
-            
-            <button onclick="addRow()" style="background:var(--blue-light); color:var(--blue-dark); border:none; padding:15px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; margin-top: 10px;">AGREGAR AL REPORTE</button>
+            <label class="lbl-custom">COMENTARIOS:</label>
+            <textarea id="txt-comentario" rows="2"></textarea>
+            <button onclick="addRow()" style="background:var(--blue-light); color:var(--blue-dark); border:none; padding:15px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; margin-top: 10px;">AGREGAR FILA</button>
         </div>
     </div>
 
     <div class="table-overflow">
         <div id="capture-area">
-            <div class="report-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-                <div>
-                    <h1 id="h-titulo" style="margin:0; color:#004488;">VISITAS REALIZADAS</h1>
-                    <p style="margin:0; font-size:12px; color:#0077ff; font-weight:bold;">OPERACIONES PARACENTRAL</p>
+            <div class="report-header">
+                <div style="max-width: 70%;">
+                    <h1 id="h-titulo" style="margin:0; color:#004488; font-size: 2.2rem; text-transform: uppercase;">VISITAS REALIZADAS</h1>
+                    <p style="margin:5px 0 0 0; font-size:16px; color:#0077ff; font-weight:bold; letter-spacing: 1px;">OPERACIONES PARACENTRAL</p>
                 </div>
-                <div id="h-fecha-display" style="font-weight:bold; color:#004488; font-size:1.4rem;"></div>
+                <div style="text-align: right;">
+                    <p style="margin:0; font-size: 14px; color: #666;">FECHA DE REPORTE</p>
+                    <div id="h-fecha-display" style="font-weight:bold; color:#004488; font-size:1.8rem;"></div>
+                </div>
             </div>
             <table class="excel-table">
                 <thead>
                     <tr>
-                        <th style="width:200px">SITIO</th>
-                        <th style="width:120px">TORRERO</th>
-                        <th style="width:150px">FALLA</th>
-                        <th style="width:130px">ESTADO</th>
-                        <th id="th-tecnico" style="width:180px; display:none;">TÉCNICOS</th>
-                        <th style="width:250px">COMENTARIOS</th>
-                        <th class="no-capture" style="width:45px"></th>
-                    </tr>
+                        <th style="width:250px">SITIO</th>
+                        <th style="width:130px">TORRERO</th>
+                        <th style="width:160px">FALLA</th>
+                        <th style="width:150px">ESTADO</th>
+                        <th id="th-tecnico" style="width:200px; display:none;">TÉCNICOS</th>
+                        <th style="width:auto">COMENTARIOS</th>
+                        <th class="no-capture col-action"></th> </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
             </table>
         </div>
     </div>
 
-    <button class="btn-action" style="background:#ffffff; border: 2px solid #004488; color:#004488;" onclick="downloadImg()">💾 DESCARGAR PNG</button>
+    <button class="btn-action" style="background:#004488; color:#ffffff;" onclick="downloadImg()">💾 GENERAR IMAGEN FINAL</button>
     <button class="btn-reset" onclick="clearFullTable()">🗑️ LIMPIAR TODO</button>
 
     <script>
@@ -148,10 +156,8 @@
         function loadAllData() {
             Papa.parse(SITIOS_URL, { download: true, header: true, complete: (r) => { 
                 dbSitios = r.data.map(row => ({ 
-                    id: row.SITEID.toString().trim(), 
-                    nombre: row['NOMBRE DE SITIO'].toString().trim(),
-                    site: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, 
-                    torrero: row.Propietario 
+                    id: row.SITEID.toString().trim(), nombre: row['NOMBRE DE SITIO'].toString().trim(),
+                    site: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, torrero: row.Propietario 
                 })).filter(x => x.site.length > 5); 
             }});
             Papa.parse(TECNICOS_FILE, { download: true, header: true, complete: (r) => { 
@@ -163,41 +169,26 @@
             }});
         }
 
-        // BUSCADOR DE INICIO ESTRICTO
         document.getElementById('site-search').addEventListener('input', function(e) {
             const input = e.target.value.trim().toLowerCase();
             const sugBox = document.getElementById('suggestions');
             sugBox.innerHTML = '';
-            
             if (input.length < 1) { sugBox.style.display = 'none'; return; }
-
-            // Lógica: Solo mostrar los que EMPIECEN con el texto escrito (en nombre o en ID)
-            const matches = dbSitios.filter(s => 
-                s.nombre.toLowerCase().startsWith(input) || 
-                s.id.toLowerCase().startsWith(input)
-            ).slice(0, 15);
-
+            const matches = dbSitios.filter(s => s.nombre.toLowerCase().startsWith(input) || s.id.toLowerCase().startsWith(input)).slice(0, 15);
             if (matches.length > 0) {
                 sugBox.style.display = 'block';
                 matches.forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = 'sug-item';
-                    div.innerText = m.site;
+                    const div = document.createElement('div'); div.className = 'sug-item'; div.innerText = m.site;
                     div.onclick = () => {
-                        siteSelected = m;
-                        document.getElementById('site-search').value = m.site;
+                        siteSelected = m; document.getElementById('site-search').value = m.site;
                         document.getElementById('label-torrero').innerText = m.torrero;
-                        document.getElementById('form-site').style.display = 'block';
-                        sugBox.style.display = 'none';
+                        document.getElementById('form-site').style.display = 'block'; sugBox.style.display = 'none';
                     };
                     sugBox.appendChild(div);
                 });
-            } else { 
-                sugBox.style.display = 'none'; 
-            }
+            } else { sugBox.style.display = 'none'; }
         });
 
-        // --- Funciones de Sistema ---
         function saveState() {
             const rows = [];
             document.querySelectorAll('#table-body tr').forEach(tr => {
@@ -208,15 +199,15 @@
                     comentario: cells[cells.length - 2].innerText
                 });
             });
-            localStorage.setItem('rep_ama_rows', JSON.stringify(rows));
-            localStorage.setItem('rep_ama_tipo', document.getElementById('sel-tipo').value);
-            localStorage.setItem('rep_ama_fecha', document.getElementById('sel-fecha-smart').selectedIndex);
+            localStorage.setItem('rep_final_v5', JSON.stringify(rows));
+            localStorage.setItem('rep_tipo_v5', document.getElementById('sel-tipo').value);
+            localStorage.setItem('rep_fecha_v5', document.getElementById('sel-fecha-smart').selectedIndex);
         }
 
         function loadState() {
-            const savedRows = JSON.parse(localStorage.getItem('rep_ama_rows') || '[]');
-            document.getElementById('sel-tipo').value = localStorage.getItem('rep_ama_tipo') || 'VISITAS REALIZADAS';
-            document.getElementById('sel-fecha-smart').selectedIndex = localStorage.getItem('rep_ama_fecha') || 0;
+            const savedRows = JSON.parse(localStorage.getItem('rep_final_v5') || '[]');
+            document.getElementById('sel-tipo').value = localStorage.getItem('rep_tipo_v5') || 'VISITAS REALIZADAS';
+            document.getElementById('sel-fecha-smart').selectedIndex = localStorage.getItem('rep_fecha_v5') || 0;
             handleModeChange();
             savedRows.forEach(renderRow);
         }
@@ -235,7 +226,6 @@
             saveState();
             document.getElementById('site-search').value = ""; document.getElementById('form-site').style.display = "none";
             selectedTechs = []; renderTechTags();
-            siteSelected = null;
         }
 
         function renderRow(data) {
@@ -247,8 +237,8 @@
                 <td>${data.falla}</td>
                 <td>${data.estado}</td>
                 ${isProg ? `<td style="font-weight:bold;">${data.tecnicos}</td>` : ""}
-                <td style="font-size:11px;">${data.comentario}</td>
-                <td class="no-capture col-action"><button class="btn-delete-row" onclick="if(confirm('¿Borrar esta fila?')){this.closest('tr').remove(); saveState();}">X</button></td>
+                <td>${data.comentario}</td>
+                <td class="no-capture col-action"><button class="btn-delete-row" onclick="if(confirm('¿Borrar?')){this.closest('tr').remove(); saveState();}">X</button></td>
             `;
             document.getElementById('table-body').appendChild(tr);
         }
@@ -284,12 +274,20 @@
 
         function downloadImg() {
             const noCapture = document.querySelectorAll('.no-capture');
-            noCapture.forEach(el => el.style.display = 'none');
-            html2canvas(document.getElementById('capture-area'), { scale: 3, width: 1250 }).then(canvas => {
+            // Ocultar con visibilidad para mantener el espacio y que la fecha no se mueva
+            noCapture.forEach(el => el.style.visibility = 'hidden');
+
+            html2canvas(document.getElementById('capture-area'), { 
+                scale: 2, 
+                width: 1250,
+                backgroundColor: "#ffffff",
+                useCORS: true
+            }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Reporte_${Date.now()}.png`;
-                link.href = canvas.toDataURL(); link.click();
-                noCapture.forEach(el => el.style.display = '');
+                link.download = `REPORTE_${document.getElementById('sel-fecha-smart').value.replace(/\//g,'-')}.png`;
+                link.href = canvas.toDataURL("image/png"); 
+                link.click();
+                noCapture.forEach(el => el.style.visibility = 'visible');
             });
         }
     </script>
