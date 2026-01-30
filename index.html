@@ -3,219 +3,156 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Paracentral - Versión Final</title>
+    <title>Reporte Paracentral - Diseño Limpio</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif; background: #001a33; color: #e6f2ff;
-            margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
-        }
+        body { font-family: 'Inter', sans-serif; background: #001a33; color: #e6f2ff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        
+        .config-card { background: #003366; width: 100%; max-width: 800px; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #0059b3; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 10px 0; border-radius: 8px; border: 1px solid #0059b3; background: #001a33; color: white; font-size: 0.9rem; }
 
-        .config-card {
-            background: #003366; width: 100%; max-width: 800px;
-            padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            margin-bottom: 20px; border: 1px solid #0059b3; box-sizing: border-box;
-        }
+        #suggestions { position: absolute; width: 100%; background: white; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .sug-item { padding: 12px; cursor: pointer; color: #003366; border-bottom: 1px solid #eee; }
 
-        h3 { margin: 15px 0 5px 0; color: #00d4ff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-
-        input, select, textarea {
-            width: 100%; padding: 12px; margin: 5px 0 10px 0; border-radius: 8px;
-            border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; font-size: 0.9rem;
-        }
-
-        .date-quick-btns { display: flex; gap: 8px; margin-bottom: 10px; }
-        .btn-date { 
-            flex: 1; padding: 10px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #00d4ff;
-            background: rgba(0, 212, 255, 0.1); color: #00d4ff; cursor: pointer; font-weight: 600;
-        }
-
-        .search-container { position: relative; }
-        #suggestions {
-            position: absolute; top: 100%; left: 0; width: 100%;
-            background: #ffffff; border: 1px solid #00d4ff; border-radius: 0 0 8px 8px;
-            max-height: 250px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .sug-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; color: #003366; font-weight: 500; }
-        .sug-item:hover { background: #e6f7ff; }
-
-        .btn-add {
-            background: linear-gradient(90deg, #00d4ff, #0077ff); color: white; border: none; padding: 15px;
-            width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px;
-        }
-
-        /* CUADRO DE CAPTURA - USANDO TU BASE QUE NO CORTA */
-        #capture-area {
-            background: #ffffff; color: #002244; padding: 35px; border-radius: 2px;
-            width: 1100px; /* Ancho optimizado para WhatsApp sin cortes */
+        /* AREA DE CAPTURA - PROTEGIDA */
+        #wrapper-captura { background: #001a33; padding: 20px; } /* Fondo oscuro para dar contraste al borde */
+        
+        #capture-area { 
+            background: #ffffff; 
+            color: #002244; 
+            padding: 40px; 
+            width: 1150px; 
+            position: relative; 
             box-sizing: border-box;
         }
 
-        .report-header { 
-            border-bottom: 4px solid #004488; padding-bottom: 12px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: flex-end;
-        }
+        .report-header { border-bottom: 4px solid #004488; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .report-header h1 { margin: 0; font-size: 2.2rem; color: #004488; text-transform: uppercase; }
 
-        .report-header h1 { margin: 0; font-size: 2.2rem; color: #004488; font-weight: 800; text-transform: uppercase; }
-
-        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #b3d9ff; }
-        .excel-table th { 
-            background: #004488; color: #ffffff; padding: 12px; 
-            font-size: 0.85rem; text-align: left; border: 1px solid #003366;
-            text-transform: uppercase;
-        }
-        .excel-table td { 
-            border: 1px solid #cce6ff; padding: 12px; font-size: 0.9rem; 
-            color: #003366; word-wrap: break-word; vertical-align: middle;
-        }
+        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #004488; }
+        .excel-table th { background: #004488; color: white; padding: 12px; font-size: 0.85rem; text-align: left; }
+        .excel-table td { border: 1px solid #cce6ff; padding: 12px; font-size: 0.9rem; color: #003366; word-wrap: break-word; position: relative; }
         
-        .excel-table tbody tr:nth-child(even) { background: #f0f7ff; }
-
-        .status-cell { display: flex; align-items: center; gap: 8px; font-weight: 700; }
-        .btn-remove { color: #ff3333; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 1.2rem; }
+        /* LA X FUERA DE LA TABLA */
+        .row-container { position: relative; }
+        .btn-floating-remove { 
+            position: absolute; 
+            right: -45px; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            background: #ff4444; 
+            color: white; 
+            border: none; 
+            border-radius: 50%; 
+            width: 30px; 
+            height: 30px; 
+            cursor: pointer; 
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
 
         .actions { display: flex; gap: 10px; margin-top: 20px; width: 100%; max-width: 800px; }
-        .btn-action { 
-            flex: 1; padding: 15px; border-radius: 50px; border: none; 
-            font-weight: 700; cursor: pointer; display: flex; align-items: center; 
-            justify-content: center; gap: 8px;
-        }
-        .btn-download { background: #ffffff; color: #004488; border: 2px solid #004488; }
-        .tech-tag { background: #00d4ff; color: #003366; padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; margin: 2px; display: inline-block; font-weight: bold; }
+        .btn-action { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="config-card">
-        <h3>1. Configuración de Reporte</h3>
+        <h3>Configuración de Reporte</h3>
         <select id="sel-tipo" onchange="handleModeChange()">
             <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
             <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
         </select>
-
-        <div class="date-quick-btns">
-            <button class="btn-date" onclick="setQuickDate(0)">HOY</button>
-            <button class="btn-date" onclick="setQuickDate(1)">MAÑANA</button>
-            <button class="btn-date" onclick="setQuickDate(2)">PASADO MAÑANA</button>
-        </div>
         <input type="date" id="sel-fecha" onchange="updateHeader()">
 
-        <h3>2. Detalles del Sitio</h3>
-        <div class="search-container">
-            <input type="text" id="site-search" placeholder="Buscar por nombre (ej: ama...)" autocomplete="off">
+        <div style="position:relative;">
+            <input type="text" id="site-search" placeholder="Buscar sitio (ej: ama...)" autocomplete="off">
             <div id="suggestions"></div>
         </div>
 
-        <div id="form-site" style="display:none; margin-top:10px; padding:15px; border:1px solid #0059b3; border-radius:10px; background: rgba(255,255,255,0.05);">
-            <p style="font-size: 0.8rem; color:#00d4ff;">Propiedad de: <span id="label-torrero" style="color:white; font-weight:bold;"></span></p>
-            
-            <label style="font-size: 0.7rem; color: #b3e6ff;">Tipo de Falla:</label>
+        <div id="form-site" style="display:none; margin-top:10px; border-top:1px solid #00d4ff; padding-top:10px;">
+            <p style="font-size: 0.8rem;">Dueño: <span id="label-torrero" style="font-weight:bold; color:#00d4ff;"></span></p>
             <select id="sel-falla">
-                <option value="FDS">FDS</option><option value="LTE FDS">LTE FDS</option><option value="3G FDS">3G FDS</option><option value="2G FDS">2G FDS</option>
-                <option value="PARCIAL">PARCIAL</option><option value="FALLA DE AC">FALLA DE AC</option><option value="ALARMAS EXTERNAS">ALARMAS EXTERNAS</option>
-                <option value="REVISIÓN DE MOTOGENERADOR">REVISIÓN DE MOTOGENERADOR</option><option value="VISITA TÉCNICA">VISITA TÉCNICA</option><option value="ALTA TEMPERATURA">ALTA TEMPERATURA</option>
+                <option value="FDS">FDS</option><option value="LTE FDS">LTE FDS</option><option value="PARCIAL">PARCIAL</option><option value="VISITA TÉCNICA">VISITA TÉCNICA</option>
             </select>
-
-            <label style="font-size: 0.7rem; color: #b3e6ff;">Estado:</label>
-            <select id="sel-estado-fila">
-                <option value="OPERATIVO">OPERATIVO</option><option value="EN RUTA">EN RUTA</option><option value="EN SITIO">EN SITIO</option>
-                <option value="PDR">PDR</option><option value="AFECTADO">AFECTADO</option><option value="LPU">LPU</option><option value="PENDIENTE CELECT">PENDIENTE CELECT</option>
+            <select id="sel-estado">
+                <option value="OPERATIVO">OPERATIVO</option><option value="EN RUTA">EN RUTA</option><option value="EN SITIO">EN SITIO</option><option value="PENDIENTE CELECT">PENDIENTE CELECT</option>
             </select>
-
-            <div id="div-tecnicos" style="display:none;">
-                <label style="font-size: 0.7rem; color: #b3e6ff;">Asignar Técnicos:</label>
-                <select id="sel-tech-local" onchange="addTechToList()"><option value="">-- Seleccionar técnico --</option></select>
-                <div id="selected-techs" style="margin-bottom: 10px;"></div>
+            <div id="div-tech" style="display:none;">
+                <select id="sel-tech" onchange="addTech()"><option value="">-- Asignar Técnico --</option></select>
+                <div id="tech-list" style="margin-bottom:10px;"></div>
             </div>
-
-            <textarea id="txt-comentario" rows="2" placeholder="Comentarios y detalles..."></textarea>
-            <button class="btn-add" onclick="addRow()">AGREGAR A TABLA</button>
+            <textarea id="txt-obs" placeholder="Observaciones..."></textarea>
+            <button onclick="addRow()" style="background:#00d4ff; color:#001a33; width:100%; padding:15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">AGREGAR FILA</button>
         </div>
     </div>
 
-    <div style="width: 100%; overflow-x: auto; display: flex; justify-content: center;">
+    <div id="wrapper-captura">
         <div id="capture-area">
             <div class="report-header">
                 <div>
                     <h1 id="h-titulo">VISITAS REALIZADAS</h1>
-                    <span style="font-size:0.9rem; color:#0077ff; font-weight: 700; text-transform: uppercase;">Operaciones Paracentral</span>
+                    <span style="color:#0077ff; font-weight:700;">OPERACIONES PARACENTRAL</span>
                 </div>
-                <div id="h-fecha-display" style="font-weight:800; color: #004488; font-size: 1.8rem;"></div>
+                <div id="h-fecha-display" style="font-weight:800; color:#004488; font-size:1.8rem;"></div>
             </div>
 
             <table class="excel-table">
                 <thead>
                     <tr>
-                        <th style="width:22%">Sitio</th>
-                        <th style="width:12%">Torrero</th>
+                        <th style="width:25%">Sitio</th>
+                        <th style="width:15%">Torrero</th>
                         <th style="width:15%">Falla</th>
                         <th style="width:15%">Estado</th>
-                        <th id="th-tecnico" style="width:15%; display:none;">Técnicos</th>
+                        <th id="th-tecnico" style="width:18%; display:none;">Técnicos</th>
                         <th style="width:auto">Comentarios</th>
-                        <th class="no-capture" style="width:40px"></th>
                     </tr>
                 </thead>
-                <tbody id="table-body"></tbody>
+                <tbody id="table-body">
+                    </tbody>
             </table>
         </div>
     </div>
 
     <div class="actions">
-        <button class="btn-action btn-download" onclick="downloadImg()">💾 DESCARGAR REPORTE PNG</button>
-        <button class="btn-action" style="background:#ff4444; color:white;" onclick="if(confirm('¿Borrar todo?')) { document.getElementById('table-body').innerHTML=''; }">🗑️ LIMPIAR TODO</button>
+        <button class="btn-action" style="background:white; color:#004488; border:2px solid #004488;" onclick="downloadImg()">💾 DESCARGAR PNG</button>
+        <button class="btn-action" style="background:#25d366; color:white;" onclick="copyWhatsApp()">📋 COPIAR TEXTO</button>
     </div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        const TECH_URL = 'tecnicos.csv';
         let db = [], selectedTechs = [], siteSelected = null;
 
-        window.onload = () => { setQuickDate(0); loadData(); };
+        window.onload = () => { 
+            const d = new Date(); document.getElementById('sel-fecha').value = d.toISOString().split('T')[0];
+            updateHeader(); loadData();
+        };
 
         function loadData() {
-            Papa.parse(CSV_URL, { download: true, header: true, complete: (r) => { 
-                db = r.data.map(row => ({ id: row.SITEID, nombre: row['NOMBRE DE SITIO'], site: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, torrero: row.Propietario })).filter(x => x.site.length > 5); 
-            }});
-            Papa.parse(TECH_URL, { download: true, header: true, complete: (r) => {
-                const list = [...new Set(r.data.map(row => row.TECNICO))].filter(t => t).sort();
-                list.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.innerText = t; document.getElementById('sel-tech-local').appendChild(opt); });
+            Papa.parse(CSV_URL, { download: true, header: true, complete: (r) => {
+                db = r.data.map(row => ({ id: row.SITEID, nombre: row['NOMBRE DE SITIO'], site: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, torrero: row.Propietario })).filter(x => x.site.length > 5);
             }});
         }
 
-        function setQuickDate(days) {
-            const d = new Date(); d.setDate(d.getDate() + days);
-            const iso = d.toISOString().split('T')[0];
-            document.getElementById('sel-fecha').value = iso;
-            updateHeader();
-        }
-
-        function updateHeader() {
-            const parts = document.getElementById('sel-fecha').value.split('-');
-            document.getElementById('h-fecha-display').innerText = parts[0] ? `${parts[2]}/${parts[1]}/${parts[0]}` : "";
-            document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
-        }
-
-        // BUSCADOR OPTIMIZADO: "ama" -> Amatecampo
         document.getElementById('site-search').addEventListener('input', (e) => {
             const v = e.target.value.toLowerCase().trim();
             const sug = document.getElementById('suggestions');
             sug.innerHTML = '';
             if(v.length < 1) { sug.style.display = 'none'; return; }
-            
             const matches = db.filter(x => x.nombre.toLowerCase().startsWith(v) || x.id.toLowerCase().startsWith(v)).slice(0, 10);
-            
             if(matches.length > 0) {
                 sug.style.display = 'block';
                 matches.forEach(m => {
                     const d = document.createElement('div'); d.className = 'sug-item'; d.innerText = m.site;
                     d.onclick = () => {
-                        siteSelected = m;
-                        document.getElementById('site-search').value = m.site;
+                        siteSelected = m; document.getElementById('site-search').value = m.site;
                         document.getElementById('label-torrero').innerText = m.torrero || 'N/A';
-                        document.getElementById('form-site').style.display = 'block';
-                        sug.style.display = 'none';
+                        document.getElementById('form-site').style.display = 'block'; sug.style.display = 'none';
                     };
                     sug.appendChild(d);
                 });
@@ -224,61 +161,66 @@
 
         function handleModeChange() {
             const isProg = document.getElementById('sel-tipo').value === 'PROGRAMACIÓN';
-            document.getElementById('div-tecnicos').style.display = isProg ? 'block' : 'none';
+            document.getElementById('div-tech').style.display = isProg ? 'block' : 'none';
             document.getElementById('th-tecnico').style.display = isProg ? 'table-cell' : 'none';
             updateHeader();
-        }
-
-        function addTechToList() {
-            const t = document.getElementById('sel-tech-local').value;
-            if(t && !selectedTechs.includes(t)) {
-                selectedTechs.push(t);
-                document.getElementById('selected-techs').innerHTML += `<span class="tech-tag">${t}</span>`;
-            }
-            document.getElementById('sel-tech-local').value = "";
         }
 
         function addRow() {
             if(!siteSelected) return;
             const isProg = document.getElementById('sel-tipo').value === 'PROGRAMACIÓN';
-            const emojis = { "OPERATIVO":"✅", "EN RUTA":"🚗", "EN SITIO":"📍", "PDR":"⏸️", "AFECTADO":"❌", "LPU":"❌", "PENDIENTE CELECT":"⏳" };
-            const est = document.getElementById('sel-estado-fila').value;
+            const est = document.getElementById('sel-estado').value;
+            const emojis = { "OPERATIVO":"✅", "EN RUTA":"🚗", "EN SITIO":"📍", "PENDIENTE CELECT":"⏳" };
             
+            // Creamos un contenedor relativo para la fila
+            const tbody = document.getElementById('table-body');
             const tr = document.createElement('tr');
+            tr.style.position = 'relative'; // Para que la X flote respecto a la fila
+            
             tr.innerHTML = `
                 <td style="font-weight:700;">${siteSelected.site}</td>
                 <td>${siteSelected.torrero || 'N/A'}</td>
                 <td style="font-size:0.75rem;">${document.getElementById('sel-falla').value}</td>
-                <td><div class="status-cell"><span>${emojis[est] || "🔹"}</span><span>${est}</span></div></td>
+                <td style="font-weight:700;">${emojis[est] || "🔹"} ${est}</td>
                 ${isProg ? `<td style="font-weight:bold; font-size:0.75rem;">${selectedTechs.join(' / ')}</td>` : ""}
-                <td style="font-size: 0.8rem; white-space: pre-wrap;">${document.getElementById('txt-comentario').value}</td>
-                <td class="no-capture" style="text-align:center;"><button class="btn-remove" onclick="this.parentElement.parentElement.remove()">×</button></td>
+                <td style="font-size:0.8rem;">${document.getElementById('txt-obs').value}</td>
+                <button class="btn-floating-remove no-capture" onclick="this.closest('tr').remove()">×</button>
             `;
-            document.getElementById('table-body').appendChild(tr);
+            tbody.appendChild(tr);
             
-            // Reset
             document.getElementById('form-site').style.display = 'none';
             document.getElementById('site-search').value = '';
-            document.getElementById('txt-comentario').value = '';
-            document.getElementById('selected-techs').innerHTML = '';
+            document.getElementById('txt-obs').value = '';
             selectedTechs = []; siteSelected = null;
         }
 
+        function updateHeader() {
+            const p = document.getElementById('sel-fecha').value.split('-');
+            document.getElementById('h-fecha-display').innerText = `${p[2]}/${p[1]}/${p[0]}`;
+            document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
+        }
+
         function downloadImg() {
-            const nc = document.querySelectorAll('.no-capture');
-            nc.forEach(el => el.style.display = 'none');
-            
-            html2canvas(document.getElementById('capture-area'), { 
-                scale: 3, 
-                backgroundColor: "#ffffff",
-                width: 1100 // Mantenemos el ancho donde funcionaba bien
-            }).then(canvas => {
+            const btnX = document.querySelectorAll('.btn-floating-remove');
+            btnX.forEach(b => b.style.display = 'none');
+
+            html2canvas(document.getElementById('capture-area'), { scale: 3 }).then(canvas => {
                 const a = document.createElement('a');
-                a.download = `Reporte_${document.getElementById('sel-fecha').value}.png`;
-                a.href = canvas.toDataURL("image/png");
+                a.download = `Reporte_${Date.now()}.png`;
+                a.href = canvas.toDataURL();
                 a.click();
-                nc.forEach(el => el.style.display = 'table-cell');
+                btnX.forEach(b => b.style.display = 'flex');
             });
+        }
+
+        function copyWhatsApp() {
+            let txt = `*${document.getElementById('sel-tipo').value}*\n*FECHA:* ${document.getElementById('h-fecha-display').innerText}\n\n`;
+            document.querySelectorAll('#table-body tr').forEach(tr => {
+                const c = tr.querySelectorAll('td');
+                txt += `📍 *Sitio:* ${c[0].innerText}\n📊 *Estado:* ${c[3].innerText}\n📝 *Obs:* ${c[c.length-1].innerText}\n\n`;
+            });
+            navigator.clipboard.writeText(txt);
+            alert("Texto copiado");
         }
     </script>
 </body>
