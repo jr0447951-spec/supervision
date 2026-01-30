@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Pro - Captura Corregida</title>
+    <title>Reporte Pro - Ajuste de Fecha</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -17,46 +17,55 @@
         .lbl-custom { font-size: 0.7rem; color: #b3e6ff; font-weight: bold; display: block; margin-top: 5px; }
 
         #suggestions { background: #ffffff; border: 2px solid var(--blue-light); max-height: 300px; overflow-y: auto; position: absolute; width: 100%; z-index: 100; border-radius: 8px; display: none; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        .sug-item { padding: 14px; border-bottom: 1px solid #eee; cursor: pointer; color: #003366; font-size: 0.95rem; }
+        .sug-item { padding: 14px; border-bottom: 1px solid #eee; cursor: pointer; color: #003366; }
 
-        /* AREA DE CAPTURA - FIJA PARA EVITAR CORTES */
-        .table-overflow { width: 100%; overflow-x: auto; background: var(--blue-dark); padding: 20px 0; }
-        
+        /* AREA DE CAPTURA - REDISEÑADA */
         #capture-area { 
             background: var(--white); 
             color: #002244; 
-            padding: 40px; 
-            width: 1250px; /* Ancho fijo para la imagen */
+            padding: 40px 60px; /* Más margen a los lados */
+            width: 1250px; 
             margin: 0 auto;
             position: relative;
         }
 
-        .report-header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            margin-bottom: 25px; 
-            border-bottom: 3px solid #004488;
-            padding-bottom: 10px;
+        .header-top {
+            border-bottom: 4px solid #004488;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+        }
+
+        .header-top h1 { margin:0; color:#004488; font-size: 2.8rem; text-transform: uppercase; }
+        .header-top p { margin:0; font-size:18px; color:#0077ff; font-weight:bold; }
+
+        .date-container {
+            text-align: right;
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        #h-fecha-display {
+            font-weight: 800;
+            color: #004488;
+            font-size: 2.2rem;
+            display: inline-block;
         }
 
         .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .excel-table th { background: #004488; color: white; padding: 12px; font-size: 13px; text-align: left; }
-        .excel-table td { border: 1px solid #cce6ff; padding: 12px; font-size: 13px; color: #003366; word-wrap: break-word; }
+        .excel-table th { background: #004488; color: white; padding: 14px; font-size: 14px; text-align: left; }
+        .excel-table td { border: 1px solid #cce6ff; padding: 12px; font-size: 14px; color: #003366; word-wrap: break-word; }
         
-        /* Columna de Acción con ancho reservado */
-        .col-action { width: 50px; text-align: center; border: none !important; }
+        .col-action { width: 60px; text-align: center; border: none !important; }
         .btn-delete-row { background: var(--danger); color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
         .btn-action { padding: 18px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; width: 100%; max-width: 500px; margin-bottom: 10px; }
         .btn-reset { background: none; color: var(--danger); border: 2px solid var(--danger); font-size: 0.8rem; padding: 10px; margin-top: 10px; width: 100%; max-width: 500px; border-radius: 8px; cursor: pointer; }
-        .tech-tag { background: var(--blue-light); color: var(--blue-dark); padding: 4px 8px; border-radius: 4px; margin: 2px; display: inline-block; font-weight: bold; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
     <div class="config-card">
-        <h3 style="color:var(--blue-light); font-size:0.8rem; text-align: center;">REPORTE OPERATIVO PARACENTRAL</h3>
+        <h3 style="color:var(--blue-light); font-size:0.8rem; text-align: center;">CONFIGURACIÓN REPORTE</h3>
         
         <label class="lbl-custom">TIPO:</label>
         <select id="sel-tipo" onchange="handleModeChange(); saveState();">
@@ -74,7 +83,7 @@
         </div>
 
         <div id="form-site" style="display:none;">
-            <p style="font-size:0.8rem; margin: 10px 0;">Dueño: <span id="label-torrero" style="font-weight:bold; color:var(--blue-light)"></span></p>
+            <p style="font-size:0.8rem; margin: 10px 0;">Propiedad: <span id="label-torrero" style="font-weight:bold; color:var(--blue-light)"></span></p>
             
             <label class="lbl-custom">FALLA:</label>
             <select id="sel-falla">
@@ -90,7 +99,7 @@
             </select>
 
             <div id="div-tecnicos" style="display:none; background: rgba(0,0,0,0.15); padding: 10px; border-radius: 8px; margin-bottom: 10px;">
-                <label class="lbl-custom">PERSONAL:</label>
+                <label class="lbl-custom">TÉCNICOS:</label>
                 <select id="sel-tech-local" onchange="addTechToList()"><option value="">-- Seleccionar --</option></select>
                 <div id="selected-techs" style="margin: 5px 0;"></div>
             </div>
@@ -101,36 +110,36 @@
         </div>
     </div>
 
-    <div class="table-overflow">
+    <div style="width: 100%; overflow-x: auto;">
         <div id="capture-area">
-            <div class="report-header">
-                <div style="max-width: 70%;">
-                    <h1 id="h-titulo" style="margin:0; color:#004488; font-size: 2.2rem; text-transform: uppercase;">VISITAS REALIZADAS</h1>
-                    <p style="margin:5px 0 0 0; font-size:16px; color:#0077ff; font-weight:bold; letter-spacing: 1px;">OPERACIONES PARACENTRAL</p>
-                </div>
-                <div style="text-align: right;">
-                    <p style="margin:0; font-size: 14px; color: #666;">FECHA DE REPORTE</p>
-                    <div id="h-fecha-display" style="font-weight:bold; color:#004488; font-size:1.8rem;"></div>
-                </div>
+            <div class="header-top">
+                <h1 id="h-titulo">VISITAS REALIZADAS</h1>
+                <p>OPERACIONES PARACENTRAL</p>
             </div>
+            
+            <div class="date-container">
+                <div id="h-fecha-display"></div>
+            </div>
+
             <table class="excel-table">
                 <thead>
                     <tr>
-                        <th style="width:250px">SITIO</th>
-                        <th style="width:130px">TORRERO</th>
-                        <th style="width:160px">FALLA</th>
-                        <th style="width:150px">ESTADO</th>
+                        <th style="width:260px">SITIO</th>
+                        <th style="width:140px">TORRERO</th>
+                        <th style="width:170px">FALLA</th>
+                        <th style="width:160px">ESTADO</th>
                         <th id="th-tecnico" style="width:200px; display:none;">TÉCNICOS</th>
                         <th style="width:auto">COMENTARIOS</th>
-                        <th class="no-capture col-action"></th> </tr>
+                        <th class="no-capture col-action"></th>
+                    </tr>
                 </thead>
                 <tbody id="table-body"></tbody>
             </table>
         </div>
     </div>
 
-    <button class="btn-action" style="background:#004488; color:#ffffff;" onclick="downloadImg()">💾 GENERAR IMAGEN FINAL</button>
-    <button class="btn-reset" onclick="clearFullTable()">🗑️ LIMPIAR TODO</button>
+    <button class="btn-action" style="background:#ffffff; color:#004488; border: 2px solid #004488; margin-top:20px;" onclick="downloadImg()">💾 DESCARGAR PNG FINAL</button>
+    <button class="btn-reset" onclick="clearFullTable()">🗑️ LIMPIAR TABLA</button>
 
     <script>
         const SITIOS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
@@ -199,15 +208,15 @@
                     comentario: cells[cells.length - 2].innerText
                 });
             });
-            localStorage.setItem('rep_final_v5', JSON.stringify(rows));
-            localStorage.setItem('rep_tipo_v5', document.getElementById('sel-tipo').value);
-            localStorage.setItem('rep_fecha_v5', document.getElementById('sel-fecha-smart').selectedIndex);
+            localStorage.setItem('rep_v6_rows', JSON.stringify(rows));
+            localStorage.setItem('rep_v6_tipo', document.getElementById('sel-tipo').value);
+            localStorage.setItem('rep_v6_fecha', document.getElementById('sel-fecha-smart').selectedIndex);
         }
 
         function loadState() {
-            const savedRows = JSON.parse(localStorage.getItem('rep_final_v5') || '[]');
-            document.getElementById('sel-tipo').value = localStorage.getItem('rep_tipo_v5') || 'VISITAS REALIZADAS';
-            document.getElementById('sel-fecha-smart').selectedIndex = localStorage.getItem('rep_fecha_v5') || 0;
+            const savedRows = JSON.parse(localStorage.getItem('rep_v6_rows') || '[]');
+            document.getElementById('sel-tipo').value = localStorage.getItem('rep_v6_tipo') || 'VISITAS REALIZADAS';
+            document.getElementById('sel-fecha-smart').selectedIndex = localStorage.getItem('rep_v6_fecha') || 0;
             handleModeChange();
             savedRows.forEach(renderRow);
         }
@@ -225,7 +234,7 @@
             });
             saveState();
             document.getElementById('site-search').value = ""; document.getElementById('form-site').style.display = "none";
-            selectedTechs = []; renderTechTags();
+            selectedTechs = []; document.getElementById('selected-techs').innerHTML = '';
         }
 
         function renderRow(data) {
@@ -259,12 +268,11 @@
 
         function addTechToList() {
             const val = document.getElementById('sel-tech-local').value;
-            if(val && !selectedTechs.includes(val)) { selectedTechs.push(val); renderTechTags(); }
+            if(val && !selectedTechs.includes(val)) { 
+                selectedTechs.push(val); 
+                document.getElementById('selected-techs').innerHTML += `<span style="background:var(--blue-light); color:var(--blue-dark); padding:4px; margin:2px; border-radius:4px; font-size:10px; font-weight:bold;">${val}</span>`;
+            }
             document.getElementById('sel-tech-local').value = "";
-        }
-
-        function renderTechTags() {
-            document.getElementById('selected-techs').innerHTML = selectedTechs.map(t => `<span class="tech-tag">${t}</span>`).join('');
         }
 
         function updateHeader() {
@@ -274,19 +282,17 @@
 
         function downloadImg() {
             const noCapture = document.querySelectorAll('.no-capture');
-            // Ocultar con visibilidad para mantener el espacio y que la fecha no se mueva
             noCapture.forEach(el => el.style.visibility = 'hidden');
 
             html2canvas(document.getElementById('capture-area'), { 
-                scale: 2, 
+                scale: 2.5, 
                 width: 1250,
                 backgroundColor: "#ffffff",
-                useCORS: true
+                logging: false
             }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = `REPORTE_${document.getElementById('sel-fecha-smart').value.replace(/\//g,'-')}.png`;
-                link.href = canvas.toDataURL("image/png"); 
-                link.click();
+                link.href = canvas.toDataURL("image/png"); link.click();
                 noCapture.forEach(el => el.style.visibility = 'visible');
             });
         }
