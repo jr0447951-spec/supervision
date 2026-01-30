@@ -3,117 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte Paracentral Pro</title>
+    <title>Reporte de Campo Profesional</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --blue-main: #004488; --blue-light: #00d4ff; --bg: #001a33; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e6f2ff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        :root { --blue-dark: #001a33; --blue-med: #003366; --blue-accent: #00d4ff; --white: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background: var(--blue-dark); color: #e6f2ff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
         
-        .config-card { background: #003366; width: 100%; max-width: 800px; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #0059b3; box-sizing: border-box; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 10px 0; border-radius: 8px; border: 1px solid #0059b3; background: #001a33; color: white; font-size: 16px; }
+        .config-card { background: var(--blue-med); width: 100%; max-width: 800px; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #0059b3; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 10px 0; border-radius: 8px; border: 1px solid #0059b3; background: var(--blue-dark); color: white; font-size: 0.9rem; }
 
-        #suggestions { position: absolute; width: 100%; background: white; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .sug-item { padding: 12px; cursor: pointer; color: #003366; border-bottom: 1px solid #eee; }
+        /* BUSCADOR */
+        .search-container { position: relative; }
+        #suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: var(--blue-med); border: 1px solid var(--blue-accent); border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; z-index: 100; display: none; }
+        .sug-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #004080; color: #b3e6ff; }
+        .sug-item:hover { background: #0059b3; color: white; }
 
         /* AREA DE CAPTURA */
-        #capture-area { background: #ffffff; color: #002244; padding: 40px; width: 1200px; box-sizing: border-box; }
-        
-        .report-header { border-bottom: 4px solid var(--blue-main); padding-bottom: 10px; margin-bottom: 0px; }
-        .report-header h1 { margin: 0; font-size: 2.5rem; color: var(--blue-main); font-weight: 800; }
-        .sub-header { color: #0077ff; font-weight: 700; font-size: 1rem; text-transform: uppercase; margin-bottom: 15px; }
+        #capture-area { background: var(--white); color: #002244; padding: 35px; width: 1100px; box-sizing: border-box; }
+        .report-header { border-bottom: 4px solid #004488; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .report-header h1 { margin: 0; font-size: 1.4rem; color: #004488; font-weight: 800; text-transform: uppercase; }
 
-        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid var(--blue-main); }
+        /* TABLA */
+        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1px solid #b3d9ff; }
+        .excel-table th { background: #004488; color: white; padding: 12px; font-size: 0.75rem; text-align: left; border: 1px solid #003366; text-transform: uppercase; }
+        .excel-table td { border: 1px solid #cce6ff; padding: 12px; font-size: 0.8rem; color: #003366; word-wrap: break-word; vertical-align: middle; position: relative; }
         
-        /* Celda especial para la Fecha arriba de Comentarios */
-        .date-header-cell { 
-            background: #f0f7ff; 
-            color: var(--blue-main); 
-            font-weight: 800; 
-            font-size: 1.4rem; 
-            text-align: right; 
-            padding: 10px 15px;
-            border: 2px solid var(--blue-main);
-            border-bottom: none;
-        }
+        /* Efecto al pasar el mouse para indicar que es editable */
+        .editable:hover { background-color: #f0faff; cursor: pointer; outline: 1px dashed var(--blue-accent); }
+        .editing-input { width: 95%; padding: 5px; font-family: inherit; font-size: inherit; border: 1px solid var(--blue-accent); color: #004488; }
 
-        .excel-table th { background: var(--blue-main); color: #ffffff; padding: 12px; font-size: 0.85rem; text-align: left; border: 1px solid #003366; }
-        .excel-table td { border: 1px solid #cce6ff; padding: 12px; font-size: 0.9rem; color: #003366; word-wrap: break-word; vertical-align: middle; }
-        
-        .col-x { width: 45px; text-align: center; background: #fafafa; }
-        .btn-remove { color: #ff4444; font-weight: 800; cursor: pointer; border: 2px solid #ff4444; background: white; border-radius: 4px; padding: 2px 8px; }
-
+        .btn-remove { color: #ff3333; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 1.2rem; }
         .actions { display: flex; gap: 10px; margin-top: 20px; width: 100%; max-width: 800px; }
-        .btn-action { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; font-size: 1rem; }
+        .btn-action { flex: 1; padding: 15px; border-radius: 50px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     </style>
 </head>
 <body>
 
     <div class="config-card">
-        <h3>Configuración General</h3>
-        <select id="sel-tipo" onchange="updateView()">
+        <h3>1. Configuración</h3>
+        <select id="sel-tipo" onchange="updateHeader()">
             <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
             <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
         </select>
         <input type="date" id="sel-fecha" onchange="updateHeader()">
 
-        <div style="position:relative;">
-            <input type="text" id="site-search" placeholder="Escribe nombre del sitio..." autocomplete="off">
+        <h3>2. Agregar Sitio</h3>
+        <div class="search-container">
+            <input type="text" id="site-search" placeholder="Buscar sitio por ID o Nombre..." autocomplete="off">
             <div id="suggestions"></div>
         </div>
 
-        <div id="form-site" style="display:none; margin-top:15px; border-top: 1px solid var(--blue-light); padding-top:15px;">
-            <p>Torrero: <span id="label-torrero" style="font-weight:bold; color:var(--blue-light);"></span></p>
-            <select id="sel-falla">
-                <option value="FDS">FDS</option><option value="LTE FDS">LTE FDS</option><option value="PARCIAL">PARCIAL</option>
-                <option value="VISITA TÉCNICA">VISITA TÉCNICA</option><option value="FALLA DE AC">FALLA DE AC</option>
-            </select>
-            <select id="sel-estado">
-                <option value="OPERATIVO">OPERATIVO</option><option value="EN RUTA">EN RUTA</option><option value="EN SITIO">EN SITIO</option>
-                <option value="PENDIENTE CELECT">PENDIENTE CELECT</option><option value="AFECTADO">AFECTADO</option>
-            </select>
-            
-            <div id="div-tech" style="display:none;">
-                <input type="text" id="in-techs" placeholder="Nombres de técnicos...">
-            </div>
-
-            <textarea id="txt-obs" placeholder="Escribe el comentario aquí..."></textarea>
-            <button onclick="addRow()" style="background:var(--blue-light); color:var(--bg); width:100%; padding:15px; border:none; border-radius:8px; font-weight:800; cursor:pointer;">AGREGAR FILA AL REPORTE</button>
+        <div id="form-site" style="display:none; margin-top:10px; padding:15px; border:1px solid #0059b3; border-radius:10px;">
+            <p>Torrero: <span id="label-torrero" style="font-weight:bold; color:var(--blue-accent);"></span></p>
+            <textarea id="txt-comentario" rows="2" placeholder="Escribir comentario aquí..."></textarea>
+            <button onclick="addRow()" style="background:var(--blue-accent); color:var(--blue-dark); width:100%; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">AÑADIR A TABLA</button>
         </div>
     </div>
 
     <div id="capture-area">
         <div class="report-header">
-            <h1 id="h-titulo">VISITAS REALIZADAS</h1>
-            <div class="sub-header">Operaciones Paracentral</div>
+            <div>
+                <h1 id="h-titulo">VISITAS REALIZADAS</h1>
+                <span style="font-size:0.65rem; color:#0077ff; font-weight: 700;">OPERACIONES PARACENTRAL</span>
+            </div>
+            <div id="h-fecha-display" style="font-weight:700; color: #004488; font-size: 1.1rem;"></div>
         </div>
 
         <table class="excel-table">
             <thead>
                 <tr>
-                    <th colspan="4" style="background:white; border:none;"></th>
-                    <th id="fecha-target-cell" colspan="1" class="date-header-cell">
-                        <span id="h-fecha-display"></span>
-                    </th>
-                    <th class="no-capture" style="background:white; border:none; width:45px;"></th>
-                </tr>
-                <tr>
-                    <th style="width:250px">Sitio / Nodo</th>
-                    <th style="width:140px">Torrero</th>
-                    <th style="width:160px">Falla</th>
-                    <th style="width:160px">Estado</th>
-                    <th id="th-tecnico" style="width:200px; display:none;">Técnicos</th>
-                    <th style="width:auto">Comentarios / Observaciones</th>
-                    <th class="no-capture col-x">X</th>
+                    <th style="width:25%">Sitio / Nodo</th>
+                    <th style="width:15%">Torrero</th>
+                    <th style="width:18%">Tipo de Falla</th>
+                    <th style="width:17%">Estado</th>
+                    <th style="width:20%">Comentarios</th>
+                    <th class="no-capture" style="width:5%">X</th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
         </table>
+        <p style="font-size: 0.7rem; color: #888; margin-top: 10px;" class="no-capture">* Haz clic en cualquier celda de la tabla para editar su contenido.</p>
     </div>
 
     <div class="actions">
-        <button class="btn-action" style="background:white; color:var(--blue-main); border:2px solid var(--blue-main);" onclick="downloadImg()">💾 DESCARGAR PNG</button>
+        <button class="btn-action" style="background:white; color:#004488; border:2px solid #004488;" onclick="downloadImg()">💾 DESCARGAR PNG</button>
         <button class="btn-action" style="background:#25d366; color:white;" onclick="copyTxt()">📋 COPIAR TEXTO</button>
     </div>
 
@@ -123,21 +98,25 @@
 
         window.onload = () => { 
             document.getElementById('sel-fecha').value = new Date().toISOString().split('T')[0];
-            updateHeader(); loadData(); 
-        };
-
-        function loadData() {
+            updateHeader(); 
             Papa.parse(CSV_URL, { download: true, header: true, complete: (r) => {
                 db = r.data.map(row => ({ id: row.SITEID, nombre: row['NOMBRE DE SITIO'], site: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, torrero: row.Propietario })).filter(x => x.site.length > 5);
             }});
+        };
+
+        function updateHeader() {
+            const p = document.getElementById('sel-fecha').value.split('-');
+            document.getElementById('h-fecha-display').innerText = `${p[2]}/${p[1]}/${p[0]}`;
+            document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
         }
 
+        // BUSCADOR MEJORADO
         document.getElementById('site-search').addEventListener('input', (e) => {
-            const v = e.target.value.toLowerCase().trim();
+            const v = e.target.value.toLowerCase();
             const sug = document.getElementById('suggestions');
             sug.innerHTML = '';
-            if(v.length < 1) { sug.style.display = 'none'; return; }
-            const matches = db.filter(x => x.nombre.toLowerCase().startsWith(v) || x.id.toLowerCase().startsWith(v)).slice(0, 10);
+            if(v.length < 2) { sug.style.display = 'none'; return; }
+            const matches = db.filter(x => x.site.toLowerCase().includes(v)).slice(0,6);
             if(matches.length > 0) {
                 sug.style.display = 'block';
                 matches.forEach(m => {
@@ -149,65 +128,58 @@
                     };
                     sug.appendChild(d);
                 });
-            } else { sug.style.display = 'none'; }
+            }
         });
-
-        function updateView() {
-            const isProg = document.getElementById('sel-tipo').value === 'PROGRAMACIÓN';
-            document.getElementById('div-tech').style.display = isProg ? 'block' : 'none';
-            document.getElementById('th-tecnico').style.display = isProg ? 'table-cell' : 'none';
-            // Ajustar el colspan de la celda de fecha según si aparece la columna técnicos
-            document.getElementById('fecha-target-cell').colSpan = isProg ? 2 : 1;
-            updateHeader();
-        }
 
         function addRow() {
             if(!siteSelected) return;
-            const isProg = document.getElementById('sel-tipo').value === 'PROGRAMACIÓN';
-            const emojis = { "OPERATIVO":"✅", "EN RUTA":"🚗", "EN SITIO":"📍", "PENDIENTE CELECT":"⏳", "AFECTADO":"❌" };
-            const est = document.getElementById('sel-estado').value;
-            
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td style="font-weight:700;">${siteSelected.site}</td>
-                <td>${siteSelected.torrero || 'N/A'}</td>
-                <td style="font-size:0.8rem;">${document.getElementById('sel-falla').value}</td>
-                <td style="font-weight:700;">${emojis[est] || "🔹"} ${est}</td>
-                ${isProg ? `<td style="font-weight:bold; font-size:0.8rem; color:#004488;">${document.getElementById('in-techs').value}</td>` : ""}
-                <td style="font-size:0.85rem;">${document.getElementById('txt-obs').value}</td>
-                <td class="no-capture col-x"><button class="btn-remove" onclick="this.closest('tr').remove()">X</button></td>
+                <td class="editable" style="font-weight:700;">${siteSelected.site}</td>
+                <td class="editable">${siteSelected.torrero || 'N/A'}</td>
+                <td class="editable">FDS</td>
+                <td class="editable">OPERATIVO</td>
+                <td class="editable">${document.getElementById('txt-comentario').value}</td>
+                <td class="no-capture" style="text-align:center;"><button class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
             `;
+            // Hacer celdas editables al clic
+            tr.querySelectorAll('.editable').forEach(cell => {
+                cell.addEventListener('click', function() { makeEditable(this); });
+            });
             document.getElementById('table-body').appendChild(tr);
-            document.getElementById('site-search').value = ''; document.getElementById('form-site').style.display = 'none';
-            document.getElementById('txt-obs').value = ''; document.getElementById('in-techs').value = '';
+            document.getElementById('form-site').style.display = 'none';
+            document.getElementById('site-search').value = '';
         }
 
-        function updateHeader() {
-            const p = document.getElementById('sel-fecha').value.split('-');
-            document.getElementById('h-fecha-display').innerText = `${p[2]}/${p[1]}/${p[0]}`;
-            document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
+        function makeEditable(cell) {
+            if (cell.querySelector('input')) return;
+            const oldText = cell.innerText;
+            cell.innerHTML = `<input type="text" class="editing-input" value="${oldText}">`;
+            const input = cell.querySelector('input');
+            input.focus();
+            
+            const save = () => { cell.innerText = input.value; };
+            input.addEventListener('blur', save);
+            input.addEventListener('keydown', (e) => { if(e.key === 'Enter') save(); });
         }
 
         function downloadImg() {
             const nc = document.querySelectorAll('.no-capture');
-            nc.forEach(el => el.style.visibility = 'hidden');
+            nc.forEach(el => el.style.display = 'none');
             html2canvas(document.getElementById('capture-area'), { scale: 3 }).then(canvas => {
                 const a = document.createElement('a');
-                a.download = `Reporte_${Date.now()}.png`;
-                a.href = canvas.toDataURL();
-                a.click();
-                nc.forEach(el => el.style.visibility = 'visible');
+                a.download = `Reporte.png`; a.href = canvas.toDataURL(); a.click();
+                nc.forEach(el => el.style.display = 'table-cell');
             });
         }
 
         function copyTxt() {
-            let txt = `*${document.getElementById('sel-tipo').value}*\n*FECHA:* ${document.getElementById('h-fecha-display').innerText}\n\n`;
+            let txt = `*${document.getElementById('h-titulo').innerText}*\n*FECHA:* ${document.getElementById('h-fecha-display').innerText}\n\n`;
             document.querySelectorAll('#table-body tr').forEach(tr => {
                 const c = tr.querySelectorAll('td');
-                txt += `📍 *Sitio:* ${c[0].innerText}\n📊 *Estado:* ${c[3].innerText}\n📝 *Obs:* ${c[c.length-2].innerText}\n\n`;
+                txt += `📍 *Sitio:* ${c[0].innerText}\n📊 *Estado:* ${c[3].innerText}\n📝 *Obs:* ${c[4].innerText}\n\n`;
             });
-            navigator.clipboard.writeText(txt);
-            alert("Texto copiado");
+            navigator.clipboard.writeText(txt).then(() => alert("Texto copiado para WhatsApp"));
         }
     </script>
 </body>
