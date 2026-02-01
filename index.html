@@ -19,6 +19,11 @@
             margin-bottom: 20px; border: 1px solid #0059b3; box-sizing: border-box;
         }
 
+        .query-panel {
+            background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; 
+            margin-bottom: 20px; border: 1px solid #00d4ff33;
+        }
+
         h3 { margin: 15px 0 5px 0; color: #00d4ff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
 
         input, select, textarea {
@@ -26,7 +31,6 @@
             border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; font-size: 0.9rem;
         }
 
-        /* Selector de Técnicos (Checkboxes) */
         .tech-selector {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 8px; background: #001a33; padding: 12px; border-radius: 8px;
@@ -56,7 +60,6 @@
             width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px;
         }
 
-        /* ÁREA DE REPORTE */
         #capture-area {
             background: #ffffff; color: #002244; padding: 35px; border-radius: 2px;
             width: 1120px; box-sizing: border-box;
@@ -78,10 +81,7 @@
         .excel-table td { 
             border: 1px solid #cce6ff; padding: 10px; font-size: 0.75rem; 
             color: #003366; vertical-align: middle;
-            /* Ajuste de texto como párrafo */
-            word-wrap: break-word; 
-            overflow-wrap: break-word; 
-            line-height: 1.4;
+            word-wrap: break-word; overflow-wrap: break-word; line-height: 1.4;
         }
         
         .excel-table tbody tr:nth-child(even) { background: #f0f7ff; }
@@ -96,11 +96,36 @@
         }
         .btn-download { background: #ffffff; color: #004488; border: 2px solid #004488; }
         .btn-whatsapp { background: #25d366; color: white; }
+        .btn-cloud { background: #f39c12; color: white; }
     </style>
 </head>
 <body>
 
     <div class="config-card">
+        <div class="query-panel">
+            <h3 style="margin-top:0; display:flex; align-items:center; gap:8px;">
+                <span style="font-size:1.2rem;">🔍</span> CONSULTAR HISTORIAL
+            </h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
+                <div>
+                    <label style="font-size: 0.7rem; color: #b3e6ff;">Fecha a buscar:</label>
+                    <input type="date" id="busq-fecha" style="margin-bottom:0;">
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; color: #b3e6ff;">Tipo de Reporte:</label>
+                    <select id="busq-tipo" style="margin-bottom:0;">
+                        <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
+                        <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
+                    </select>
+                </div>
+                <button onclick="consultarNube()" style="background: #00d4ff; color: #001a33; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; height: 45px;">
+                    BUSCAR
+                </button>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #0059b3; margin: 20px 0;">
+
         <h3>1. Configuración de Informe</h3>
         <select id="sel-tipo" onchange="updateHeader()">
             <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
@@ -124,8 +149,7 @@
             <p style="font-size: 0.8rem; color:#00d4ff; margin: 0 0 10px 0;">Torrero: <span id="label-torrero" style="color:white; font-weight:bold;"></span></p>
             
             <label style="font-size: 0.7rem; color: #b3e6ff;">Técnicos Asignados:</label>
-            <div id="tech-list" class="tech-selector">
-                </div>
+            <div id="tech-list" class="tech-selector"></div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div>
@@ -190,9 +214,13 @@
     <div class="actions">
         <button class="btn-action btn-download" onclick="downloadImg()">💾 DESCARGAR PNG</button>
         <button class="btn-action btn-whatsapp" onclick="sendWhatsapp()">📱 ENVIAR WHATSAPP</button>
+        <button class="btn-action btn-cloud" onclick="enviarAlHistorial()">☁️ GUARDAR HISTORIAL</button>
     </div>
 
     <script>
+        // CONFIGURACIÓN: PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
+        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
+        
         const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
         const TECNICOS_CSV = 'tecnicos.csv';
         let dbSitios = [];
@@ -203,7 +231,6 @@
             document.getElementById('sel-fecha').value = today.toISOString().split('T')[0];
             updateHeader();
 
-            // Cargar Sitios
             Papa.parse(SITIOS_CSV, {
                 download: true, header: true,
                 complete: (r) => { 
@@ -216,7 +243,6 @@
                 }
             });
 
-            // Cargar Técnicos
             Papa.parse(TECNICOS_CSV, {
                 download: true, header: true,
                 complete: (r) => {
@@ -249,7 +275,6 @@
             document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
         }
 
-        // Buscador Inteligente
         document.getElementById('site-search').addEventListener('input', (e) => {
             const v = e.target.value.toLowerCase().trim();
             const sug = document.getElementById('suggestions');
@@ -285,10 +310,7 @@
 
         function addRow() {
             if(!siteSelected) return;
-            
-            const selectedTechs = Array.from(document.querySelectorAll('#tech-list input:checked'))
-                                       .map(i => i.value).join(' / ');
-            
+            const selectedTechs = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value).join(' / ');
             const falla = document.getElementById('sel-falla').value;
             const estadoTexto = document.getElementById('sel-estado-fila').value;
             const comment = document.getElementById('txt-comentario').value;
@@ -307,16 +329,107 @@
                 <td style="color: #002244;">${comment}</td>
                 <td class="no-capture" style="text-align:center;"><button class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
             `;
-            
             body.appendChild(tr);
-            
-            // Limpiar campos
             document.getElementById('form-site').style.display = 'none';
             document.getElementById('site-search').value = '';
             document.getElementById('txt-comentario').value = '';
             document.querySelectorAll('#tech-list input').forEach(i => i.checked = false);
             siteSelected = null;
         }
+
+        // --- FUNCIONES DE NUBE (GUARDAR Y CONSULTAR) ---
+
+        async function enviarAlHistorial() {
+            const filas = document.querySelectorAll("#table-body tr");
+            if (filas.length === 0) return alert("⚠️ La tabla está vacía.");
+
+            const btn = event.currentTarget;
+            btn.innerText = "⏳ GUARDANDO...";
+            btn.disabled = true;
+
+            const dataReporte = {
+                fecha: document.getElementById('sel-fecha').value,
+                tipo: document.getElementById('sel-tipo').value,
+                rows: []
+            };
+
+            filas.forEach(tr => {
+                const c = tr.cells;
+                dataReporte.rows.push({
+                    sitio: c[0].innerText,
+                    torrero: c[1].innerText,
+                    asignado: c[2].innerText,
+                    falla: c[3].innerText,
+                    estado: c[4].innerText.replace(/[^\w\s]/gi, '').trim(), // Limpia emoji para el Excel
+                    comentarios: c[5].innerText
+                });
+            });
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataReporte)
+                });
+                alert("✅ Historial actualizado en Google Sheets.");
+            } catch (error) {
+                alert("❌ Error al guardar.");
+            } finally {
+                btn.innerText = "☁️ GUARDAR HISTORIAL";
+                btn.disabled = false;
+            }
+        }
+
+        async function consultarNube() {
+            const fecha = document.getElementById('busq-fecha').value;
+            const tipo = document.getElementById('busq-tipo').value;
+            if (!fecha) return alert("Selecciona una fecha.");
+
+            const btn = event.currentTarget;
+            btn.innerText = "⏳...";
+            btn.disabled = true;
+
+            try {
+                const resp = await fetch(`${SCRIPT_URL}?fecha=${fecha}&tipo=${tipo}`);
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    alert("No hay registros para esta selección.");
+                } else {
+                    document.getElementById('table-body').innerHTML = '';
+                    document.getElementById('sel-fecha').value = fecha;
+                    document.getElementById('sel-tipo').value = tipo;
+                    updateHeader();
+
+                    data.forEach(item => {
+                        const body = document.getElementById('table-body');
+                        const tr = document.createElement('tr');
+                        const emojis = { "OPERATIVO":"✅", "EN RUTA":"🚗", "EN SITIO":"📍", "PDR":"⏸️", "AFECTADO":"❌", "LPU":"❌" };
+                        const emoji = emojis[item.estado] || "🔹";
+
+                        tr.innerHTML = `
+                            <td style="font-weight:700; color: #004488;">${item.sitio}</td>
+                            <td style="color: #0059b3;">${item.torrero}</td>
+                            <td style="font-weight:600; color: #444;">${item.asignado}</td>
+                            <td style="font-weight:600; color: #0077ff;">${item.falla}</td>
+                            <td><div class="status-cell"><span>${emoji}</span><span>${item.estado}</span></div></td>
+                            <td style="color: #002244;">${item.comentarios}</td>
+                            <td class="no-capture" style="text-align:center;"><button class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
+                        `;
+                        body.appendChild(tr);
+                    });
+                    alert("✅ Registros cargados con éxito.");
+                }
+            } catch (error) {
+                alert("Error al consultar.");
+            } finally {
+                btn.innerText = "BUSCAR";
+                btn.disabled = false;
+            }
+        }
+
+        // --- FUNCIONES ORIGINALES ---
 
         function downloadImg() {
             const nc = document.querySelectorAll('.no-capture');
