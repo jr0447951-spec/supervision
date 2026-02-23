@@ -3,30 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>REPORTE CORTES - NIC AUTO</title>
+    <title>REPORTE RÁPIDO V5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#0f172a] text-white pb-16 font-sans text-[12px]">
+<body class="bg-[#0f172a] text-white pb-20 font-sans">
 
-    <div class="p-2 max-w-6xl mx-auto">
+    <div class="p-2 max-w-7xl mx-auto">
         <div id="capture-area" class="bg-white p-6 rounded shadow-2xl text-slate-900">
-            
             <div class="text-center border-b-4 border-slate-800 pb-4 mb-4">
-                <h1 class="text-3xl font-black tracking-tighter uppercase italic text-slate-800">Corte Programado</h1>
-                <p class="text-lg font-bold text-slate-600 uppercase">Resumen de Operaciones - 22/02/2026</p>
+                <h1 class="text-3xl font-black tracking-tighter uppercase italic text-slate-800 leading-none">Corte Programado</h1>
+                <p class="text-sm font-bold text-slate-500 uppercase mt-1">Reporte Operativo - 22/02/2026</p>
             </div>
 
-            <table class="w-full border-collapse border border-slate-400">
+            <table class="w-full border-collapse border border-slate-400 text-[10px]">
                 <thead>
-                    <tr class="bg-slate-800 text-white uppercase italic text-[10px]">
-                        <th class="border border-slate-400 p-2 w-20">Distribuidora</th>
-                        <th class="border border-slate-400 p-2 w-36">Horario</th>
-                        <th class="border border-slate-400 p-2">Sitio / ID</th>
-                        <th class="border border-slate-400 p-2 w-24">Torrero</th>
+                    <tr class="bg-slate-800 text-white uppercase italic">
+                        <th class="border border-slate-400 p-2">Distribuidora</th>
+                        <th class="border border-slate-400 p-2">Horario</th>
+                        <th class="border border-slate-400 p-2 w-24">ID Sitio</th>
+                        <th class="border border-slate-400 p-2">Nombre del Sitio</th>
+                        <th class="border border-slate-400 p-2">Torrero</th>
                         <th class="border border-slate-400 p-2">Comentario</th>
-                        <th class="border border-slate-400 p-2 w-24">NIC</th>
+                        <th class="border border-slate-400 p-2">NIC</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo">
@@ -34,39 +34,61 @@
             </table>
         </div>
 
-        <div class="mt-6 space-y-3 no-print">
+        <div class="mt-6 space-y-4 no-print px-4">
             <div class="flex gap-2">
-                <button onclick="addRow()" class="flex-1 bg-slate-700 p-4 rounded-xl font-bold uppercase hover:bg-slate-600 transition-all">＋ Añadir Sitio</button>
-                <button onclick="takeSnapshot()" class="flex-1 bg-white text-slate-900 p-4 rounded-xl font-bold uppercase shadow-lg">📸 Generar PNG</button>
+                <button onclick="addRow()" class="flex-1 bg-slate-700 py-4 rounded-xl font-bold uppercase border border-slate-500 hover:bg-slate-600 transition-all">
+                    ＋ Añadir Sitio
+                </button>
+                <button onclick="copiarUltimoHorario()" class="flex-1 bg-amber-600 py-4 rounded-xl font-bold uppercase border border-amber-500 hover:bg-amber-500 transition-all text-[10px]">
+                    🕒 Repetir Horario
+                </button>
             </div>
-            <button onclick="downloadCSV()" class="w-full bg-emerald-600 p-4 rounded-xl font-bold uppercase">📊 Exportar CSV</button>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="confirmAndSnapshot()" class="bg-white text-slate-900 p-5 rounded-xl font-black uppercase shadow-lg border-2 border-slate-200 active:scale-95 transition-transform">
+                    📸 Generar Imagen PNG
+                </button>
+                <button onclick="downloadCSV()" class="bg-emerald-600 text-white p-5 rounded-xl font-black uppercase active:scale-95 transition-transform">
+                    📊 Exportar CSV
+                </button>
+            </div>
         </div>
     </div>
 
     <template id="row-edit-temp">
-        <tr class="fila-dato bg-white border-b border-slate-200">
-            <td class="border border-slate-400 p-1">
-                <select class="dist w-full outline-none font-bold uppercase bg-transparent">
+        <tr class="fila-dato bg-white border-b border-slate-100">
+            <td class="border border-slate-400 p-1 text-center">
+                <select class="dist w-full outline-none font-bold uppercase text-[9px] bg-transparent cursor-pointer">
                     <option value="AES">AES</option>
                     <option value="DELSUR">DELSUR</option>
                     <option value=" ">--</option>
                 </select>
             </td>
             <td class="border border-slate-400 p-1">
-                <input type="text" placeholder="8:30am - 4:30pm" class="horario w-full outline-none text-center font-semibold placeholder:text-slate-300">
+                <div class="flex flex-col gap-1 items-center no-print-content">
+                    <div class="flex items-center gap-1">
+                        <input type="time" onchange="syncHorarioText(this)" class="h-in bg-slate-100 border border-slate-300 rounded text-[9px] p-0.5">
+                        <span class="text-[8px] font-bold text-slate-400">A</span>
+                        <input type="time" onchange="syncHorarioText(this)" class="h-out bg-slate-100 border border-slate-300 rounded text-[9px] p-0.5">
+                    </div>
+                </div>
+                <div class="horario-final text-center font-bold text-[9px] uppercase mt-1 text-slate-800"></div>
             </td>
             <td class="border border-slate-400 p-1 relative">
-                <input type="text" oninput="buscarSitio(this)" placeholder="Buscar..." class="sitio w-full outline-none uppercase font-bold placeholder:font-normal">
-                <div class="sug-box hidden absolute left-0 bg-white border border-slate-400 w-full z-50 shadow-2xl max-h-40 overflow-y-auto"></div>
+                <input type="text" oninput="buscarSitio(this)" placeholder="ID..." class="id-sitio w-full outline-none uppercase font-black text-blue-800 text-center">
+                <div class="sug-box hidden absolute left-0 bg-white border border-slate-400 w-64 z-50 shadow-2xl max-h-48 overflow-y-auto"></div>
             </td>
             <td class="border border-slate-400 p-1">
-                <input type="text" class="torrero w-full outline-none text-center uppercase italic text-slate-600 font-medium" readonly>
+                <input type="text" class="nombre-sitio w-full outline-none uppercase text-slate-700 font-bold" readonly>
             </td>
             <td class="border border-slate-400 p-1">
-                <input type="text" class="comentario w-full outline-none italic text-slate-700">
+                <input type="text" class="torrero w-full outline-none text-center uppercase italic text-slate-500 font-medium" readonly>
             </td>
             <td class="border border-slate-400 p-1">
-                <input type="text" class="nic w-full outline-none text-center font-mono font-bold text-blue-700" readonly>
+                <input type="text" class="comentario w-full outline-none italic text-slate-600 text-[9px]" placeholder="...">
+            </td>
+            <td class="border border-slate-400 p-1">
+                <input type="text" class="nic w-full outline-none text-center font-mono font-bold text-slate-900 bg-slate-50" readonly>
             </td>
         </tr>
     </template>
@@ -75,21 +97,12 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
         let dbSitios = [];
 
-        // Carga de datos
         window.onload = () => {
             Papa.parse(CSV_URL, {
-                download: true,
-                header: false, // Usamos false para manejar índices exactos
-                complete: (results) => {
-                    // Quitamos la cabecera del CSV
-                    const rows = results.data.slice(1);
-                    dbSitios = rows.map(row => ({
-                        idNombre: `${row[0]} - ${row[1]}`, // Columna A y B
-                        torrero: row[2],                  // Columna C (Propietario)
-                        nic: row[4]                       // Columna E (Índice 4)
-                    })).filter(item => item.idNombre.length > 5);
-                    
-                    for(let i=0; i<4; i++) addRow();
+                download: true, header: false,
+                complete: (r) => {
+                    dbSitios = r.data.slice(1).map(row => ({ id: row[0], name: row[1], owner: row[2], nic: row[4] })).filter(i => i.id);
+                    for(let i=0; i<3; i++) addRow();
                 }
             });
         };
@@ -100,28 +113,52 @@
             body.appendChild(temp);
         }
 
+        // Función de conversión AM/PM rápida
+        function t12(t) {
+            if(!t) return "";
+            let [h, m] = t.split(':');
+            let ampm = h >= 12 ? 'pm' : 'am';
+            h = h % 12 || 12;
+            return `${h}:${m}${ampm}`;
+        }
+
+        function syncHorarioText(el) {
+            const fila = el.closest('tr');
+            const inTime = fila.querySelector('.h-in').value;
+            const outTime = fila.querySelector('.h-out').value;
+            if(inTime && outTime) {
+                fila.querySelector('.horario-final').innerText = `${t12(inTime)} A ${t12(outTime)}`;
+            }
+        }
+
+        function copiarUltimoHorario() {
+            const filas = document.querySelectorAll('.fila-dato');
+            if(filas.length < 2) return;
+            const ultima = filas[filas.length - 2]; // La penúltima (antes de la nueva)
+            const nueva = filas[filas.length - 1];
+            
+            nueva.querySelector('.h-in').value = ultima.querySelector('.h-in').value;
+            nueva.querySelector('.h-out').value = ultima.querySelector('.h-out').value;
+            syncHorarioText(nueva.querySelector('.h-in'));
+        }
+
         function buscarSitio(el) {
             const val = el.value.toLowerCase();
             const box = el.nextElementSibling;
             box.innerHTML = '';
-            
-            if(val.length < 2) {
-                box.classList.add('hidden');
-                return;
-            }
-
-            const filtered = dbSitios.filter(s => s.idNombre.toLowerCase().includes(val)).slice(0, 5);
-            
+            if(val.length < 2) return box.classList.add('hidden');
+            const filtered = dbSitios.filter(s => s.id.toLowerCase().includes(val) || s.name.toLowerCase().includes(val)).slice(0, 6);
             if(filtered.length > 0) {
                 box.classList.remove('hidden');
                 filtered.forEach(m => {
                     const d = document.createElement('div');
-                    d.className = 'p-2 border-b hover:bg-slate-100 cursor-pointer text-[10px] uppercase font-bold text-slate-700';
-                    d.innerText = m.idNombre;
+                    d.className = 'p-2 border-b hover:bg-slate-100 cursor-pointer text-[10px]';
+                    d.innerHTML = `<b>${m.id}</b> - ${m.name}`;
                     d.onclick = () => {
                         const fila = el.closest('tr');
-                        el.value = m.idNombre;
-                        fila.querySelector('.torrero').value = m.torrero || "N/A";
+                        fila.querySelector('.id-sitio').value = m.id;
+                        fila.querySelector('.nombre-sitio').value = m.name;
+                        fila.querySelector('.torrero').value = m.owner || "N/A";
                         fila.querySelector('.nic').value = m.nic || "S/N";
                         box.classList.add('hidden');
                     };
@@ -130,39 +167,31 @@
             }
         }
 
-        function takeSnapshot() {
-            const area = document.getElementById('capture-area');
-            const btns = document.querySelectorAll('.no-print');
-            html2canvas(area, { scale: 3 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `Reporte_Corte_${Date.now()}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            });
+        function confirmAndSnapshot() {
+            if(confirm("¿Los horarios y NIC son correctos?")) {
+                // Ocultamos los inputs de tiempo para que solo quede el texto formateado en el PNG
+                document.querySelectorAll('.no-print-content').forEach(i => i.style.display = 'none');
+                
+                html2canvas(document.getElementById('capture-area'), { scale: 3 }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `Reporte_Corte_Programado.png`;
+                    link.href = canvas.toDataURL();
+                    link.click();
+                    document.querySelectorAll('.no-print-content').forEach(i => i.style.display = 'flex');
+                });
+            }
         }
 
         function downloadCSV() {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Distribuidora,Horario,Sitio,Torrero,Comentario,NIC\n";
-            
-            document.querySelectorAll('.fila-dato').forEach(row => {
-                const data = [
-                    row.querySelector('.dist').value,
-                    row.querySelector('.horario').value,
-                    row.querySelector('.sitio').value,
-                    row.querySelector('.torrero').value,
-                    row.querySelector('.comentario').value,
-                    row.querySelector('.nic').value
-                ].map(v => `"${v}"`).join(",");
-                csvContent += data + "\n";
+            let csv = "Distribuidora,Horario,ID_Sitio,Nombre_Sitio,Torrero,Comentario,NIC\n";
+            document.querySelectorAll('.fila-dato').forEach(r => {
+                const id = r.querySelector('.id-sitio').value;
+                if(id) {
+                    csv += `"${r.querySelector('.dist').value}","${r.querySelector('.horario-final').innerText}","${id}","${r.querySelector('.nombre-sitio').value}","${r.querySelector('.torrero').value}","${r.querySelector('.comentario').value}","${r.querySelector('.nic').value}"\n`;
+                }
             });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Corte_Programado.csv");
-            document.body.appendChild(link);
-            link.click();
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            window.open(URL.createObjectURL(blob));
         }
     </script>
 </body>
