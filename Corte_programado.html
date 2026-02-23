@@ -3,196 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SISTEMA DE GESTIÓN DE CORTES V10</title>
+    <title>REPORTING SYSTEM PRO V11</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
         
-        :root { --cobalt: #1e40af; --sky: #0ea5e9; }
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
-        
-        /* Estilos de tabla para el PNG */
-        #capture-area { background: white; border-radius: 12px; overflow: hidden; }
-        .report-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #e2e8f0; }
-        .report-table th { background-color: #1e3a8a; color: white; text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; padding: 12px 8px; }
-        .report-table td { border-bottom: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; padding: 8px; vertical-align: middle; }
-        
-        /* UI de Control */
         .is-capturing .no-print-ui { display: none !important; }
-        .is-capturing #capture-area { border: none; border-radius: 0; box-shadow: none; }
+        .is-capturing #capture-area { border-radius: 0; box-shadow: none; border: none; }
         
-        .tech-chip { transition: all 0.2s; cursor: pointer; border: 1px solid #e2e8f0; }
-        .tech-chip.selected { background-color: #3b82f6; color: white; border-color: #2563eb; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        
-        #modal-tecnicos { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        table { border-collapse: collapse; width: 100%; table-layout: fixed; border: 2px solid #1e3a8a; }
+        th { background-color: #1e3a8a; color: white; font-size: 10px; padding: 12px 4px; border: 1px solid #334155; }
+        td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: middle; }
+
+        .tech-chip.selected { background-color: #0284c7; color: white; border-color: #0ea5e9; }
+        #modal-tecnicos { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-24">
 
     <div id="modal-tecnicos">
-        <div class="bg-white p-8 rounded-3xl w-[90%] max-w-lg shadow-2xl border border-slate-200">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-extrabold text-2xl text-slate-800 tracking-tight">Equipo de Trabajo</h3>
-                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-bold uppercase">Personal Activo</span>
-            </div>
-            <div id="lista-tecnicos" class="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto mb-8 p-1">
-                </div>
-            <button onclick="cerrarModal()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-bold uppercase tracking-widest shadow-lg shadow-blue-200 transition-all">
-                Confirmar Selección
-            </button>
+        <div class="bg-white text-slate-900 p-6 rounded-3xl w-[90%] max-w-md shadow-2xl">
+            <h3 class="font-black text-xl mb-4 uppercase italic text-blue-900">Seleccionar Equipo</h3>
+            <div id="lista-tecnicos" class="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto mb-6"></div>
+            <button onclick="cerrarModal()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black uppercase tracking-widest">Confirmar</button>
         </div>
     </div>
 
-    <div class="p-4 max-w-7xl mx-auto">
-        
-        <div class="flex justify-between items-center mb-6 no-print-ui">
-            <h1 class="font-black text-slate-400 text-sm uppercase tracking-widest">Generador de Reportes</h1>
-            <div class="flex gap-2">
-                <button onclick="addRow()" class="bg-white text-blue-600 px-6 py-3 rounded-xl font-bold text-xs shadow-sm border border-blue-100 hover:bg-blue-50 transition-all">＋ AÑADIR SITIO</button>
-                <button onclick="confirmAndSnapshot()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold text-xs shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">📸 GENERAR PNG</button>
+    <div class="p-2 max-w-[98%] mx-auto">
+        <div id="capture-area" class="bg-white p-6 rounded-2xl shadow-2xl text-slate-900">
+            
+            <div class="text-center border-b-4 border-blue-900 pb-4 mb-6">
+                <input type="text" id="main-title" value="CORTE PROGRAMADO 22/02/2026" oninput="saveData()"
+                       class="w-full text-center text-3xl font-black uppercase italic bg-transparent border-none outline-none text-blue-900">
+                <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mt-1">Gestión de Mantenimiento e Infraestructura</p>
             </div>
+
+            <table>
+                <thead>
+                    <tr class="italic">
+                        <th class="w-16">Dist.</th>
+                        <th class="w-28">Horario (12H)</th>
+                        <th>Nombre del Sitio / ID</th>
+                        <th class="w-20">Torrero</th>
+                        <th>Comentarios</th>
+                        <th class="w-24">NIC</th>
+                        <th class="w-32">Técnicos</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo"></tbody>
+            </table>
         </div>
 
-        <div id="capture-area" class="shadow-2xl border border-slate-200">
-            
-            <div class="p-10 bg-gradient-to-r from-blue-900 to-blue-800 text-white flex justify-between items-end">
-                <div class="flex-1">
-                    <input type="text" value="CORTE PROGRAMADO 22/02/2026" 
-                           class="editable-title w-full bg-transparent border-none text-3xl font-black uppercase italic outline-none placeholder:text-blue-300/50">
-                    <p class="text-blue-200 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Mantenimiento de Infraestructura Crítica</p>
-                </div>
-                <div class="text-right">
-                    <div class="text-[10px] font-black opacity-60 uppercase">Estado:</div>
-                    <div class="text-sm font-bold uppercase">Planificado</div>
-                </div>
-            </div>
-
-            <div class="p-6">
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 100px;">Distribuidora</th>
-                            <th style="width: 130px;">Horario (12H)</th>
-                            <th>Información del Sitio</th>
-                            <th style="width: 100px;">Torrero</th>
-                            <th>Observaciones</th>
-                            <th style="width: 110px;">NIC</th>
-                            <th style="width: 160px;">Técnicos</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-cuerpo" class="text-slate-700">
-                        </tbody>
-                </table>
-            </div>
-            
-            <div class="px-10 py-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                <span class="text-[8px] font-bold text-slate-400 uppercase">Sistema Autogenerado • Confidencial</span>
-                <span id="footer-date" class="text-[8px] font-bold text-slate-400 uppercase"></span>
-            </div>
+        <div class="mt-8 flex flex-col md:flex-row gap-4 no-print-ui px-4">
+            <button onclick="addRow()" class="flex-1 bg-slate-800 py-4 rounded-xl font-black uppercase text-xs border border-slate-700 hover:bg-slate-700">＋ Añadir Sitio</button>
+            <button onclick="confirmAndSnapshot()" class="flex-1 bg-blue-600 text-white py-4 rounded-xl font-black uppercase text-xs shadow-lg shadow-blue-500/20">📸 Generar PNG Final</button>
+            <button onclick="clearAll()" class="bg-red-900/30 text-red-400 px-4 py-4 rounded-xl font-black uppercase text-[10px] border border-red-900/50">Limpiar Todo</button>
         </div>
     </div>
 
     <template id="row-edit-temp">
-        <tr class="fila-dato">
-            <td class="text-center bg-slate-50/50">
-                <select class="dist w-full bg-transparent font-black uppercase text-[10px] outline-none cursor-pointer no-print-ui">
-                    <option value="">--</option>
-                    <option value="AES">AES</option>
-                    <option value="DELSUR">DELSUR</option>
+        <tr class="fila-dato bg-white">
+            <td class="p-1 text-center">
+                <select class="dist w-full outline-none font-black uppercase text-[10px] bg-slate-50 no-print-ui border rounded" onchange="saveData()">
+                    <option value="">-</option><option value="AES">AES</option><option value="DELSUR">DELSUR</option>
                 </select>
                 <div class="dist-val hidden font-black text-blue-900 text-[10px]"></div>
             </td>
-            <td>
-                <div class="no-print-ui flex flex-col gap-1">
-                    <input type="time" onchange="sync12h(this)" class="h-in text-[9px] border rounded p-1">
-                    <input type="time" onchange="sync12h(this)" class="h-out text-[9px] border rounded p-1">
+            <td class="p-1 text-center">
+                <div class="no-print-ui flex flex-col gap-1 items-center">
+                    <input type="time" class="h-in bg-white border rounded text-[9px] w-full p-0.5" onchange="convert12h(this)">
+                    <input type="time" class="h-out bg-white border rounded text-[9px] w-full p-0.5" onchange="convert12h(this)">
                 </div>
-                <div class="horario-txt font-bold text-[10px] text-center text-slate-800"></div>
+                <div class="horario-txt font-black text-slate-800 uppercase text-[9px] mt-1"></div>
             </td>
-            <td class="relative">
-                <input type="text" oninput="searchSite(this)" placeholder="Nombre o ID..." 
-                       class="site-input w-full outline-none uppercase font-extrabold text-blue-800 text-[11px] placeholder:font-normal placeholder:text-slate-300">
-                <div class="id-sub text-[8px] font-bold text-slate-400 mt-1 uppercase">ID: <span class="text-slate-800">---</span></div>
-                <div class="sug-box hidden absolute left-0 top-full bg-white border-2 border-blue-900 w-full z-50 shadow-2xl rounded-xl overflow-hidden"></div>
+            <td class="p-2 relative">
+                <input type="text" oninput="searchByName(this)" placeholder="Escribir nombre..." 
+                       class="nombre-input w-full outline-none uppercase font-black text-blue-700 text-[10px] no-print-ui">
+                <div class="nombre-val hidden font-black text-blue-800 text-[11px] uppercase"></div>
+                <div class="id-val text-[8px] font-mono font-bold text-slate-400 mt-1">ID: <span class="text-slate-900">---</span></div>
+                <div class="sug-box hidden absolute left-0 bg-white border-2 border-blue-900 w-full z-50 shadow-2xl max-h-40 overflow-y-auto rounded-lg"></div>
             </td>
-            <td class="text-center bg-slate-50/30">
-                <input type="text" class="torrero-in w-full bg-transparent text-center text-[9px] font-bold text-slate-500 uppercase outline-none" readonly>
+            <td class="p-1 text-center">
+                <input type="text" class="torrero-input w-full bg-transparent text-center outline-none font-bold text-slate-400 uppercase text-[9px]" readonly>
             </td>
-            <td>
-                <textarea rows="2" class="comm-in w-full bg-transparent text-[9px] italic outline-none resize-none" placeholder="Escribir..."></textarea>
+            <td class="p-1">
+                <textarea rows="2" class="comm-input w-full outline-none text-[9px] italic leading-tight resize-none bg-transparent" placeholder="..." oninput="saveData()"></textarea>
             </td>
-            <td class="bg-slate-50/50">
-                <input type="text" class="nic-in w-full bg-transparent text-center font-mono font-bold text-slate-900 text-[10px] outline-none" readonly>
+            <td class="p-1 text-center">
+                <input type="text" class="nic-input w-full bg-transparent text-center outline-none font-mono font-black text-slate-900 text-[10px]" readonly>
             </td>
-            <td class="relative">
-                <button onclick="openTechs(this)" class="no-print-ui w-full bg-blue-50 text-blue-600 border border-blue-100 rounded py-1 text-[8px] font-black hover:bg-blue-600 hover:text-white mb-1">＋ EQUIPO</button>
-                <div class="tech-disp text-[8px] font-bold text-slate-800 leading-tight text-center uppercase"></div>
+            <td class="p-1 text-center">
+                <button onclick="abrirModalTecnicos(this)" class="no-print-ui w-full bg-blue-50 border text-[8px] font-black rounded mb-1 py-1 text-blue-700">＋ EQUIPO</button>
+                <div class="tech-display text-[8px] font-bold text-slate-800 leading-tight uppercase"></div>
             </td>
         </tr>
     </template>
 
     <script>
-        const SITES_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        const TECHS_CSV = 'tecnicos.csv'; // Asegúrate que esté en la misma carpeta
-        
-        let dbSitios = [];
-        let dbTecnicos = [];
-        let currentRow = null;
+        const SITES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        const TECHS_URL = 'tecnicos.csv';
+        let dbSitios = [], dbTecnicos = [], currentTechRow = null;
 
-        window.onload = () => {
-            document.getElementById('footer-date').innerText = "REGISTRO: " + new Date().toLocaleDateString();
-            
-            // Cargar Sitios
-            Papa.parse(SITES_CSV, { download: true, complete: (r) => {
+        window.onload = async () => {
+            // Cargar Datos
+            Papa.parse(SITES_URL, { download: true, complete: (r) => {
                 dbSitios = r.data.slice(1).map(row => ({ id: row[0], name: row[1], owner: row[16], nic: row[4] })).filter(i => i.name);
-                addRow();
+                loadSavedData();
             }});
 
-            // Cargar Técnicos
-            Papa.parse(TECHS_CSV, { download: true, complete: (r) => {
-                dbTecnicos = r.data.map(row => row[0]).filter(name => name && name !== "Nombre");
-                renderTechList();
+            Papa.parse(TECHS_URL, { download: true, complete: (r) => {
+                dbTecnicos = r.data.map(row => row[0]).filter(n => n && n !== "Nombre");
+                renderizarStaff();
             }, error: () => {
-                console.log("No se encontró tecnicos.csv, usando lista interna.");
-                dbTecnicos = ["JUAN PEREZ", "CARLOS GOMEZ", "MARIO DIAZ"];
-                renderTechList();
+                dbTecnicos = ["TÉCNICO EJEMPLO 1", "TÉCNICO EJEMPLO 2"];
+                renderizarStaff();
             }});
         };
 
         function addRow() {
             const temp = document.getElementById('row-edit-temp').content.cloneNode(true);
             document.getElementById('tabla-cuerpo').appendChild(temp);
+            saveData();
         }
 
-        function sync12h(el) {
+        function convert12h(el) {
             const f = el.closest('tr');
-            const i = f.querySelector('.h-in').value, o = f.querySelector('.h-out').value;
-            const fmt = (t) => {
-                if(!t) return "";
-                let [h, m] = t.split(':');
-                let a = h >= 12 ? 'PM' : 'AM';
+            const hIn = f.querySelector('.h-in').value, hOut = f.querySelector('.h-out').value;
+            const to12 = (val) => {
+                if(!val) return "";
+                let [h, m] = val.split(':');
+                let ampm = h >= 12 ? 'PM' : 'AM';
                 h = h % 12 || 12;
-                return `${h}:${m}${a}`;
-            }
-            if(i && o) f.querySelector('.horario-txt').innerText = `${fmt(i)} A ${fmt(o)}`;
+                return `${h}:${m}${ampm}`;
+            };
+            if(hIn && hOut) f.querySelector('.horario-txt').innerText = `${to12(hIn)} A ${to12(hOut)}`;
+            saveData();
         }
 
-        function renderTechList() {
+        function renderizarStaff() {
             const cont = document.getElementById('lista-tecnicos');
             cont.innerHTML = '';
-            dbTecnicos.forEach(t => {
+            dbTecnicos.forEach(n => {
                 const d = document.createElement('div');
-                d.className = "tech-chip p-4 rounded-2xl font-bold text-xs bg-slate-50 text-slate-600 flex items-center justify-center text-center uppercase";
-                d.innerText = t;
+                d.className = "tech-chip p-3 border rounded-xl font-bold text-xs cursor-pointer bg-slate-50 text-slate-500 text-center uppercase";
+                d.innerText = n;
                 d.onclick = function() { this.classList.toggle('selected'); };
                 cont.appendChild(d);
             });
         }
 
-        function openTechs(btn) {
-            currentRow = btn.closest('tr');
+        function abrirModalTecnicos(btn) {
+            currentTechRow = btn.closest('tr');
             document.getElementById('modal-tecnicos').style.display = 'flex';
             document.querySelectorAll('.tech-chip').forEach(c => c.classList.remove('selected'));
         }
@@ -200,12 +164,13 @@
         function cerrarModal() {
             const sels = [];
             document.querySelectorAll('.tech-chip.selected').forEach(c => sels.push(c.innerText));
-            if(currentRow) currentRow.querySelector('.tech-disp').innerText = sels.join(', ');
+            if(currentTechRow) currentTechRow.querySelector('.tech-display').innerText = sels.join(', ');
             document.getElementById('modal-tecnicos').style.display = 'none';
+            saveData();
         }
 
-        function searchSite(el) {
-            const val = el.value.toLowerCase(), box = el.nextElementSibling.nextElementSibling;
+        function searchByName(el) {
+            const val = el.value.toLowerCase(), box = el.nextElementSibling.nextElementSibling.nextElementSibling;
             box.innerHTML = '';
             if(val.length < 2) return box.classList.add('hidden');
             const matches = dbSitios.filter(s => s.name.toLowerCase().includes(val) || s.id.toLowerCase().includes(val)).slice(0, 6);
@@ -213,36 +178,97 @@
                 box.classList.remove('hidden');
                 matches.forEach(m => {
                     const d = document.createElement('div');
-                    d.className = 'p-4 border-b hover:bg-blue-50 cursor-pointer text-[10px] flex justify-between font-bold';
-                    d.innerHTML = `<span>${m.name}</span> <span class="text-blue-600 bg-blue-50 px-2 rounded">${m.id}</span>`;
+                    d.className = 'p-3 border-b hover:bg-blue-50 cursor-pointer text-[10px] flex justify-between font-bold text-slate-700';
+                    d.innerHTML = `<span>${m.name}</span> <span class="text-blue-600">${m.id}</span>`;
                     d.onclick = () => {
                         const f = el.closest('tr');
                         el.value = m.name;
-                        f.querySelector('.id-sub span').innerText = m.id;
-                        f.querySelector('.torrero-in').value = m.owner || "N/A";
-                        f.querySelector('.nic-in').value = m.nic || "S/N";
+                        f.querySelector('.nombre-val').innerText = m.name;
+                        f.querySelector('.id-val span').innerText = m.id;
+                        f.querySelector('.torrero-input').value = m.owner || "N/A";
+                        f.querySelector('.nic-input').value = m.nic || "S/N";
                         box.classList.add('hidden');
+                        saveData();
                     };
                     box.appendChild(d);
                 });
             }
         }
 
+        // --- SISTEMA DE PERSISTENCIA ---
+        function saveData() {
+            const data = {
+                title: document.getElementById('main-title').value,
+                rows: []
+            };
+            document.querySelectorAll('.fila-dato').forEach(f => {
+                data.rows.push({
+                    dist: f.querySelector('.dist').value,
+                    hIn: f.querySelector('.h-in').value,
+                    hOut: f.querySelector('.h-out').value,
+                    horarioTxt: f.querySelector('.horario-txt').innerText,
+                    nombre: f.querySelector('.nombre-input').value,
+                    id: f.querySelector('.id-val span').innerText,
+                    torrero: f.querySelector('.torrero-input').value,
+                    comm: f.querySelector('.comm-input').value,
+                    nic: f.querySelector('.nic-input').value,
+                    tech: f.querySelector('.tech-display').innerText
+                });
+            });
+            localStorage.setItem('corte_data', JSON.stringify(data));
+        }
+
+        function loadSavedData() {
+            const saved = JSON.parse(localStorage.getItem('corte_data'));
+            if(!saved) return addRow();
+            document.getElementById('main-title').value = saved.title;
+            saved.rows.forEach(r => {
+                const temp = document.getElementById('row-edit-temp').content.cloneNode(true);
+                const f = temp.querySelector('.fila-dato');
+                f.querySelector('.dist').value = r.dist;
+                f.querySelector('.h-in').value = r.hIn;
+                f.querySelector('.h-out').value = r.hOut;
+                f.querySelector('.horario-txt').innerText = r.horarioTxt;
+                f.querySelector('.nombre-input').value = r.nombre;
+                f.querySelector('.nombre-val').innerText = r.nombre;
+                f.querySelector('.id-val span').innerText = r.id;
+                f.querySelector('.torrero-input').value = r.torrero;
+                f.querySelector('.comm-input').value = r.comm;
+                f.querySelector('.nic-input').value = r.nic;
+                f.querySelector('.tech-display').innerText = r.tech;
+                document.getElementById('tabla-cuerpo').appendChild(temp);
+            });
+        }
+
+        function clearAll() {
+            if(confirm("¿Borrar todos los datos ingresados?")) {
+                localStorage.removeItem('corte_data');
+                location.reload();
+            }
+        }
+
         function confirmAndSnapshot() {
             const area = document.getElementById('capture-area');
             area.classList.add('is-capturing');
+            
+            // Preparar visualización para PNG
             document.querySelectorAll('.fila-dato').forEach(f => {
                 f.querySelector('.dist-val').innerText = f.querySelector('.dist').value;
                 f.querySelector('.dist-val').classList.remove('hidden');
+                
+                const nombreVal = f.querySelector('.nombre-input').value;
+                f.querySelector('.nombre-val').innerText = nombreVal;
+                f.querySelector('.nombre-val').classList.remove('hidden');
             });
 
-            html2canvas(area, { scale: 3, useCORS: true }).then(canvas => {
+            html2canvas(area, { scale: 3, backgroundColor: '#ffffff' }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `REPORTE_TECNICO_${Date.now()}.png`;
+                link.download = `Reporte_Corte_Final.png`;
                 link.href = canvas.toDataURL();
                 link.click();
+                
                 area.classList.remove('is-capturing');
-                document.querySelectorAll('.dist-val').forEach(dv => dv.classList.add('hidden'));
+                document.querySelectorAll('.dist-val, .nombre-val').forEach(el => el.classList.add('hidden'));
             });
         }
     </script>
