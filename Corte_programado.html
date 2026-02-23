@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SISTEMA OPERATIVO V12</title>
+    <title>SISTEMA OPERATIVO V14 - DURACIÓN</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -22,9 +22,11 @@
 
     <div id="modal-tecnicos">
         <div class="bg-white text-slate-900 p-6 rounded-3xl w-[90%] max-w-md shadow-2xl">
-            <h3 class="font-black text-xl mb-4 text-blue-900 uppercase italic">Equipo Técnico</h3>
-            <div id="lista-tecnicos" class="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto mb-6"></div>
-            <button onclick="cerrarModal()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black uppercase">Confirmar</button>
+            <h3 class="font-black text-xl mb-2 text-blue-900 uppercase italic">Equipo Técnico</h3>
+            <input type="text" id="search-staff" placeholder="Filtrar técnico..." oninput="filterStaff()" 
+                   class="w-full border-2 border-slate-100 rounded-xl p-3 mb-4 outline-none focus:border-blue-500 text-sm font-bold">
+            <div id="lista-tecnicos" class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto mb-6"></div>
+            <button onclick="cerrarModal()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black uppercase shadow-lg">Confirmar Equipo</button>
         </div>
     </div>
 
@@ -39,12 +41,12 @@
                 <thead>
                     <tr class="italic">
                         <th class="w-16">Dist.</th>
-                        <th class="w-28">Horario</th>
+                        <th class="w-32">Horario y Duración</th>
                         <th>Sitio / ID</th>
                         <th class="w-24">Torrero</th>
                         <th>Comentarios</th>
                         <th class="w-24">NIC</th>
-                        <th class="w-32">Técnicos</th>
+                        <th class="w-32">Asignado</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo"></tbody>
@@ -54,9 +56,7 @@
         <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 no-print-ui px-4">
             <button onclick="addRow()" class="bg-slate-800 py-4 rounded-xl font-black uppercase text-[10px]">＋ Sitio</button>
             <button onclick="confirmAndSnapshot()" class="bg-blue-600 py-4 rounded-xl font-black uppercase text-[10px]">📸 Imagen</button>
-            <button onclick="sendToSheets()" class="bg-emerald-600 py-4 rounded-xl font-black uppercase text-[10px] flex items-center justify-center gap-2">
-                <span>☁️</span> Guardar Sheets
-            </button>
+            <button onclick="sendToSheets()" class="bg-emerald-600 py-4 rounded-xl font-black uppercase text-[10px]">☁️ Sheets</button>
             <button onclick="clearAll()" class="bg-red-900/40 py-4 rounded-xl font-black uppercase text-[10px]">Limpiar</button>
         </div>
     </div>
@@ -71,25 +71,28 @@
             </td>
             <td class="text-center">
                 <div class="no-print-ui flex flex-col gap-1">
-                    <input type="time" class="h-in text-[9px] border rounded" onchange="convert12h(this)">
-                    <input type="time" class="h-out text-[9px] border rounded" onchange="convert12h(this)">
+                    <input type="time" class="h-in text-[9px] border rounded" onchange="processTime(this)">
+                    <input type="time" class="h-out text-[9px] border rounded" onchange="processTime(this)">
                 </div>
-                <div class="horario-txt font-black text-[9px] uppercase"></div>
+                <div class="horario-txt font-black text-[9px] uppercase leading-tight"></div>
+                <div class="duration-txt font-bold text-[8px] text-blue-600 mt-1 uppercase italic"></div>
             </td>
             <td class="relative">
-                <input type="text" oninput="searchByName(this)" class="nombre-input w-full font-black text-blue-800 text-[10px] no-print-ui uppercase outline-none" placeholder="Buscar...">
+                <input type="text" oninput="searchByName(this)" class="nombre-input w-full font-black text-blue-800 text-[10px] no-print-ui uppercase outline-none" placeholder="Buscar sitio...">
                 <div class="nombre-val hidden font-black text-blue-800 text-[10px] uppercase"></div>
                 <div class="id-val text-[8px] font-bold text-slate-400 mt-1">ID: <span class="id-text text-slate-900">---</span></div>
                 <div class="sug-box hidden absolute left-0 bg-white border border-blue-900 w-full z-50 shadow-xl max-h-40 overflow-y-auto"></div>
             </td>
             <td class="text-center">
-                <div class="torrero-txt font-bold text-slate-500 uppercase text-[9px]"></div>
+                <input type="text" class="torrero-in w-full bg-transparent text-center text-[9px] font-bold text-slate-500 uppercase outline-none" readonly>
+                <div class="torrero-val hidden font-bold text-slate-500 uppercase text-[9px]"></div>
             </td>
             <td>
                 <textarea rows="2" class="comm-input w-full text-[9px] italic outline-none resize-none bg-transparent" oninput="saveLocal()"></textarea>
             </td>
             <td class="text-center">
-                <div class="nic-txt font-mono font-black text-slate-900 text-[10px]"></div>
+                <input type="text" class="nic-in w-full bg-transparent text-center font-mono font-black text-slate-900 text-[10px] outline-none" readonly>
+                <div class="nic-val hidden font-mono font-black text-slate-900 text-[10px]"></div>
             </td>
             <td class="text-center">
                 <button onclick="abrirModalTecnicos(this)" class="no-print-ui w-full bg-blue-50 text-[8px] font-black rounded border border-blue-200 py-1 mb-1">＋ EQUIPO</button>
@@ -100,7 +103,8 @@
 
     <script>
         const SITES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        const WEBAPP_URL = 'TU_URL_DE_APPS_SCRIPT_AQUI'; // <--- PEGAR AQUÍ LA URL DE GOOGLE
+        const TECHS_URL = 'tecnicos.csv';
+        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzXxzF0ND-hf4AUhxx02UY9pcbKxuZa4OXZ-4SElElwnXM_KYR7x0SuBlGNkeobqvyUZw/exec'; 
         
         let dbSitios = [], dbTecnicos = [], currentTechRow = null;
 
@@ -109,9 +113,13 @@
                 dbSitios = r.data.slice(1).map(row => ({ id: row[0], name: row[1], owner: row[16], nic: row[4] })).filter(i => i.name);
                 loadSaved();
             }});
-            // Simulación de técnicos (esto debe venir de tecnicos.csv si lo tienes en el mismo folder)
-            dbTecnicos = ["Técnico 1", "Técnico 2", "Técnico 3"];
-            renderStaff();
+            
+            Papa.parse(TECHS_URL, { download: true, complete: (r) => {
+                dbTecnicos = r.data.map(row => row[0]).filter(n => n && n !== "Nombre");
+                renderStaff();
+            }, error: () => {
+                dbTecnicos = ["EJEMPLO TÉCNICO"]; renderStaff();
+            }});
         };
 
         function addRow() {
@@ -120,9 +128,11 @@
             saveLocal();
         }
 
-        function convert12h(el) {
+        function processTime(el) {
             const f = el.closest('tr');
-            const i = f.querySelector('.h-in').value, o = f.querySelector('.h-out').value;
+            const iVal = f.querySelector('.h-in').value;
+            const oVal = f.querySelector('.h-out').value;
+            
             const to12 = (v) => {
                 if(!v) return "";
                 let [h, m] = v.split(':');
@@ -130,8 +140,44 @@
                 h = h % 12 || 12;
                 return `${h}:${m}${a}`;
             };
-            if(i && o) f.querySelector('.horario-txt').innerText = `${to12(i)} A ${to12(o)}`;
+
+            if(iVal && oVal) {
+                f.querySelector('.horario-txt').innerText = `${to12(iVal)} A ${to12(oVal)}`;
+                
+                // CÁLCULO DE DURACIÓN
+                let start = new Date(`2000-01-01T${iVal}`);
+                let end = new Date(`2000-01-01T${oVal}`);
+                if(end < start) end.setDate(end.getDate() + 1);
+                
+                let diff = (end - start) / 1000 / 60; // min
+                let hrs = Math.floor(diff / 60);
+                let mins = diff % 60;
+                f.querySelector('.duration-txt').innerText = `DURACIÓN: ${hrs}h ${mins}m`;
+            }
             saveLocal();
+        }
+
+        function filterStaff() {
+            const val = document.getElementById('search-staff').value.toLowerCase();
+            document.querySelectorAll('.tech-chip').forEach(c => {
+                c.style.display = c.innerText.toLowerCase().includes(val) ? 'block' : 'none';
+            });
+        }
+
+        function renderStaff() {
+            const c = document.getElementById('lista-tecnicos');
+            c.innerHTML = '';
+            dbTecnicos.forEach(t => {
+                const d = document.createElement('div');
+                d.className = "tech-chip p-3 border rounded-xl font-bold text-[10px] cursor-pointer text-center uppercase bg-slate-50 transition-all";
+                d.innerText = t;
+                d.onclick = function() { 
+                    this.classList.toggle('selected'); 
+                    this.classList.toggle('bg-blue-600'); 
+                    this.classList.toggle('text-white'); 
+                };
+                c.appendChild(d);
+            });
         }
 
         function searchByName(el) {
@@ -148,8 +194,8 @@
                     el.value = m.name;
                     f.querySelector('.nombre-val').innerText = m.name;
                     f.querySelector('.id-text').innerText = m.id;
-                    f.querySelector('.torrero-txt').innerText = m.owner || "N/A";
-                    f.querySelector('.nic-txt').innerText = m.nic || "S/N";
+                    f.querySelector('.torrero-in').value = m.owner || "N/A";
+                    f.querySelector('.nic-in').value = m.nic || "S/N";
                     box.classList.add('hidden');
                     saveLocal();
                 };
@@ -158,20 +204,11 @@
             box.classList.remove('hidden');
         }
 
-        function renderStaff() {
-            const c = document.getElementById('lista-tecnicos');
-            dbTecnicos.forEach(t => {
-                const d = document.createElement('div');
-                d.className = "tech-chip p-3 border rounded-xl font-bold text-xs cursor-pointer text-center uppercase bg-slate-50";
-                d.innerText = t;
-                d.onclick = function() { this.classList.toggle('selected'); this.classList.toggle('bg-blue-600'); this.classList.toggle('text-white'); };
-                c.appendChild(d);
-            });
-        }
-
         function abrirModalTecnicos(btn) {
             currentTechRow = btn.closest('tr');
             document.getElementById('modal-tecnicos').style.display = 'flex';
+            document.getElementById('search-staff').value = '';
+            filterStaff();
         }
 
         function cerrarModal() {
@@ -182,26 +219,26 @@
             saveLocal();
         }
 
-        // PERSISTENCIA
         function saveLocal() {
             const rows = [];
             document.querySelectorAll('.fila-dato').forEach(f => {
                 rows.push({
                     dist: f.querySelector('.dist').value,
                     h: f.querySelector('.horario-txt').innerText,
+                    d: f.querySelector('.duration-txt').innerText,
                     n: f.querySelector('.nombre-input').value,
                     id: f.querySelector('.id-text').innerText,
-                    t: f.querySelector('.torrero-txt').innerText,
+                    t: f.querySelector('.torrero-in').value,
                     c: f.querySelector('.comm-input').value,
-                    nic: f.querySelector('.nic-txt').innerText,
+                    nic: f.querySelector('.nic-in').value,
                     st: f.querySelector('.tech-display').innerText
                 });
             });
-            localStorage.setItem('corte_v12', JSON.stringify({t: document.getElementById('main-title').value, r: rows}));
+            localStorage.setItem('corte_v14', JSON.stringify({t: document.getElementById('main-title').value, r: rows}));
         }
 
         function loadSaved() {
-            const s = JSON.parse(localStorage.getItem('corte_v12'));
+            const s = JSON.parse(localStorage.getItem('corte_v14'));
             if(!s) return addRow();
             document.getElementById('main-title').value = s.t;
             s.r.forEach(r => {
@@ -209,18 +246,19 @@
                 const f = temp.querySelector('.fila-dato');
                 f.querySelector('.dist').value = r.dist;
                 f.querySelector('.horario-txt').innerText = r.h;
+                f.querySelector('.duration-txt').innerText = r.d || "";
                 f.querySelector('.nombre-input').value = r.n;
                 f.querySelector('.nombre-val').innerText = r.n;
                 f.querySelector('.id-text').innerText = r.id;
-                f.querySelector('.torrero-txt').innerText = r.t;
+                f.querySelector('.torrero-in').value = r.t;
                 f.querySelector('.comm-input').value = r.c;
-                f.querySelector('.nic-txt').innerText = r.nic;
+                f.querySelector('.nic-in').value = r.nic;
                 f.querySelector('.tech-display').innerText = r.st;
                 document.getElementById('tabla-cuerpo').appendChild(temp);
             });
         }
 
-        function clearAll() { if(confirm("Borrar reporte?")) { localStorage.removeItem('corte_v12'); location.reload(); } }
+        function clearAll() { if(confirm("¿Borrar reporte actual?")) { localStorage.removeItem('corte_v14'); location.reload(); } }
 
         function confirmAndSnapshot() {
             const area = document.getElementById('capture-area');
@@ -229,48 +267,44 @@
                 f.querySelector('.dist-val').innerText = f.querySelector('.dist').value;
                 f.querySelector('.dist-val').classList.remove('hidden');
                 f.querySelector('.nombre-val').classList.remove('hidden');
+                f.querySelector('.torrero-val').innerText = f.querySelector('.torrero-in').value;
+                f.querySelector('.torrero-val').classList.remove('hidden');
+                f.querySelector('.torrero-in').classList.add('hidden');
+                f.querySelector('.nic-val').innerText = f.querySelector('.nic-in').value;
+                f.querySelector('.nic-val').classList.remove('hidden');
+                f.querySelector('.nic-in').classList.add('hidden');
             });
 
             html2canvas(area, { scale: 3 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Reporte_${Date.now()}.png`;
+                link.download = `REPORTE_${Date.now()}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
                 area.classList.remove('is-capturing');
-                document.querySelectorAll('.dist-val, .nombre-val').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.dist-val, .nombre-val, .torrero-val, .nic-val').forEach(el => el.classList.add('hidden'));
+                document.querySelectorAll('.torrero-in, .nic-in').forEach(el => el.classList.remove('hidden'));
             });
         }
 
-        // GUARDADO EN GOOGLE SHEETS
         async function sendToSheets() {
-            const rows = [];
+            const fechaTitulo = document.getElementById('main-title').value;
+            const payload = [];
             document.querySelectorAll('.fila-dato').forEach(f => {
-                rows.push([
-                    document.getElementById('main-title').value,
+                payload.push([
+                    fechaTitulo,
                     f.querySelector('.dist').value,
                     f.querySelector('.horario-txt').innerText,
                     f.querySelector('.nombre-input').value,
-                    f.querySelector('.id-text').innerText,
-                    f.querySelector('.torrero-txt').innerText,
-                    f.querySelector('.comm-input').value,
-                    f.querySelector('.nic-txt').innerText,
-                    f.querySelector('.tech-display').innerText
+                    f.querySelector('.torrero-in').value,
+                    f.querySelector('.tech-display').innerText,
+                    f.querySelector('.comm-input').value
                 ]);
             });
-
-            if(WEBAPP_URL === 'TU_URL_DE_APPS_SCRIPT_AQUI') {
-                alert("Primero debes configurar tu URL de Google Apps Script.");
-                return;
-            }
-
+            if(WEBAPP_URL.includes('TU_URL')) return alert("Pega tu URL de Apps Script.");
             try {
-                const res = await fetch(WEBAPP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(rows)
-                });
-                alert("Datos enviados a la cola de guardado.");
-            } catch(e) { alert("Error al conectar con Sheets."); }
+                await fetch(WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+                alert("✅ Guardado en Sheets exitoso");
+            } catch(e) { alert("❌ Error de envío"); }
         }
     </script>
 </body>
