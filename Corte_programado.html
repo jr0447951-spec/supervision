@@ -3,121 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <title>Consultor AES/DELSUR</title>
-</head>
-<body class="bg-slate-50 pb-24 font-sans">
-
-    <div id="edit-tab" class="p-4">
-        <h1 class="text-2xl font-bold text-slate-800 mb-4 text-center">Generador de Reporte</h1>
+    <title>CONSULTOR DISTRIBUIDORAS</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #00d4ff; --bg: #001a33; --card: #003366; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e6f2ff; margin: 0; padding-bottom: 80px; }
         
-        <form id="registroForm" class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 space-y-4">
-            
-            <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Distribuidora</label>
-                <select id="distribuidora" class="w-full p-3 bg-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="AES">AES</option>
-                    <option value="DELSUR">DELSUR</option>
-                </select>
-            </div>
+        /* Contenedores */
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: var(--card); border-radius: 16px; padding: 20px; border: 1px solid #0059b3; box-shadow: 0 8px 20px rgba(0,0,0,0.4); margin-bottom: 20px; }
+        
+        /* Inputs Estilo Android */
+        h3 { color: var(--primary); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        select, input, textarea { 
+            width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 10px; 
+            border: 1px solid #0059b3; background: #001a33; color: white; font-size: 1rem; box-sizing: border-box;
+        }
+        input:read-only { background: #00264d; color: #80bfff; }
 
-            <div class="grid grid-cols-2 gap-4">
+        /* Buscador de Sitios */
+        .search-container { position: relative; }
+        #suggestions {
+            position: absolute; top: 100%; left: 0; width: 100%; background: #004080;
+            border-radius: 0 0 10px 10px; z-index: 100; max-height: 200px; overflow-y: auto; display: none;
+        }
+        .sug-item { padding: 14px; border-bottom: 1px solid #0059b3; font-size: 0.9rem; }
+        .sug-item:active { background: var(--primary); color: #001a33; }
+
+        /* Botones */
+        .btn-main { 
+            background: linear-gradient(90deg, #00d4ff, #0077ff); color: white; border: none; 
+            padding: 16px; width: 100%; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer;
+        }
+        
+        /* Pestañas Inferiores */
+        .nav-bar { 
+            position: fixed; bottom: 0; width: 100%; background: #00264d; 
+            display: flex; height: 65px; border-top: 1px solid #0059b3;
+        }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; color: #80bfff; cursor: pointer; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+
+        /* Tabla de registros previos */
+        .reg-card { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
+        .reg-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="tab-editor">
+        <h2 style="text-align: center; color: var(--primary);">NUEVO REPORTE</h2>
+        
+        <div class="card">
+            <h3>Distribuidora</h3>
+            <select id="distribuidora">
+                <option value="AES">AES</option>
+                <option value="DELSUR">DELSUR</option>
+            </select>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hora Inicio</label>
-                    <input type="time" id="horaInicio" onchange="calcularDiferencia()" class="w-full p-3 bg-slate-100 rounded-lg">
+                    <h3>Inicio</h3>
+                    <input type="time" id="h-inicio" onchange="calcularDuracion()">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hora Fin</label>
-                    <input type="time" id="horaFin" onchange="calcularDiferencia()" class="w-full p-3 bg-slate-100 rounded-lg">
+                    <h3>Final</h3>
+                    <input type="time" id="h-fin" onchange="calcularDuracion()">
                 </div>
             </div>
 
-            <div id="displayTiempo" class="text-center py-2 bg-green-50 text-green-700 font-bold rounded-lg border border-green-200 hidden">
-                Total: <span id="resultadoHoras">0:00</span> horas
+            <div id="res-tiempo" style="text-align: center; font-weight: bold; margin-bottom: 15px; color: #2ecc71; display:none;">
+                Duración: <span id="label-duracion">0:00</span> horas
             </div>
 
-            <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Sitio (ID)</label>
-                <input type="text" id="sitioInput" list="listaSitios" oninput="autocompletarTorrero()" placeholder="Escribe el ID del sitio..." class="w-full p-3 bg-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                <datalist id="listaSitios"></datalist>
+            <h3>Sitio (Buscador)</h3>
+            <div class="search-container">
+                <input type="text" id="site-search" placeholder="ID o Nombre del sitio..." autocomplete="off">
+                <div id="suggestions"></div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Torrero</label>
-                <input type="text" id="torreroInput" readonly placeholder="Se autocompletará..." class="w-full p-3 bg-slate-200 rounded-lg outline-none text-slate-600">
-            </div>
+            <h3>Torrero</h3>
+            <input type="text" id="label-torrero" readonly placeholder="Se llenará solo">
 
-            <input type="text" id="asignado" placeholder="Técnico Asignado" class="w-full p-3 bg-slate-100 rounded-lg outline-none">
-            <textarea id="comentario" rows="3" placeholder="Comentario manual..." class="w-full p-3 bg-slate-100 rounded-lg outline-none"></textarea>
+            <h3>Técnico Asignado</h3>
+            <input type="text" id="asignado" placeholder="Nombre del técnico">
 
-            <button type="button" onclick="enviarDatos()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform">
-                GUARDAR EN GOOGLE SHEETS
-            </button>
-        </form>
+            <h3>Comentarios</h3>
+            <textarea id="comentario" rows="3" placeholder="Detalles de la labor..."></textarea>
+
+            <button class="btn-main" onclick="enviarDatos()">GUARDAR EN LA NUBE</button>
+        </div>
     </div>
 
-    <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        let baseDatosSitios = [];
+    <div class="container" id="tab-consultor" style="display:none;">
+        <h2 style="text-align: center; color: var(--primary);">HISTORIAL (5 DÍAS)</h2>
+        <div id="lista-historial">
+            </div>
+    </div>
 
-        // Cargar datos del CSV al iniciar
-        window.onload = async () => {
-            try {
-                const response = await fetch(CSV_URL);
-                const data = await response.text();
-                const filas = data.split('\n').slice(1); // Saltar encabezado
-                
-                const datalist = document.getElementById('listaSitios');
-                
-                filas.forEach(fila => {
-                    const columnas = fila.split(',');
-                    if(columnas.length >= 2) {
-                        const sitio = { id: columnas[0].trim(), torrero: columnas[1].trim() };
-                        baseDatosSitios.push(sitio);
-                        
-                        // Agregar al datalist del HTML
-                        let option = document.createElement('option');
-                        option.value = sitio.id;
-                        datalist.appendChild(option);
-                    }
-                });
-                console.log("Base de datos cargada");
-            } catch (e) {
-                console.error("Error cargando CSV:", e);
-            }
+    <nav class="nav-bar">
+        <div class="nav-item active" onclick="switchTab('editor', this)">
+            <span>➕</span><span>GENERADOR</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('consultor', this)">
+            <span>🔍</span><span>CONSULTAR</span>
+        </div>
+    </nav>
+
+    <script>
+        const SCRIPT_URL = "URL_DE_TU_APPS_SCRIPT"; // DEBES PEGAR TU URL AQUÍ
+        const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        let dbSitios = [];
+        let siteSelected = null;
+
+        window.onload = () => {
+            Papa.parse(SITIOS_CSV, {
+                download: true, header: true,
+                complete: (r) => {
+                    dbSitios = r.data.map(row => ({
+                        full: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`,
+                        torrero: row.Propietario
+                    })).filter(x => x.full.length > 5);
+                }
+            });
         };
 
-        function autocompletarTorrero() {
-            const valorInput = document.getElementById('sitioInput').value;
-            const torreroInput = document.getElementById('torreroInput');
-            
-            const match = baseDatosSitios.find(s => s.id === valorInput);
-            if (match) {
-                torreroInput.value = match.torrero;
-            } else {
-                torreroInput.value = "";
+        // Buscador Inteligente
+        document.getElementById('site-search').addEventListener('input', (e) => {
+            const v = e.target.value.toLowerCase().trim();
+            const sug = document.getElementById('suggestions');
+            sug.innerHTML = '';
+            if(v.length < 2) { sug.style.display = 'none'; return; }
+
+            const matches = dbSitios.filter(s => s.full.toLowerCase().includes(v)).slice(0,5);
+            if(matches.length > 0) {
+                sug.style.display = 'block';
+                matches.forEach(m => {
+                    const d = document.createElement('div');
+                    d.className = 'sug-item';
+                    d.innerText = m.full.toUpperCase();
+                    d.onclick = () => {
+                        siteSelected = m;
+                        document.getElementById('site-search').value = m.full;
+                        document.getElementById('label-torrero').value = m.torrero || 'N/A';
+                        sug.style.display = 'none';
+                    };
+                    sug.appendChild(d);
+                });
+            }
+        });
+
+        function calcularDuracion() {
+            const h1 = document.getElementById('h-inicio').value;
+            const h2 = document.getElementById('h-fin').value;
+            if(h1 && h2) {
+                const [m1, s1] = h1.split(':').map(Number);
+                const [m2, s2] = h2.split(':').map(Number);
+                let diff = (m2 * 60 + s2) - (m1 * 60 + s1);
+                if(diff < 0) diff += 1440;
+                const hh = Math.floor(diff/60);
+                const mm = diff%60;
+                const fmt = `${hh}:${mm.toString().padStart(2,'0')}`;
+                document.getElementById('label-duracion').innerText = fmt;
+                document.getElementById('res-tiempo').style.display = 'block';
+                return fmt + " horas";
             }
         }
 
-        function calcularDiferencia() {
-            const inicio = document.getElementById('horaInicio').value;
-            const fin = document.getElementById('horaFin').value;
-            if (inicio && fin) {
-                const [hI, mI] = inicio.split(':').map(Number);
-                const [hF, mF] = fin.split(':').map(Number);
-                let diff = (hF * 60 + mF) - (hI * 60 + mI);
-                if (diff < 0) diff += 1440;
-                const res = `${Math.floor(diff/60)}:${(diff%60).toString().padStart(2,'0')}`;
-                document.getElementById('resultadoHoras').innerText = res;
-                document.getElementById('displayTiempo').classList.remove('hidden');
-                return res + " horas";
-            }
-            return "";
+        function formatAMPM(time) {
+            let [h, m] = time.split(':');
+            let ampm = h >= 12 ? 'p. m.' : 'a. m.';
+            h = h % 12 || 12;
+            return `${h}:${m} ${ampm}`;
         }
 
-        function enviarDatos() {
-            // Aquí llamarías a google.script.run para enviar al Sheet
-            alert("Datos procesados listos para enviar");
+        async function enviarDatos() {
+            if(!siteSelected) return alert("Selecciona un sitio primero");
+            const btn = event.target;
+            btn.disabled = true; btn.innerText = "ENVIANDO...";
+
+            const data = {
+                distribuidora: document.getElementById('distribuidora').value,
+                inicio: formatAMPM(document.getElementById('h-inicio').value),
+                fin: formatAMPM(document.getElementById('h-fin').value),
+                duracion: document.getElementById('label-duracion').innerText + " horas",
+                sitio: siteSelected.full,
+                torrero: document.getElementById('label-torrero').value,
+                asignado: document.getElementById('asignado').value,
+                comentario: document.getElementById('comentario').value
+            };
+
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+                alert("✅ Guardado correctamente");
+                location.reload();
+            } catch (e) { alert("Error al guardar"); }
+        }
+
+        function switchTab(tab, el) {
+            document.getElementById('tab-editor').style.display = tab === 'editor' ? 'block' : 'none';
+            document.getElementById('tab-consultor').style.display = tab === 'consultor' ? 'block' : 'none';
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
         }
     </script>
 </body>
