@@ -3,223 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>GENERADOR DE REPORTES</title>
+    <title>SISTEMA DE CAPTURA AES/DELSUR</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --primary: #00d4ff; --bg: #001a33; --card: #003366; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e6f2ff; margin: 0; padding-bottom: 90px; }
-        .container { padding: 15px; max-width: 600px; margin: auto; }
-        .card { background: var(--card); border-radius: 16px; padding: 20px; border: 1px solid #0059b3; box-shadow: 0 8px 20px rgba(0,0,0,0.4); margin-bottom: 20px; }
-        
-        h3 { color: var(--primary); font-size: 0.75rem; text-transform: uppercase; margin: 15px 0 8px 0; letter-spacing: 1px; }
-        select, input, textarea { 
-            width: 100%; padding: 14px; margin-bottom: 5px; border-radius: 10px; 
-            border: 1px solid #0059b3; background: #001a33; color: white; font-size: 1rem; box-sizing: border-box;
-        }
-
-        /* Selector de Técnicos (Chips) */
-        .tech-grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
-            gap: 8px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; border: 1px solid #0059b3;
-            max-height: 150px; overflow-y: auto;
-        }
-        .tech-item { 
-            display: flex; align-items: center; gap: 8px; font-size: 0.8rem; background: #00264d; 
-            padding: 8px; border-radius: 6px; cursor: pointer; border: 1px solid transparent;
-        }
-        .tech-item input { width: auto; margin: 0; transform: scale(1.2); }
-        .tech-item:has(input:checked) { border-color: var(--primary); background: #004080; }
-
-        /* Buscador */
-        .search-container { position: relative; }
-        #suggestions {
-            position: absolute; top: 100%; left: 0; width: 100%; background: #004080;
-            border-radius: 0 0 10px 10px; z-index: 100; max-height: 200px; overflow-y: auto; display: none; border: 1px solid var(--primary);
-        }
-        .sug-item { padding: 14px; border-bottom: 1px solid #0059b3; font-size: 0.9rem; }
-
-        .btn-main { 
-            background: linear-gradient(90deg, #00d4ff, #0077ff); color: white; border: none; 
-            padding: 18px; width: 100%; border-radius: 12px; font-weight: 700; font-size: 1rem; margin-top: 20px;
-        }
-
-        .nav-bar { 
-            position: fixed; bottom: 0; width: 100%; background: #00264d; 
-            display: flex; height: 70px; border-top: 1px solid #0059b3; z-index: 1000;
-        }
-        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.7rem; color: #80bfff; }
-        .nav-item.active { color: var(--primary); border-top: 3px solid var(--primary); }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-[#001a33] text-white pb-10 font-sans">
 
-    <div class="container" id="tab-editor">
-        <h2 style="text-align: center; color: var(--primary); margin-top: 10px;">GENERADOR</h2>
-        
-        <div class="card">
-            <h3>Distribuidora</h3>
-            <select id="distribuidora">
-                <option value="AES">AES</option>
-                <option value="DELSUR">DELSUR</option>
-            </select>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+    <div class="p-4 max-w-4xl mx-auto">
+        <div id="area-reporte" class="bg-[#001a33] p-4 rounded-xl">
+            <header class="flex justify-between items-center mb-6 border-b border-[#00d4ff] pb-4">
                 <div>
-                    <h3>Hora Inicio</h3>
-                    <input type="time" id="h-inicio" onchange="calcular()">
+                    <h1 class="text-xl font-black text-[#00d4ff] tracking-tighter">REPORTE DE JORNADA</h1>
+                    <p id="fecha-actual" class="text-[10px] text-[#80bfff] font-bold uppercase"></p>
                 </div>
-                <div>
-                    <h3>Hora Final</h3>
-                    <input type="time" id="h-fin" onchange="calcular()">
+                <div class="text-right">
+                    <span class="text-[10px] bg-[#00d4ff] text-[#001a33] px-2 py-1 rounded font-bold">ZONA PARACENTRAL</span>
                 </div>
+            </header>
+
+            <div id="tabla-dinamica" class="space-y-3">
+                </div>
+        </div>
+
+        <div class="mt-8 space-y-4 no-print">
+            <button onclick="agregarFila()" class="w-full py-3 border-2 border-dashed border-[#00d4ff] rounded-xl text-[#00d4ff] font-bold flex items-center justify-center gap-2">
+                <span>➕</span> AÑADIR SITIO
+            </button>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="exportarPNG()" class="bg-white text-[#001a33] p-4 rounded-2xl font-bold flex flex-col items-center justify-center shadow-lg">
+                    <span class="text-xl">📸</span>
+                    <span class="text-xs">Capturar PNG</span>
+                </button>
+                <button onclick="exportarCSV()" class="bg-[#2ecc71] text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center shadow-lg">
+                    <span class="text-xl">📊</span>
+                    <span class="text-xs">Descargar CSV</span>
+                </button>
             </div>
 
-            <div id="res-tiempo" style="text-align: center; font-weight: bold; margin: 10px 0; color: #2ecc71; display:none; font-size: 0.9rem; background: rgba(46, 204, 113, 0.1); padding: 8px; border-radius: 8px;">
-                CÁLCULO: <span id="label-duracion">0:00</span> horas
-            </div>
-
-            <h3>Sitio (ID/Nombre)</h3>
-            <div class="search-container">
-                <input type="text" id="site-search" placeholder="Buscar sitio..." autocomplete="off">
-                <div id="suggestions"></div>
-            </div>
-
-            <h3>Torrero</h3>
-            <input type="text" id="label-torrero" readonly placeholder="Automático">
-
-            <h3>Técnicos Asignados (POP)</h3>
-            <div id="tech-list" class="tech-grid">
-                <p style="font-size: 0.7rem; padding: 10px;">Cargando técnicos...</p>
-            </div>
-
-            <h3>Comentario</h3>
-            <textarea id="comentario" rows="2" placeholder="Escriba aquí..."></textarea>
-
-            <button class="btn-main" id="btn-save" onclick="enviarDatos()">GUARDAR REPORTE</button>
+            <button onclick="enviarNube()" class="w-full bg-gradient-to-r from-[#00d4ff] to-[#0077ff] p-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-500/20">
+                ☁️ SUBIR A GOOGLE SHEETS
+            </button>
         </div>
     </div>
 
-    <nav class="nav-bar">
-        <div class="nav-item active"><span>➕</span><span>NUEVO</span></div>
-        <div class="nav-item"><span>🔍</span><span>HISTORIAL</span></div>
-    </nav>
+    <template id="fila-temp">
+        <div class="fila-card bg-[#003366] p-4 rounded-xl border border-[#0059b3] relative shadow-md">
+            <button onclick="this.closest('.fila-card').remove()" class="no-print absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-[10px]">✕</button>
+            
+            <div class="grid grid-cols-12 gap-3">
+                <div class="col-span-12 md:col-span-6">
+                    <select class="dist w-full bg-[#001a33] border border-[#0059b3] rounded p-2 text-xs font-bold text-[#00d4ff] outline-none mb-2">
+                        <option>AES</option>
+                        <option>DELSUR</option>
+                    </select>
+                    <div class="relative">
+                        <input type="text" oninput="buscador(this)" placeholder="ID SITIO / NOMBRE" class="sitio w-full bg-[#001a33] border border-[#0059b3] rounded p-2 text-xs outline-none uppercase">
+                        <div class="sug hidden absolute w-full bg-[#004080] border border-[#00d4ff] z-50 rounded-b shadow-xl"></div>
+                    </div>
+                </div>
+                <div class="col-span-12 md:col-span-6 grid grid-cols-2 gap-2">
+                    <input type="time" onchange="calc(this)" class="h-ini bg-[#001a33] border border-[#0059b3] rounded p-2 text-xs text-center">
+                    <input type="time" onchange="calc(this)" class="h-fin bg-[#001a33] border border-[#0059b3] rounded p-2 text-xs text-center">
+                </div>
+            </div>
+            <div class="mt-2 flex justify-between items-center border-t border-[#0059b3] pt-2">
+                <span class="torrero text-[9px] text-[#80bfff] uppercase font-bold tracking-widest">PROPIETARIO: ---</span>
+                <span class="dur text-[10px] font-black text-[#2ecc71] bg-green-900/20 px-2 py-0.5 rounded">0:00 HORAS</span>
+            </div>
+        </div>
+    </template>
 
     <script>
-        const SCRIPT_URL = "URL_DE_TU_APPS_SCRIPT"; 
-        const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        const TECNICOS_CSV = 'tecnicos.csv'; // Asegúrate de que este archivo esté en tu GitHub
-        
-        let dbSitios = [];
-        let siteSelected = null;
+        const SCRIPT_URL = "TU_URL_AQUI";
+        const SITIOS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        let db = [];
 
         window.onload = () => {
-            // Cargar Sitios
-            Papa.parse(SITIOS_CSV, {
-                download: true, header: true,
-                complete: (r) => {
-                    dbSitios = r.data.map(row => ({
-                        full: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`,
-                        torrero: row.Propietario
-                    })).filter(x => x.full.length > 5);
-                }
-            });
-
-            // Cargar Técnicos (Selector POP)
-            Papa.parse(TECNICOS_CSV, {
-                download: true, header: true,
-                complete: (r) => {
-                    const container = document.getElementById('tech-list');
-                    container.innerHTML = '';
-                    r.data.forEach(t => {
-                        if(t.Nombre) {
-                            const label = document.createElement('label');
-                            label.className = 'tech-item';
-                            label.innerHTML = `<input type="checkbox" value="${t.Nombre}"> ${t.Nombre}`;
-                            container.appendChild(label);
-                        }
-                    });
-                }
-            });
+            document.getElementById('fecha-actual').innerText = new Date().toLocaleDateString('es-SV', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            Papa.parse(SITIOS_URL, { download: true, header: true, complete: (r) => { 
+                db = r.data.map(i => ({ f: `${i.SITEID} - ${i['NOMBRE DE SITIO']}`, t: i.Propietario }));
+                agregarFila();
+            }});
         };
 
-        // Lógica de Autocompletado
-        document.getElementById('site-search').addEventListener('input', (e) => {
-            const v = e.target.value.toLowerCase();
-            const sug = document.getElementById('suggestions');
-            sug.innerHTML = '';
-            if(v.length < 2) { sug.style.display = 'none'; return; }
+        function agregarFila() {
+            const t = document.getElementById('fila-temp').content.cloneNode(true);
+            document.getElementById('tabla-dinamica').appendChild(t);
+        }
 
-            const matches = dbSitios.filter(s => s.full.toLowerCase().includes(v)).slice(0,5);
+        function buscador(el) {
+            const v = el.value.toLowerCase();
+            const box = el.nextElementSibling;
+            box.innerHTML = '';
+            if(v.length < 2) return box.classList.add('hidden');
+            const matches = db.filter(s => s.f.toLowerCase().includes(v)).slice(0,4);
             if(matches.length > 0) {
-                sug.style.display = 'block';
+                box.classList.remove('hidden');
                 matches.forEach(m => {
                     const d = document.createElement('div');
-                    d.className = 'sug-item';
-                    d.innerText = m.full.toUpperCase();
+                    d.className = 'p-2 border-b border-[#0059b3] text-[10px] active:bg-[#00d4ff]';
+                    d.innerText = m.f.toUpperCase();
                     d.onclick = () => {
-                        siteSelected = m;
-                        document.getElementById('site-search').value = m.full;
-                        document.getElementById('label-torrero').value = m.torrero || 'N/A';
-                        sug.style.display = 'none';
+                        el.value = m.f;
+                        el.closest('.fila-card').querySelector('.torrero').innerText = "PROPIETARIO: " + (m.t || "N/A");
+                        box.classList.add('hidden');
                     };
-                    sug.appendChild(d);
+                    box.appendChild(d);
                 });
             }
-        });
+        }
 
-        // Cálculo de horas y conversión a 12H
-        function calcular() {
-            const h1 = document.getElementById('h-inicio').value;
-            const h2 = document.getElementById('h-fin').value;
+        function calc(el) {
+            const f = el.closest('.fila-card');
+            const h1 = f.querySelector('.h-ini').value, h2 = f.querySelector('.h-fin').value;
             if(h1 && h2) {
-                const [m1, s1] = h1.split(':').map(Number);
-                const [m2, s2] = h2.split(':').map(Number);
-                let diff = (m2 * 60 + s2) - (m1 * 60 + s1);
-                if(diff < 0) diff += 1440;
-                const fmt = `${Math.floor(diff/60)}:${(diff%60).toString().padStart(2,'0')}`;
-                document.getElementById('label-duracion').innerText = fmt;
-                document.getElementById('res-tiempo').style.display = 'block';
+                const [hA, mA] = h1.split(':').map(Number), [hB, mB] = h2.split(':').map(Number);
+                let d = (hB*60+mB)-(hA*60+mA); if(d<0) d+=1440;
+                f.querySelector('.dur').innerText = Math.floor(d/60) + ":" + (d%60).toString().padStart(2,'0') + " HORAS";
             }
         }
 
-        function to12H(time24) {
-            if(!time24) return "";
-            let [h, m] = time24.split(':');
-            let ampm = h >= 12 ? 'p. m.' : 'a. m.';
-            h = h % 12 || 12;
-            return `${h}:${m} ${ampm}`;
-        }
+        // --- EXPORTADORES ---
 
-        async function enviarDatos() {
-            const techs = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value);
-            if(!siteSelected || techs.length === 0) return alert("Falta Sitio o Técnicos");
-
-            const btn = document.getElementById('btn-save');
-            btn.disabled = true; btn.innerText = "GUARDANDO...";
-
-            const data = {
-                distribuidora: document.getElementById('distribuidora').value,
-                inicio: to12H(document.getElementById('h-inicio').value),
-                fin: to12H(document.getElementById('h-fin').value),
-                duracion: document.getElementById('label-duracion').innerText + " horas",
-                sitio: siteSelected.full,
-                torrero: document.getElementById('label-torrero').value,
-                asignado: techs.join(' / '),
-                comentario: document.getElementById('comentario').value
-            };
-
-            // Simulación de envío (Conectar con tu SCRIPT_URL)
-            console.log("Datos para Sheet:", data);
+        function exportarPNG() {
+            const area = document.getElementById('area-reporte');
+            const btns = document.querySelectorAll('.no-print');
+            btns.forEach(b => b.style.opacity = '0'); // Ocultar botones de borrar
             
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-                alert("✅ Reporte Guardado");
-                location.reload();
-            } catch (e) { 
-                alert("Error de conexión"); 
-                btn.disabled = false; btn.innerText = "GUARDAR REPORTE";
-            }
+            html2canvas(area, { backgroundColor: '#001a33', scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Reporte_${Date.now()}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                btns.forEach(b => b.style.opacity = '1');
+            });
+        }
+
+        function exportarCSV() {
+            let csv = "Distribuidora,Sitio,Inicio,Fin,Duracion\n";
+            document.querySelectorAll('.fila-card').forEach(f => {
+                csv += `${f.querySelector('.dist').value},${f.querySelector('.sitio').value},${f.querySelector('.h-ini').value},${f.querySelector('.h-fin').value},${f.querySelector('.dur').innerText}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `datos_jornada_${Date.now()}.csv`);
+            a.click();
+        }
+
+        async function enviarNube() {
+            alert("Enviando datos al Google Sheet...");
+            // Lógica Fetch POST...
         }
     </script>
 </body>
