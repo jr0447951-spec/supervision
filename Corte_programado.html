@@ -3,107 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SISTEMA OPERATIVO V14 - DURACIÓN</title>
+    <title>SISTEMA OPERATIVO PROFESIONAL - V15</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f1f5f9; }
-        .is-capturing .no-print-ui { display: none !important; }
+        
+        /* Estilos de Tabla Adaptables */
         table { border-collapse: collapse; width: 100%; table-layout: fixed; border: 2px solid #1e3a8a; background: white; }
-        th { background-color: #1e3a8a; color: white; font-size: 10px; padding: 10px 2px; border: 1px solid #334155; }
-        td { border: 1px solid #cbd5e1; padding: 6px; vertical-align: middle; color: #000; }
+        th { background-color: #1e3a8a; color: white; font-size: 10px; padding: 10px 4px; border: 1px solid #334155; text-transform: uppercase; }
+        td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: top; color: #000; overflow: hidden; }
+
+        /* Control de anchos específicos */
+        .col-dist { width: 60px; }
+        .col-hora { width: 120px; }
+        .col-sitio { width: 180px; }
+        .col-torrero { width: 90px; }
+        .col-comentario { width: auto; } /* Esta columna crecerá */
+        .col-nic { width: 85px; }
+        .col-tech { width: 130px; }
+
+        .is-capturing .no-print-ui { display: none !important; }
         .tech-chip.selected { background-color: #0284c7; color: white; }
+        
         #modal-tecnicos { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        
+        /* Texto que se ajusta */
+        .wrap-text { white-space: pre-wrap; word-break: break-word; font-size: 9px; line-height: 1.2; }
     </style>
 </head>
 <body class="pb-20">
 
     <div id="modal-tecnicos">
-        <div class="bg-white text-slate-900 p-6 rounded-3xl w-[90%] max-w-md shadow-2xl">
-            <h3 class="font-black text-xl mb-2 text-blue-900 uppercase italic">Equipo Técnico</h3>
-            <input type="text" id="search-staff" placeholder="Filtrar técnico..." oninput="filterStaff()" 
-                   class="w-full border-2 border-slate-100 rounded-xl p-3 mb-4 outline-none focus:border-blue-500 text-sm font-bold">
-            <div id="lista-tecnicos" class="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto mb-6"></div>
-            <button onclick="cerrarModal()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black uppercase shadow-lg">Confirmar Equipo</button>
+        <div class="bg-white text-slate-900 p-6 rounded-3xl w-[90%] max-w-md shadow-2xl border-4 border-blue-900">
+            <h3 class="font-black text-xl mb-2 text-blue-900 uppercase italic">Seleccionar Equipo</h3>
+            <input type="text" id="search-staff" placeholder="Buscar nombre..." oninput="filterStaff()" 
+                   class="w-full border-2 border-slate-200 rounded-xl p-3 mb-4 outline-none focus:border-blue-500 font-bold">
+            <div id="lista-tecnicos" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto mb-6 p-1"></div>
+            <button onclick="cerrarModal()" class="w-full bg-blue-900 text-white py-4 rounded-xl font-black uppercase tracking-widest">Aceptar</button>
         </div>
     </div>
 
-    <div class="p-2 max-w-[99%] mx-auto">
-        <div id="capture-area" class="bg-white p-6 rounded-2xl shadow-2xl text-slate-900">
-            <div class="text-center border-b-4 border-blue-900 pb-4 mb-6">
-                <input type="text" id="main-title" value="CORTE PROGRAMADO 22/02/2026" oninput="saveLocal()"
-                       class="w-full text-center text-3xl font-black uppercase italic bg-transparent border-none outline-none text-blue-900">
+    <div class="p-2 max-w-[100%] mx-auto">
+        <div id="capture-area" class="bg-white p-4 rounded-xl shadow-2xl text-slate-900">
+            <div class="text-center border-b-4 border-blue-900 pb-4 mb-4">
+                <input type="text" id="main-title" value="REPORTE DE CORTE PROGRAMADO - 22/02/2026" oninput="saveLocal()"
+                       class="w-full text-center text-2xl font-black uppercase italic bg-transparent border-none outline-none text-blue-900">
             </div>
 
             <table>
                 <thead>
-                    <tr class="italic">
-                        <th class="w-16">Dist.</th>
-                        <th class="w-32">Horario y Duración</th>
-                        <th>Sitio / ID</th>
-                        <th class="w-24">Torrero</th>
-                        <th>Comentarios</th>
-                        <th class="w-24">NIC</th>
-                        <th class="w-32">Asignado</th>
+                    <tr>
+                        <th class="col-dist">Dist.</th>
+                        <th class="col-hora">Horario</th>
+                        <th class="col-sitio">Sitio / ID</th>
+                        <th class="col-torrero">Torrero</th>
+                        <th class="col-comentario">Comentario</th>
+                        <th class="col-nic">NIC</th>
+                        <th class="col-tech">Asignado</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo"></tbody>
             </table>
         </div>
 
-        <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 no-print-ui px-4">
-            <button onclick="addRow()" class="bg-slate-800 py-4 rounded-xl font-black uppercase text-[10px]">＋ Sitio</button>
-            <button onclick="confirmAndSnapshot()" class="bg-blue-600 py-4 rounded-xl font-black uppercase text-[10px]">📸 Imagen</button>
-            <button onclick="sendToSheets()" class="bg-emerald-600 py-4 rounded-xl font-black uppercase text-[10px]">☁️ Sheets</button>
-            <button onclick="clearAll()" class="bg-red-900/40 py-4 rounded-xl font-black uppercase text-[10px]">Limpiar</button>
+        <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 no-print-ui px-4">
+            <button onclick="addRow()" class="bg-slate-800 py-4 rounded-xl font-black uppercase text-xs border border-slate-600 hover:bg-slate-700">＋ Sitio</button>
+            <button onclick="confirmAndSnapshot()" class="bg-blue-600 py-4 rounded-xl font-black uppercase text-xs shadow-lg hover:bg-blue-500">📸 Captura</button>
+            <button onclick="sendToSheets()" class="bg-emerald-600 py-4 rounded-xl font-black uppercase text-xs hover:bg-emerald-500">☁️ Guardar</button>
+            <button onclick="clearAll()" class="bg-red-900/40 py-4 rounded-xl font-black uppercase text-xs">Borrar</button>
         </div>
     </div>
 
     <template id="row-edit-temp">
         <tr class="fila-dato">
             <td class="text-center">
-                <select class="dist w-full text-[10px] font-black uppercase no-print-ui border rounded" onchange="saveLocal()">
+                <select class="dist w-full text-[10px] font-black uppercase no-print-ui border rounded mb-1" onchange="saveLocal()">
                     <option value="">-</option><option value="AES">AES</option><option value="DELSUR">DELSUR</option>
                 </select>
                 <div class="dist-val hidden font-black text-blue-900 text-[10px]"></div>
             </td>
             <td class="text-center">
-                <div class="no-print-ui flex flex-col gap-1">
+                <div class="no-print-ui flex flex-col gap-1 mb-1">
                     <input type="time" class="h-in text-[9px] border rounded" onchange="processTime(this)">
                     <input type="time" class="h-out text-[9px] border rounded" onchange="processTime(this)">
                 </div>
-                <div class="horario-txt font-black text-[9px] uppercase leading-tight"></div>
-                <div class="duration-txt font-bold text-[8px] text-blue-600 mt-1 uppercase italic"></div>
+                <div class="horario-txt font-black text-[9px] uppercase leading-none"></div>
+                <div class="duration-txt font-bold text-[7px] text-blue-500 mt-1 uppercase italic"></div>
             </td>
             <td class="relative">
-                <input type="text" oninput="searchByName(this)" class="nombre-input w-full font-black text-blue-800 text-[10px] no-print-ui uppercase outline-none" placeholder="Buscar sitio...">
-                <div class="nombre-val hidden font-black text-blue-800 text-[10px] uppercase"></div>
+                <input type="text" oninput="searchByName(this)" class="nombre-input w-full font-black text-blue-800 text-[10px] no-print-ui uppercase outline-none bg-slate-50 p-1 rounded" placeholder="Escribir sitio...">
+                <div class="nombre-val hidden font-black text-blue-800 text-[10px] uppercase wrap-text"></div>
                 <div class="id-val text-[8px] font-bold text-slate-400 mt-1">ID: <span class="id-text text-slate-900">---</span></div>
-                <div class="sug-box hidden absolute left-0 bg-white border border-blue-900 w-full z-50 shadow-xl max-h-40 overflow-y-auto"></div>
+                <div class="sug-box hidden absolute left-0 bg-white border-2 border-blue-900 w-full z-50 shadow-2xl max-h-40 overflow-y-auto rounded-lg"></div>
             </td>
             <td class="text-center">
-                <input type="text" class="torrero-in w-full bg-transparent text-center text-[9px] font-bold text-slate-500 uppercase outline-none" readonly>
-                <div class="torrero-val hidden font-bold text-slate-500 uppercase text-[9px]"></div>
+                <div class="torrero-txt wrap-text font-bold text-slate-500 uppercase text-[9px]">---</div>
             </td>
             <td>
-                <textarea rows="2" class="comm-input w-full text-[9px] italic outline-none resize-none bg-transparent" oninput="saveLocal()"></textarea>
+                <textarea rows="2" class="comm-input w-full text-[9px] italic outline-none resize-none bg-transparent no-print-ui border-b border-slate-100" placeholder="Detalles..." oninput="saveLocal()"></textarea>
+                <div class="comm-val hidden wrap-text italic text-[9px]"></div>
             </td>
             <td class="text-center">
-                <input type="text" class="nic-in w-full bg-transparent text-center font-mono font-black text-slate-900 text-[10px] outline-none" readonly>
-                <div class="nic-val hidden font-mono font-black text-slate-900 text-[10px]"></div>
+                <div class="nic-txt font-mono font-black text-slate-900 text-[10px]">---</div>
             </td>
             <td class="text-center">
-                <button onclick="abrirModalTecnicos(this)" class="no-print-ui w-full bg-blue-50 text-[8px] font-black rounded border border-blue-200 py-1 mb-1">＋ EQUIPO</button>
-                <div class="tech-display text-[8px] font-bold text-slate-800 leading-tight uppercase"></div>
+                <button onclick="abrirModalTecnicos(this)" class="no-print-ui w-full bg-blue-50 text-[8px] font-black rounded border border-blue-200 py-1 mb-1">＋ PERSONAL</button>
+                <div class="tech-display wrap-text text-[8px] font-bold text-slate-700 leading-tight uppercase"></div>
             </td>
         </tr>
     </template>
 
     <script>
         const SITES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        const TECHS_URL = 'tecnicos.csv';
         const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzXxzF0ND-hf4AUhxx02UY9pcbKxuZa4OXZ-4SElElwnXM_KYR7x0SuBlGNkeobqvyUZw/exec'; 
         
         let dbSitios = [], dbTecnicos = [], currentTechRow = null;
@@ -114,11 +128,11 @@
                 loadSaved();
             }});
             
-            Papa.parse(TECHS_URL, { download: true, complete: (r) => {
+            Papa.parse('tecnicos.csv', { download: true, complete: (r) => {
                 dbTecnicos = r.data.map(row => row[0]).filter(n => n && n !== "Nombre");
                 renderStaff();
             }, error: () => {
-                dbTecnicos = ["EJEMPLO TÉCNICO"]; renderStaff();
+                dbTecnicos = ["JUAN PEREZ", "CARLOS GOMEZ"]; renderStaff();
             }});
         };
 
@@ -132,52 +146,16 @@
             const f = el.closest('tr');
             const iVal = f.querySelector('.h-in').value;
             const oVal = f.querySelector('.h-out').value;
-            
-            const to12 = (v) => {
-                if(!v) return "";
-                let [h, m] = v.split(':');
-                let a = h >= 12 ? 'PM' : 'AM';
-                h = h % 12 || 12;
-                return `${h}:${m}${a}`;
-            };
+            const to12 = (v) => { if(!v) return ""; let [h, m] = v.split(':'); let a = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${m}${a}`; };
 
             if(iVal && oVal) {
                 f.querySelector('.horario-txt').innerText = `${to12(iVal)} A ${to12(oVal)}`;
-                
-                // CÁLCULO DE DURACIÓN
-                let start = new Date(`2000-01-01T${iVal}`);
-                let end = new Date(`2000-01-01T${oVal}`);
+                let start = new Date(`2000-01-01T${iVal}`), end = new Date(`2000-01-01T${oVal}`);
                 if(end < start) end.setDate(end.getDate() + 1);
-                
-                let diff = (end - start) / 1000 / 60; // min
-                let hrs = Math.floor(diff / 60);
-                let mins = diff % 60;
-                f.querySelector('.duration-txt').innerText = `DURACIÓN: ${hrs}h ${mins}m`;
+                let diff = (end - start) / 1000 / 60;
+                f.querySelector('.duration-txt').innerText = `DUR: ${Math.floor(diff/60)}h ${diff%60}m`;
             }
             saveLocal();
-        }
-
-        function filterStaff() {
-            const val = document.getElementById('search-staff').value.toLowerCase();
-            document.querySelectorAll('.tech-chip').forEach(c => {
-                c.style.display = c.innerText.toLowerCase().includes(val) ? 'block' : 'none';
-            });
-        }
-
-        function renderStaff() {
-            const c = document.getElementById('lista-tecnicos');
-            c.innerHTML = '';
-            dbTecnicos.forEach(t => {
-                const d = document.createElement('div');
-                d.className = "tech-chip p-3 border rounded-xl font-bold text-[10px] cursor-pointer text-center uppercase bg-slate-50 transition-all";
-                d.innerText = t;
-                d.onclick = function() { 
-                    this.classList.toggle('selected'); 
-                    this.classList.toggle('bg-blue-600'); 
-                    this.classList.toggle('text-white'); 
-                };
-                c.appendChild(d);
-            });
         }
 
         function searchByName(el) {
@@ -187,15 +165,15 @@
             const matches = dbSitios.filter(s => s.name.toLowerCase().includes(val) || s.id.toLowerCase().includes(val)).slice(0, 5);
             matches.forEach(m => {
                 const d = document.createElement('div');
-                d.className = 'p-2 border-b hover:bg-blue-50 text-[10px] cursor-pointer flex justify-between font-bold';
+                d.className = 'p-3 border-b hover:bg-blue-50 text-[10px] cursor-pointer flex justify-between font-bold';
                 d.innerHTML = `<span>${m.name}</span> <span class="text-blue-600">${m.id}</span>`;
                 d.onclick = () => {
                     const f = el.closest('tr');
                     el.value = m.name;
                     f.querySelector('.nombre-val').innerText = m.name;
                     f.querySelector('.id-text').innerText = m.id;
-                    f.querySelector('.torrero-in').value = m.owner || "N/A";
-                    f.querySelector('.nic-in').value = m.nic || "S/N";
+                    f.querySelector('.torrero-txt').innerText = m.owner || "N/A";
+                    f.querySelector('.nic-txt').innerText = m.nic || "S/N";
                     box.classList.add('hidden');
                     saveLocal();
                 };
@@ -207,8 +185,6 @@
         function abrirModalTecnicos(btn) {
             currentTechRow = btn.closest('tr');
             document.getElementById('modal-tecnicos').style.display = 'flex';
-            document.getElementById('search-staff').value = '';
-            filterStaff();
         }
 
         function cerrarModal() {
@@ -217,6 +193,25 @@
             if(currentTechRow) currentTechRow.querySelector('.tech-display').innerText = sels.join(', ');
             document.getElementById('modal-tecnicos').style.display = 'none';
             saveLocal();
+        }
+
+        function renderStaff() {
+            const c = document.getElementById('lista-tecnicos');
+            c.innerHTML = '';
+            dbTecnicos.forEach(t => {
+                const d = document.createElement('div');
+                d.className = "tech-chip p-3 border rounded-xl font-bold text-[10px] cursor-pointer text-center uppercase bg-slate-50";
+                d.innerText = t;
+                d.onclick = function() { this.classList.toggle('bg-blue-600'); this.classList.toggle('text-white'); };
+                c.appendChild(d);
+            });
+        }
+
+        function filterStaff() {
+            const val = document.getElementById('search-staff').value.toLowerCase();
+            document.querySelectorAll('.tech-chip').forEach(c => {
+                c.style.display = c.innerText.toLowerCase().includes(val) ? 'block' : 'none';
+            });
         }
 
         function saveLocal() {
@@ -228,17 +223,17 @@
                     d: f.querySelector('.duration-txt').innerText,
                     n: f.querySelector('.nombre-input').value,
                     id: f.querySelector('.id-text').innerText,
-                    t: f.querySelector('.torrero-in').value,
+                    t: f.querySelector('.torrero-txt').innerText,
                     c: f.querySelector('.comm-input').value,
-                    nic: f.querySelector('.nic-in').value,
+                    nic: f.querySelector('.nic-txt').innerText,
                     st: f.querySelector('.tech-display').innerText
                 });
             });
-            localStorage.setItem('corte_v14', JSON.stringify({t: document.getElementById('main-title').value, r: rows}));
+            localStorage.setItem('corte_v15', JSON.stringify({t: document.getElementById('main-title').value, r: rows}));
         }
 
         function loadSaved() {
-            const s = JSON.parse(localStorage.getItem('corte_v14'));
+            const s = JSON.parse(localStorage.getItem('corte_v15'));
             if(!s) return addRow();
             document.getElementById('main-title').value = s.t;
             s.r.forEach(r => {
@@ -246,19 +241,19 @@
                 const f = temp.querySelector('.fila-dato');
                 f.querySelector('.dist').value = r.dist;
                 f.querySelector('.horario-txt').innerText = r.h;
-                f.querySelector('.duration-txt').innerText = r.d || "";
+                f.querySelector('.duration-txt').innerText = r.d;
                 f.querySelector('.nombre-input').value = r.n;
                 f.querySelector('.nombre-val').innerText = r.n;
                 f.querySelector('.id-text').innerText = r.id;
-                f.querySelector('.torrero-in').value = r.t;
+                f.querySelector('.torrero-txt').innerText = r.t;
                 f.querySelector('.comm-input').value = r.c;
-                f.querySelector('.nic-in').value = r.nic;
+                f.querySelector('.nic-txt').innerText = r.nic;
                 f.querySelector('.tech-display').innerText = r.st;
                 document.getElementById('tabla-cuerpo').appendChild(temp);
             });
         }
 
-        function clearAll() { if(confirm("¿Borrar reporte actual?")) { localStorage.removeItem('corte_v14'); location.reload(); } }
+        function clearAll() { if(confirm("¿Borrar todo?")) { localStorage.removeItem('corte_v15'); location.reload(); } }
 
         function confirmAndSnapshot() {
             const area = document.getElementById('capture-area');
@@ -267,44 +262,38 @@
                 f.querySelector('.dist-val').innerText = f.querySelector('.dist').value;
                 f.querySelector('.dist-val').classList.remove('hidden');
                 f.querySelector('.nombre-val').classList.remove('hidden');
-                f.querySelector('.torrero-val').innerText = f.querySelector('.torrero-in').value;
-                f.querySelector('.torrero-val').classList.remove('hidden');
-                f.querySelector('.torrero-in').classList.add('hidden');
-                f.querySelector('.nic-val').innerText = f.querySelector('.nic-in').value;
-                f.querySelector('.nic-val').classList.remove('hidden');
-                f.querySelector('.nic-in').classList.add('hidden');
+                f.querySelector('.comm-val').innerText = f.querySelector('.comm-input').value;
+                f.querySelector('.comm-val').classList.remove('hidden');
             });
 
             html2canvas(area, { scale: 3 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `REPORTE_${Date.now()}.png`;
+                link.download = `Reporte_${Date.now()}.png`;
                 link.href = canvas.toDataURL();
                 link.click();
                 area.classList.remove('is-capturing');
-                document.querySelectorAll('.dist-val, .nombre-val, .torrero-val, .nic-val').forEach(el => el.classList.add('hidden'));
-                document.querySelectorAll('.torrero-in, .nic-in').forEach(el => el.classList.remove('hidden'));
+                document.querySelectorAll('.dist-val, .nombre-val, .comm-val').forEach(el => el.classList.add('hidden'));
             });
         }
 
         async function sendToSheets() {
-            const fechaTitulo = document.getElementById('main-title').value;
+            const fecha = document.getElementById('main-title').value;
             const payload = [];
             document.querySelectorAll('.fila-dato').forEach(f => {
                 payload.push([
-                    fechaTitulo,
+                    fecha,
                     f.querySelector('.dist').value,
                     f.querySelector('.horario-txt').innerText,
                     f.querySelector('.nombre-input').value,
-                    f.querySelector('.torrero-in').value,
+                    f.querySelector('.torrero-txt').innerText,
                     f.querySelector('.tech-display').innerText,
                     f.querySelector('.comm-input').value
                 ]);
             });
-            if(WEBAPP_URL.includes('TU_URL')) return alert("Pega tu URL de Apps Script.");
             try {
                 await fetch(WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                alert("✅ Guardado en Sheets exitoso");
-            } catch(e) { alert("❌ Error de envío"); }
+                alert("✅ Guardado en Sheets");
+            } catch(e) { alert("❌ Error"); }
         }
     </script>
 </body>
