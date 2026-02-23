@@ -3,111 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SISTEMA DE CAPTURA AES/DELSUR</title>
+    <title>REPORTE CORTES - NIC AUTO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#001a33] text-white pb-10 font-sans">
+<body class="bg-[#0f172a] text-white pb-16 font-sans text-[12px]">
 
-    <div class="p-4 max-w-4xl mx-auto">
-        <div id="area-reporte" class="bg-[#001a33] p-4 rounded-xl">
-            <header class="flex justify-between items-center mb-6 border-b border-[#00d4ff] pb-4">
-                <div>
-                    <h1 class="text-xl font-black text-[#00d4ff] tracking-tighter">REPORTE DE JORNADA</h1>
-                    <p id="fecha-actual" class="text-[10px] text-[#80bfff] font-bold uppercase"></p>
-                </div>
-                <div class="text-right">
-                    <span class="text-[10px] bg-[#00d4ff] text-[#001a33] px-2 py-1 rounded font-bold">ZONA PARACENTRAL</span>
-                </div>
-            </header>
-
-            <div id="tabla-dinamica" class="space-y-3">
-                </div>
-        </div>
-
-        <div class="mt-8 space-y-4 no-print">
-            <button onclick="agregarFila()" class="w-full py-3 border-2 border-dashed border-[#00d4ff] rounded-xl text-[#00d4ff] font-bold flex items-center justify-center gap-2">
-                <span>➕</span> AÑADIR SITIO
-            </button>
-
-            <div class="grid grid-cols-2 gap-3">
-                <button onclick="exportarPNG()" class="bg-white text-[#001a33] p-4 rounded-2xl font-bold flex flex-col items-center justify-center shadow-lg">
-                    <span class="text-xl">📸</span>
-                    <span class="text-xs">Capturar PNG</span>
-                </button>
-                <button onclick="exportarCSV()" class="bg-[#2ecc71] text-white p-4 rounded-2xl font-bold flex flex-col items-center justify-center shadow-lg">
-                    <span class="text-xl">📊</span>
-                    <span class="text-xs">Descargar CSV</span>
-                </button>
+    <div class="p-2 max-w-6xl mx-auto">
+        <div id="capture-area" class="bg-white p-6 rounded shadow-2xl text-slate-900">
+            
+            <div class="text-center border-b-4 border-slate-800 pb-4 mb-4">
+                <h1 class="text-3xl font-black tracking-tighter uppercase italic text-slate-800">Corte Programado</h1>
+                <p class="text-lg font-bold text-slate-600 uppercase">Resumen de Operaciones - 22/02/2026</p>
             </div>
 
-            <button onclick="enviarNube()" class="w-full bg-gradient-to-r from-[#00d4ff] to-[#0077ff] p-5 rounded-2xl font-black text-lg shadow-xl shadow-blue-500/20">
-                ☁️ SUBIR A GOOGLE SHEETS
-            </button>
+            <table class="w-full border-collapse border border-slate-400">
+                <thead>
+                    <tr class="bg-slate-800 text-white uppercase italic text-[10px]">
+                        <th class="border border-slate-400 p-2 w-20">Distribuidora</th>
+                        <th class="border border-slate-400 p-2 w-36">Horario</th>
+                        <th class="border border-slate-400 p-2">Sitio / ID</th>
+                        <th class="border border-slate-400 p-2 w-24">Torrero</th>
+                        <th class="border border-slate-400 p-2">Comentario</th>
+                        <th class="border border-slate-400 p-2 w-24">NIC</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-cuerpo">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6 space-y-3 no-print">
+            <div class="flex gap-2">
+                <button onclick="addRow()" class="flex-1 bg-slate-700 p-4 rounded-xl font-bold uppercase hover:bg-slate-600 transition-all">＋ Añadir Sitio</button>
+                <button onclick="takeSnapshot()" class="flex-1 bg-white text-slate-900 p-4 rounded-xl font-bold uppercase shadow-lg">📸 Generar PNG</button>
+            </div>
+            <button onclick="downloadCSV()" class="w-full bg-emerald-600 p-4 rounded-xl font-bold uppercase">📊 Exportar CSV</button>
         </div>
     </div>
 
-    <template id="fila-temp">
-        <div class="fila-card bg-[#003366] p-4 rounded-xl border border-[#0059b3] relative shadow-md">
-            <button onclick="this.closest('.fila-card').remove()" class="no-print absolute -top-2 -right-2 bg-red-500 text-white w-6 h-6 rounded-full text-[10px]">✕</button>
-            
-            <div class="grid grid-cols-12 gap-3">
-                <div class="col-span-12 md:col-span-6">
-                    <select class="dist w-full bg-[#001a33] border border-[#0059b3] rounded p-2 text-xs font-bold text-[#00d4ff] outline-none mb-2">
-                        <option>AES</option>
-                        <option>DELSUR</option>
-                    </select>
-                    <div class="relative">
-                        <input type="text" oninput="buscador(this)" placeholder="ID SITIO / NOMBRE" class="sitio w-full bg-[#001a33] border border-[#0059b3] rounded p-2 text-xs outline-none uppercase">
-                        <div class="sug hidden absolute w-full bg-[#004080] border border-[#00d4ff] z-50 rounded-b shadow-xl"></div>
-                    </div>
-                </div>
-                <div class="col-span-12 md:col-span-6 grid grid-cols-2 gap-2">
-                    <input type="time" onchange="calc(this)" class="h-ini bg-[#001a33] border border-[#0059b3] rounded p-2 text-xs text-center">
-                    <input type="time" onchange="calc(this)" class="h-fin bg-[#001a33] border border-[#0059b3] rounded p-2 text-xs text-center">
-                </div>
-            </div>
-            <div class="mt-2 flex justify-between items-center border-t border-[#0059b3] pt-2">
-                <span class="torrero text-[9px] text-[#80bfff] uppercase font-bold tracking-widest">PROPIETARIO: ---</span>
-                <span class="dur text-[10px] font-black text-[#2ecc71] bg-green-900/20 px-2 py-0.5 rounded">0:00 HORAS</span>
-            </div>
-        </div>
+    <template id="row-edit-temp">
+        <tr class="fila-dato bg-white border-b border-slate-200">
+            <td class="border border-slate-400 p-1">
+                <select class="dist w-full outline-none font-bold uppercase bg-transparent">
+                    <option value="AES">AES</option>
+                    <option value="DELSUR">DELSUR</option>
+                    <option value=" ">--</option>
+                </select>
+            </td>
+            <td class="border border-slate-400 p-1">
+                <input type="text" placeholder="8:30am - 4:30pm" class="horario w-full outline-none text-center font-semibold placeholder:text-slate-300">
+            </td>
+            <td class="border border-slate-400 p-1 relative">
+                <input type="text" oninput="buscarSitio(this)" placeholder="Buscar..." class="sitio w-full outline-none uppercase font-bold placeholder:font-normal">
+                <div class="sug-box hidden absolute left-0 bg-white border border-slate-400 w-full z-50 shadow-2xl max-h-40 overflow-y-auto"></div>
+            </td>
+            <td class="border border-slate-400 p-1">
+                <input type="text" class="torrero w-full outline-none text-center uppercase italic text-slate-600 font-medium" readonly>
+            </td>
+            <td class="border border-slate-400 p-1">
+                <input type="text" class="comentario w-full outline-none italic text-slate-700">
+            </td>
+            <td class="border border-slate-400 p-1">
+                <input type="text" class="nic w-full outline-none text-center font-mono font-bold text-blue-700" readonly>
+            </td>
+        </tr>
     </template>
 
     <script>
-        const SCRIPT_URL = "TU_URL_AQUI";
-        const SITIOS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        let db = [];
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        let dbSitios = [];
 
+        // Carga de datos
         window.onload = () => {
-            document.getElementById('fecha-actual').innerText = new Date().toLocaleDateString('es-SV', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            Papa.parse(SITIOS_URL, { download: true, header: true, complete: (r) => { 
-                db = r.data.map(i => ({ f: `${i.SITEID} - ${i['NOMBRE DE SITIO']}`, t: i.Propietario }));
-                agregarFila();
-            }});
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: false, // Usamos false para manejar índices exactos
+                complete: (results) => {
+                    // Quitamos la cabecera del CSV
+                    const rows = results.data.slice(1);
+                    dbSitios = rows.map(row => ({
+                        idNombre: `${row[0]} - ${row[1]}`, // Columna A y B
+                        torrero: row[2],                  // Columna C (Propietario)
+                        nic: row[4]                       // Columna E (Índice 4)
+                    })).filter(item => item.idNombre.length > 5);
+                    
+                    for(let i=0; i<4; i++) addRow();
+                }
+            });
         };
 
-        function agregarFila() {
-            const t = document.getElementById('fila-temp').content.cloneNode(true);
-            document.getElementById('tabla-dinamica').appendChild(t);
+        function addRow() {
+            const body = document.getElementById('tabla-cuerpo');
+            const temp = document.getElementById('row-edit-temp').content.cloneNode(true);
+            body.appendChild(temp);
         }
 
-        function buscador(el) {
-            const v = el.value.toLowerCase();
+        function buscarSitio(el) {
+            const val = el.value.toLowerCase();
             const box = el.nextElementSibling;
             box.innerHTML = '';
-            if(v.length < 2) return box.classList.add('hidden');
-            const matches = db.filter(s => s.f.toLowerCase().includes(v)).slice(0,4);
-            if(matches.length > 0) {
+            
+            if(val.length < 2) {
+                box.classList.add('hidden');
+                return;
+            }
+
+            const filtered = dbSitios.filter(s => s.idNombre.toLowerCase().includes(val)).slice(0, 5);
+            
+            if(filtered.length > 0) {
                 box.classList.remove('hidden');
-                matches.forEach(m => {
+                filtered.forEach(m => {
                     const d = document.createElement('div');
-                    d.className = 'p-2 border-b border-[#0059b3] text-[10px] active:bg-[#00d4ff]';
-                    d.innerText = m.f.toUpperCase();
+                    d.className = 'p-2 border-b hover:bg-slate-100 cursor-pointer text-[10px] uppercase font-bold text-slate-700';
+                    d.innerText = m.idNombre;
                     d.onclick = () => {
-                        el.value = m.f;
-                        el.closest('.fila-card').querySelector('.torrero').innerText = "PROPIETARIO: " + (m.t || "N/A");
+                        const fila = el.closest('tr');
+                        el.value = m.idNombre;
+                        fila.querySelector('.torrero').value = m.torrero || "N/A";
+                        fila.querySelector('.nic').value = m.nic || "S/N";
                         box.classList.add('hidden');
                     };
                     box.appendChild(d);
@@ -115,48 +130,39 @@
             }
         }
 
-        function calc(el) {
-            const f = el.closest('.fila-card');
-            const h1 = f.querySelector('.h-ini').value, h2 = f.querySelector('.h-fin').value;
-            if(h1 && h2) {
-                const [hA, mA] = h1.split(':').map(Number), [hB, mB] = h2.split(':').map(Number);
-                let d = (hB*60+mB)-(hA*60+mA); if(d<0) d+=1440;
-                f.querySelector('.dur').innerText = Math.floor(d/60) + ":" + (d%60).toString().padStart(2,'0') + " HORAS";
-            }
-        }
-
-        // --- EXPORTADORES ---
-
-        function exportarPNG() {
-            const area = document.getElementById('area-reporte');
+        function takeSnapshot() {
+            const area = document.getElementById('capture-area');
             const btns = document.querySelectorAll('.no-print');
-            btns.forEach(b => b.style.opacity = '0'); // Ocultar botones de borrar
-            
-            html2canvas(area, { backgroundColor: '#001a33', scale: 2 }).then(canvas => {
+            html2canvas(area, { scale: 3 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Reporte_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
+                link.download = `Reporte_Corte_${Date.now()}.png`;
+                link.href = canvas.toDataURL("image/png");
                 link.click();
-                btns.forEach(b => b.style.opacity = '1');
             });
         }
 
-        function exportarCSV() {
-            let csv = "Distribuidora,Sitio,Inicio,Fin,Duracion\n";
-            document.querySelectorAll('.fila-card').forEach(f => {
-                csv += `${f.querySelector('.dist').value},${f.querySelector('.sitio').value},${f.querySelector('.h-ini').value},${f.querySelector('.h-fin').value},${f.querySelector('.dur').innerText}\n`;
+        function downloadCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Distribuidora,Horario,Sitio,Torrero,Comentario,NIC\n";
+            
+            document.querySelectorAll('.fila-dato').forEach(row => {
+                const data = [
+                    row.querySelector('.dist').value,
+                    row.querySelector('.horario').value,
+                    row.querySelector('.sitio').value,
+                    row.querySelector('.torrero').value,
+                    row.querySelector('.comentario').value,
+                    row.querySelector('.nic').value
+                ].map(v => `"${v}"`).join(",");
+                csvContent += data + "\n";
             });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', `datos_jornada_${Date.now()}.csv`);
-            a.click();
-        }
 
-        async function enviarNube() {
-            alert("Enviando datos al Google Sheet...");
-            // Lógica Fetch POST...
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Corte_Programado.csv");
+            document.body.appendChild(link);
+            link.click();
         }
     </script>
 </body>
