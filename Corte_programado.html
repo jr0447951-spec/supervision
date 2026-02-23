@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Consultor AES/DELSUR</title>
+</head>
+<body class="bg-slate-50 pb-24 font-sans">
+
+    <div id="edit-tab" class="p-4">
+        <h1 class="text-2xl font-bold text-slate-800 mb-4 text-center">Generador de Reporte</h1>
+        
+        <form id="registroForm" class="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 space-y-4">
+            
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Distribuidora</label>
+                <select id="distribuidora" class="w-full p-3 bg-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="AES">AES</option>
+                    <option value="DELSUR">DELSUR</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hora Inicio</label>
+                    <input type="time" id="horaInicio" onchange="calcularDiferencia()" class="w-full p-3 bg-slate-100 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Hora Fin</label>
+                    <input type="time" id="horaFin" onchange="calcularDiferencia()" class="w-full p-3 bg-slate-100 rounded-lg">
+                </div>
+            </div>
+
+            <div id="displayTiempo" class="text-center py-2 bg-green-50 text-green-700 font-bold rounded-lg border border-green-200 hidden">
+                Total: <span id="resultadoHoras">0:00</span> horas
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Sitio (ID)</label>
+                <input type="text" id="sitioInput" list="listaSitios" oninput="autocompletarTorrero()" placeholder="Escribe el ID del sitio..." class="w-full p-3 bg-slate-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                <datalist id="listaSitios"></datalist>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Torrero</label>
+                <input type="text" id="torreroInput" readonly placeholder="Se autocompletará..." class="w-full p-3 bg-slate-200 rounded-lg outline-none text-slate-600">
+            </div>
+
+            <input type="text" id="asignado" placeholder="Técnico Asignado" class="w-full p-3 bg-slate-100 rounded-lg outline-none">
+            <textarea id="comentario" rows="3" placeholder="Comentario manual..." class="w-full p-3 bg-slate-100 rounded-lg outline-none"></textarea>
+
+            <button type="button" onclick="enviarDatos()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-transform">
+                GUARDAR EN GOOGLE SHEETS
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        let baseDatosSitios = [];
+
+        // Cargar datos del CSV al iniciar
+        window.onload = async () => {
+            try {
+                const response = await fetch(CSV_URL);
+                const data = await response.text();
+                const filas = data.split('\n').slice(1); // Saltar encabezado
+                
+                const datalist = document.getElementById('listaSitios');
+                
+                filas.forEach(fila => {
+                    const columnas = fila.split(',');
+                    if(columnas.length >= 2) {
+                        const sitio = { id: columnas[0].trim(), torrero: columnas[1].trim() };
+                        baseDatosSitios.push(sitio);
+                        
+                        // Agregar al datalist del HTML
+                        let option = document.createElement('option');
+                        option.value = sitio.id;
+                        datalist.appendChild(option);
+                    }
+                });
+                console.log("Base de datos cargada");
+            } catch (e) {
+                console.error("Error cargando CSV:", e);
+            }
+        };
+
+        function autocompletarTorrero() {
+            const valorInput = document.getElementById('sitioInput').value;
+            const torreroInput = document.getElementById('torreroInput');
+            
+            const match = baseDatosSitios.find(s => s.id === valorInput);
+            if (match) {
+                torreroInput.value = match.torrero;
+            } else {
+                torreroInput.value = "";
+            }
+        }
+
+        function calcularDiferencia() {
+            const inicio = document.getElementById('horaInicio').value;
+            const fin = document.getElementById('horaFin').value;
+            if (inicio && fin) {
+                const [hI, mI] = inicio.split(':').map(Number);
+                const [hF, mF] = fin.split(':').map(Number);
+                let diff = (hF * 60 + mF) - (hI * 60 + mI);
+                if (diff < 0) diff += 1440;
+                const res = `${Math.floor(diff/60)}:${(diff%60).toString().padStart(2,'0')}`;
+                document.getElementById('resultadoHoras').innerText = res;
+                document.getElementById('displayTiempo').classList.remove('hidden');
+                return res + " horas";
+            }
+            return "";
+        }
+
+        function enviarDatos() {
+            // Aquí llamarías a google.script.run para enviar al Sheet
+            alert("Datos procesados listos para enviar");
+        }
+    </script>
+</body>
+</html>
