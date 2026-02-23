@@ -3,30 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>REPORTE RÁPIDO V5</title>
+    <title>REPORTE CORTES PRO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        table { border-spacing: 0; border-collapse: collapse; }
+        .editable-title:focus { outline: none; border-bottom: 2px solid #00d4ff; }
+        .no-print-ui { display: flex; }
+        .is-capturing .no-print-ui { display: none !important; }
+    </style>
 </head>
 <body class="bg-[#0f172a] text-white pb-20 font-sans">
 
     <div class="p-2 max-w-7xl mx-auto">
-        <div id="capture-area" class="bg-white p-6 rounded shadow-2xl text-slate-900">
-            <div class="text-center border-b-4 border-slate-800 pb-4 mb-4">
-                <h1 class="text-3xl font-black tracking-tighter uppercase italic text-slate-800 leading-none">Corte Programado</h1>
-                <p class="text-sm font-bold text-slate-500 uppercase mt-1">Reporte Operativo - 22/02/2026</p>
+        <div id="capture-area" class="bg-white p-8 rounded shadow-2xl text-slate-900">
+            
+            <div class="text-center border-b-4 border-slate-800 pb-4 mb-6">
+                <input type="text" value="CORTE PROGRAMADO 22/2/2026" 
+                       class="editable-title w-full text-center text-3xl font-black uppercase italic text-slate-800 bg-transparent">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Reporte de Infraestructura Crítica</p>
             </div>
 
-            <table class="w-full border-collapse border border-slate-400 text-[10px]">
+            <table class="w-full border-2 border-slate-800 text-[11px]">
                 <thead>
                     <tr class="bg-slate-800 text-white uppercase italic">
-                        <th class="border border-slate-400 p-2">Distribuidora</th>
-                        <th class="border border-slate-400 p-2">Horario</th>
-                        <th class="border border-slate-400 p-2 w-24">ID Sitio</th>
-                        <th class="border border-slate-400 p-2">Nombre del Sitio</th>
-                        <th class="border border-slate-400 p-2">Torrero</th>
+                        <th class="border border-slate-400 p-2 w-24">Distribuidora</th>
+                        <th class="border border-slate-400 p-2 w-40">Horario</th>
+                        <th class="border border-slate-400 p-2">Sitio (Nombre / ID)</th>
+                        <th class="border border-slate-400 p-2 w-20">Torrero</th>
                         <th class="border border-slate-400 p-2">Comentario</th>
-                        <th class="border border-slate-400 p-2">NIC</th>
+                        <th class="border border-slate-400 p-2 w-24">NIC</th>
                     </tr>
                 </thead>
                 <tbody id="tabla-cuerpo">
@@ -34,61 +41,56 @@
             </table>
         </div>
 
-        <div class="mt-6 space-y-4 no-print px-4">
-            <div class="flex gap-2">
-                <button onclick="addRow()" class="flex-1 bg-slate-700 py-4 rounded-xl font-bold uppercase border border-slate-500 hover:bg-slate-600 transition-all">
+        <div class="mt-8 space-y-4 no-print px-4">
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="addRow()" class="bg-slate-700 py-4 rounded-2xl font-bold uppercase border border-slate-500 hover:bg-slate-600 transition-all">
                     ＋ Añadir Sitio
                 </button>
-                <button onclick="copiarUltimoHorario()" class="flex-1 bg-amber-600 py-4 rounded-xl font-bold uppercase border border-amber-500 hover:bg-amber-500 transition-all text-[10px]">
-                    🕒 Repetir Horario
-                </button>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button onclick="confirmAndSnapshot()" class="bg-white text-slate-900 p-5 rounded-xl font-black uppercase shadow-lg border-2 border-slate-200 active:scale-95 transition-transform">
-                    📸 Generar Imagen PNG
-                </button>
-                <button onclick="downloadCSV()" class="bg-emerald-600 text-white p-5 rounded-xl font-black uppercase active:scale-95 transition-transform">
-                    📊 Exportar CSV
+                <button onclick="confirmAndSnapshot()" class="bg-white text-slate-900 p-4 rounded-2xl font-black uppercase shadow-xl border-2 border-slate-200 active:scale-95 transition-transform">
+                    📸 Generar Reporte PNG
                 </button>
             </div>
         </div>
     </div>
 
     <template id="row-edit-temp">
-        <tr class="fila-dato bg-white border-b border-slate-100">
-            <td class="border border-slate-400 p-1 text-center">
-                <select class="dist w-full outline-none font-bold uppercase text-[9px] bg-transparent cursor-pointer">
+        <tr class="fila-dato bg-white">
+            <td class="border border-slate-400 p-1 text-center group">
+                <select class="dist w-full outline-none font-bold uppercase text-[10px] bg-transparent no-print-ui">
+                    <option value="">--</option>
                     <option value="AES">AES</option>
                     <option value="DELSUR">DELSUR</option>
-                    <option value=" ">--</option>
                 </select>
+                <div class="dist-val hidden font-black text-slate-800"></div>
             </td>
+            
             <td class="border border-slate-400 p-1">
-                <div class="flex flex-col gap-1 items-center no-print-content">
+                <div class="no-print-ui flex-col items-center gap-1">
                     <div class="flex items-center gap-1">
-                        <input type="time" onchange="syncHorarioText(this)" class="h-in bg-slate-100 border border-slate-300 rounded text-[9px] p-0.5">
-                        <span class="text-[8px] font-bold text-slate-400">A</span>
-                        <input type="time" onchange="syncHorarioText(this)" class="h-out bg-slate-100 border border-slate-300 rounded text-[9px] p-0.5">
+                        <input type="time" onchange="updateRowVisuals(this)" class="h-in bg-slate-50 border rounded text-[9px] p-0.5">
+                        <input type="time" onchange="updateRowVisuals(this)" class="h-out bg-slate-50 border rounded text-[9px] p-0.5">
                     </div>
                 </div>
-                <div class="horario-final text-center font-bold text-[9px] uppercase mt-1 text-slate-800"></div>
+                <div class="horario-txt text-center font-bold text-[10px] uppercase text-slate-700 mt-1"></div>
             </td>
-            <td class="border border-slate-400 p-1 relative">
-                <input type="text" oninput="buscarSitio(this)" placeholder="ID..." class="id-sitio w-full outline-none uppercase font-black text-blue-800 text-center">
-                <div class="sug-box hidden absolute left-0 bg-white border border-slate-400 w-64 z-50 shadow-2xl max-h-48 overflow-y-auto"></div>
+
+            <td class="border border-slate-400 p-2 relative">
+                <input type="text" oninput="searchByName(this)" placeholder="Escriba nombre del sitio..." 
+                       class="nombre-input w-full outline-none uppercase font-bold text-slate-800 placeholder:normal-case placeholder:font-normal placeholder:text-slate-300">
+                <div class="id-val text-[9px] text-blue-600 font-mono font-bold mt-1">ID: ---</div>
+                <div class="sug-box hidden absolute left-0 bg-white border-2 border-slate-800 w-full z-50 shadow-2xl max-h-60 overflow-y-auto"></div>
             </td>
+
+            <td class="border border-slate-400 p-1 text-center italic font-medium text-slate-500 uppercase text-[9px] bg-slate-50/50">
+                <input type="text" class="torrero-input w-full bg-transparent text-center outline-none" readonly>
+            </td>
+
             <td class="border border-slate-400 p-1">
-                <input type="text" class="nombre-sitio w-full outline-none uppercase text-slate-700 font-bold" readonly>
+                <textarea rows="1" class="comm-input w-full outline-none text-[10px] italic leading-tight resize-none bg-transparent" placeholder="Observaciones..."></textarea>
             </td>
-            <td class="border border-slate-400 p-1">
-                <input type="text" class="torrero w-full outline-none text-center uppercase italic text-slate-500 font-medium" readonly>
-            </td>
-            <td class="border border-slate-400 p-1">
-                <input type="text" class="comentario w-full outline-none italic text-slate-600 text-[9px]" placeholder="...">
-            </td>
-            <td class="border border-slate-400 p-1">
-                <input type="text" class="nic w-full outline-none text-center font-mono font-bold text-slate-900 bg-slate-50" readonly>
+
+            <td class="border border-slate-400 p-1 text-center font-mono font-bold text-slate-900">
+                <input type="text" class="nic-input w-full bg-transparent text-center outline-none" readonly>
             </td>
         </tr>
     </template>
@@ -101,19 +103,19 @@
             Papa.parse(CSV_URL, {
                 download: true, header: false,
                 complete: (r) => {
-                    dbSitios = r.data.slice(1).map(row => ({ id: row[0], name: row[1], owner: row[2], nic: row[4] })).filter(i => i.id);
-                    for(let i=0; i<3; i++) addRow();
+                    dbSitios = r.data.slice(1).map(row => ({
+                        id: row[0], name: row[1], owner: row[2], nic: row[4]
+                    })).filter(i => i.name);
+                    addRow();
                 }
             });
         };
 
         function addRow() {
-            const body = document.getElementById('tabla-cuerpo');
             const temp = document.getElementById('row-edit-temp').content.cloneNode(true);
-            body.appendChild(temp);
+            document.getElementById('tabla-cuerpo').appendChild(temp);
         }
 
-        // Función de conversión AM/PM rápida
         function t12(t) {
             if(!t) return "";
             let [h, m] = t.split(':');
@@ -122,44 +124,35 @@
             return `${h}:${m}${ampm}`;
         }
 
-        function syncHorarioText(el) {
+        function updateRowVisuals(el) {
             const fila = el.closest('tr');
-            const inTime = fila.querySelector('.h-in').value;
-            const outTime = fila.querySelector('.h-out').value;
-            if(inTime && outTime) {
-                fila.querySelector('.horario-final').innerText = `${t12(inTime)} A ${t12(outTime)}`;
+            const hIn = fila.querySelector('.h-in').value;
+            const hOut = fila.querySelector('.h-out').value;
+            if(hIn && hOut) {
+                fila.querySelector('.horario-txt').innerText = `${t12(hIn)} A ${t12(hOut)}`;
             }
         }
 
-        function copiarUltimoHorario() {
-            const filas = document.querySelectorAll('.fila-dato');
-            if(filas.length < 2) return;
-            const ultima = filas[filas.length - 2]; // La penúltima (antes de la nueva)
-            const nueva = filas[filas.length - 1];
-            
-            nueva.querySelector('.h-in').value = ultima.querySelector('.h-in').value;
-            nueva.querySelector('.h-out').value = ultima.querySelector('.h-out').value;
-            syncHorarioText(nueva.querySelector('.h-in'));
-        }
-
-        function buscarSitio(el) {
+        function searchByName(el) {
             const val = el.value.toLowerCase();
-            const box = el.nextElementSibling;
+            const box = el.nextElementSibling.nextElementSibling;
             box.innerHTML = '';
             if(val.length < 2) return box.classList.add('hidden');
-            const filtered = dbSitios.filter(s => s.id.toLowerCase().includes(val) || s.name.toLowerCase().includes(val)).slice(0, 6);
-            if(filtered.length > 0) {
+
+            const matches = dbSitios.filter(s => s.name.toLowerCase().includes(val) || s.id.toLowerCase().includes(val)).slice(0, 8);
+            
+            if(matches.length > 0) {
                 box.classList.remove('hidden');
-                filtered.forEach(m => {
+                matches.forEach(m => {
                     const d = document.createElement('div');
-                    d.className = 'p-2 border-b hover:bg-slate-100 cursor-pointer text-[10px]';
-                    d.innerHTML = `<b>${m.id}</b> - ${m.name}`;
+                    d.className = 'p-3 border-b hover:bg-slate-100 cursor-pointer text-[11px] flex justify-between';
+                    d.innerHTML = `<span>${m.name}</span> <b class="text-blue-600">${m.id}</b>`;
                     d.onclick = () => {
                         const fila = el.closest('tr');
-                        fila.querySelector('.id-sitio').value = m.id;
-                        fila.querySelector('.nombre-sitio').value = m.name;
-                        fila.querySelector('.torrero').value = m.owner || "N/A";
-                        fila.querySelector('.nic').value = m.nic || "S/N";
+                        el.value = m.name;
+                        fila.querySelector('.id-val').innerText = "ID: " + m.id;
+                        fila.querySelector('.torrero-input').value = m.owner || "N/A";
+                        fila.querySelector('.nic-input').value = m.nic || "S/N";
                         box.classList.add('hidden');
                     };
                     box.appendChild(d);
@@ -168,30 +161,30 @@
         }
 
         function confirmAndSnapshot() {
-            if(confirm("¿Los horarios y NIC son correctos?")) {
-                // Ocultamos los inputs de tiempo para que solo quede el texto formateado en el PNG
-                document.querySelectorAll('.no-print-content').forEach(i => i.style.display = 'none');
-                
-                html2canvas(document.getElementById('capture-area'), { scale: 3 }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `Reporte_Corte_Programado.png`;
-                    link.href = canvas.toDataURL();
-                    link.click();
-                    document.querySelectorAll('.no-print-content').forEach(i => i.style.display = 'flex');
-                });
-            }
-        }
-
-        function downloadCSV() {
-            let csv = "Distribuidora,Horario,ID_Sitio,Nombre_Sitio,Torrero,Comentario,NIC\n";
-            document.querySelectorAll('.fila-dato').forEach(r => {
-                const id = r.querySelector('.id-sitio').value;
-                if(id) {
-                    csv += `"${r.querySelector('.dist').value}","${r.querySelector('.horario-final').innerText}","${id}","${r.querySelector('.nombre-sitio').value}","${r.querySelector('.torrero').value}","${r.querySelector('.comentario').value}","${r.querySelector('.nic').value}"\n`;
-                }
+            // Lógica de visualización previa a captura
+            const captureArea = document.getElementById('capture-area');
+            captureArea.classList.add('is-capturing');
+            
+            // Sincronizar selectores de Dist a texto plano
+            document.querySelectorAll('.fila-dato').forEach(f => {
+                f.querySelector('.dist-val').innerText = f.querySelector('.dist').value;
+                f.querySelector('.dist-val').classList.remove('hidden');
+                f.querySelector('.dist').classList.add('hidden');
             });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            window.open(URL.createObjectURL(blob));
+
+            html2canvas(captureArea, { scale: 3 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Reporte_Corte_Programado.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+                
+                // Revertir cambios visuales
+                captureArea.classList.remove('is-capturing');
+                document.querySelectorAll('.fila-dato').forEach(f => {
+                    f.querySelector('.dist-val').classList.add('hidden');
+                    f.querySelector('.dist').classList.remove('hidden');
+                });
+            });
         }
     </script>
 </body>
