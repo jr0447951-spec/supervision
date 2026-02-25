@@ -40,7 +40,9 @@
         </div>
         <div class="flex gap-2 mb-6">
             <input type="date" id="fecha-filtro" class="flex-1 p-4 rounded-xl bg-slate-800 text-white border-2 border-slate-700 font-bold outline-none focus:border-amber-500">
-            <button onclick="consultarPorDia()" class="bg-amber-600 px-6 rounded-xl font-black uppercase text-sm active:scale-95 transition-all">Buscar</button>
+            <button onclick="abrirHistorial()" class="flex-1 bg-white py-4 rounded-xl font-bold text-[10px] uppercase text-slate-900 shadow-lg border border-slate-200">
+    <span style="filter: grayscale(1) contrast(2);">📅</span> Día
+</button>
         </div>
         <div id="resultados-historial" class="flex-1 overflow-y-auto space-y-4 pb-10">
             <p class="text-center text-slate-500 italic mt-10">Ingresa una fecha para ver registros...</p>
