@@ -242,16 +242,21 @@
 
         // 🔁 REINSERTAR FILAS EDITABLES
         filtrados.forEach(f => {
-            addRow();
-            const fila = document.querySelector('.fila-dato:last-child');
+    addRow();
+    const fila = document.querySelector('.fila-dato:last-child');
 
-            fila.querySelector('.dist').value = f[1];
-            fila.querySelector('.horario-txt').innerText = f[2];
-            fila.querySelector('.nombre-input').value = f[3];
-            fila.querySelector('.torrero-txt').innerText = f[4];
-            fila.querySelector('.tech-display').innerText = f[5];
-            fila.querySelector('.comm-input').value = f[6];
-        });
+    fila.querySelector('.dist').value = f[1];
+    fila.querySelector('.horario-txt').innerText = f[2];
+    fila.querySelector('.nombre-input').value = f[3];
+    fila.querySelector('.nombre-val').innerText = f[3]; // Para mostrar en captura
+
+    fila.querySelector('.id-text').innerText = f[7] || "---";  // ID
+    fila.querySelector('.nic-txt').innerText = f[8] || "S/N"; // NIC
+
+    fila.querySelector('.torrero-txt').innerText = f[4];
+    fila.querySelector('.tech-display').innerText = f[5];
+    fila.querySelector('.comm-input').value = f[6];
+});
 
         cerrarHistorial();
         saveLocal();
