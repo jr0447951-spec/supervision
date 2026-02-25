@@ -132,17 +132,47 @@
 
     <script>
         const SITES_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-        const WEBAPP_URL = 'ESCRIBE_AQUI_TU_URL_DE_APPS_SCRIPT'; 
+        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyKbz3HxPXxivgWPME_ltx8Vie9v-MV4x25j2Cz5w_7tEo4BlJXWJvJCdu3Qq1uRVpNzA/exec'; 
+        const TECNICOS_URL = 'tecnicos.csv';
         
-        let dbSitios = [], dbTecnicos = ["TECNICO 1", "TECNICO 2", "TECNICO 3", "TECNICO 4"], currentTechRow = null;
+        let dbSitios = [], dbTecnicos = [], currentTechRow = null;
 
-        window.onload = () => {
-            Papa.parse(SITES_URL, { download: true, complete: (r) => {
-                dbSitios = r.data.slice(1).map(row => ({ id: row[0], name: row[1], owner: row[16], nic: row[4] })).filter(i => i.name);
-                loadSaved();
-            }});
+        wwindow.onload = () => {
+
+    // Cargar sitios
+    Papa.parse(SITES_URL, {
+        download: true,
+        complete: (r) => {
+            dbSitios = r.data.slice(1).map(row => ({
+                id: row[0],
+                name: row[1],
+                owner: row[16],
+                nic: row[4]
+            })).filter(i => i.name);
+
+            loadSaved();
+        }
+    });
+
+    // Cargar técnicos desde archivo local
+    Papa.parse(TECNICOS_URL, {
+        download: true,
+        complete: (r) => {
+
+            dbTecnicos = [...new Set(
+                r.data
+                  .slice(1)
+                  .map(row => row[0]?.trim())
+                  .filter(t => t)
+            )];
+
             renderStaff();
-        };
+        },
+        error: (err) => {
+            console.error("Error cargando tecnicos.csv:", err);
+        }
+    });
+};
 
         function addRow() {
             const temp = document.getElementById('row-temp').content.cloneNode(true);
