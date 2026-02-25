@@ -215,27 +215,54 @@
         function abrirHistorial() { document.getElementById('modal-historial').classList.remove('hidden'); }
         function cerrarHistorial() { document.getElementById('modal-historial').classList.add('hidden'); }
 
-        async function consultarPorDia() {
-            const fechaInput = document.getElementById('fecha-filtro').value;
-            if(!fechaInput) return alert("Selecciona fecha");
-            const resBox = document.getElementById('resultados-historial');
-            resBox.innerHTML = '<p class="text-amber-400 text-center animate-pulse">Consultando base de datos...</p>';
-            
-            try {
-                const response = await fetch(WEBAPP_URL);
-                const data = await response.json();
-                const fechaBuscada = fechaInput.split('-').reverse().join('/'); // Convierte 2026-02-25 a 25/02/2026
-                const filtrados = data.filter(f => f[0].toString().includes(fechaBuscada));
-                
-                resBox.innerHTML = filtrados.length ? '' : '<p class="text-slate-500 text-center">No hay registros para este día.</p>';
-                filtrados.forEach(f => {
-                    const d = document.createElement('div');
-                    d.className = "bg-white p-4 rounded-xl text-slate-900 border-l-8 border-amber-500 shadow-lg";
-                    d.innerHTML = `<div class="flex justify-between font-black text-blue-900"><span>${f[3]}</span> <span class="text-[10px] bg-slate-100 px-2 rounded">${f[2]}</span></div><div class="text-[10px] text-slate-500 font-bold uppercase mt-1">Equipo: ${f[5]}</div><div class="mt-2 text-[11px] italic border-t pt-2 text-slate-700">${f[6]}</div>`;
-                    resBox.appendChild(d);
-                });
-            } catch(e) { alert("Error al conectar con la nube"); }
+       async function consultarPorDia() {
+    const fechaInput = document.getElementById('fecha-filtro').value;
+    if (!fechaInput) return alert("Selecciona fecha");
+
+    const fechaBuscada = fechaInput.split('-').reverse().join('/');
+    
+    try {
+        const response = await fetch(WEBAPP_URL);
+        const data = await response.json();
+
+        const filtrados = data.filter(f => 
+            f[0].toString().includes(fechaBuscada)
+        );
+
+        if (filtrados.length === 0) {
+            alert("No hay registros para este día.");
+            return;
         }
+
+        // 🧹 LIMPIAR TABLA ACTUAL
+        document.getElementById('tabla-cuerpo').innerHTML = "";
+
+        // 📝 ACTUALIZAR TITULO
+        document.getElementById('main-title').value = `REPORTE DE CORTE - ${fechaBuscada}`;
+
+        // 🔁 REINSERTAR FILAS EDITABLES
+        filtrados.forEach(f => {
+            addRow();
+            const fila = document.querySelector('.fila-dato:last-child');
+
+            fila.querySelector('.dist').value = f[1];
+            fila.querySelector('.horario-txt').innerText = f[2];
+            fila.querySelector('.nombre-input').value = f[3];
+            fila.querySelector('.torrero-txt').innerText = f[4];
+            fila.querySelector('.tech-display').innerText = f[5];
+            fila.querySelector('.comm-input').value = f[6];
+        });
+
+        cerrarHistorial();
+        saveLocal();
+
+        alert("✅ Reporte cargado. Puedes editarlo.");
+
+    } catch (e) {
+        alert("Error al conectar con la nube");
+        console.error(e);
+    }
+}
 
         // --- CAPTURA ---
         function confirmAndSnapshot() {
