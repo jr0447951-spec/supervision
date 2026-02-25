@@ -17,7 +17,7 @@
             touch-action: manipulation; 
         }
 
-        /* Contenedor de tabla para evitar que se descomponga en móvil */
+        /* Contenedor de tabla adaptable */
         .table-container {
             width: 100%;
             overflow-x: auto;
@@ -27,32 +27,44 @@
         }
 
         table { 
-            min-width: 900px; /* Asegura que la tabla mantenga su forma */
+            width: 100%;
+            min-width: 900px; /* Mantiene legibilidad en móvil */
             border-collapse: collapse; 
             background: white; 
+            table-layout: fixed;
         }
 
-        th { background-color: #1e3a8a; color: white; font-size: 11px; padding: 12px 4px; border: 1px solid #334155; }
-        td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: top; color: #000; }
+        th { background-color: #1e3a8a; color: white; font-size: 11px; padding: 12px 4px; border: 1px solid #334155; text-transform: uppercase; }
+        td { border: 1px solid #cbd5e1; padding: 8px; vertical-align: top; color: #000; overflow: hidden; }
 
-        /* Inputs más grandes para móvil */
-        input, select, textarea {
-            font-size: 14px !important; /* Evita zoom automático en iOS */
-            padding: 8px;
-            border-radius: 6px;
+        /* Anchos de columna proporcionales */
+        .col-dist { width: 70px; }
+        .col-horario { width: 120px; }
+        .col-sitio { width: 220px; }
+        .col-torrero { width: 100px; }
+        .col-comm { width: auto; }
+        .col-nic { width: 90px; }
+        .col-tech { width: 130px; }
+
+        /* Ajustes para la captura de imagen */
+        .is-capturing {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 1050px !important; /* Ancho fijo para que la imagen salga perfecta */
         }
-
+        .is-capturing .table-container {
+            overflow: visible !important;
+            border-radius: 0;
+            width: 100% !important;
+        }
+        .is-capturing table {
+            min-width: 100% !important;
+            width: 100% !important;
+        }
         .is-capturing .no-print-ui { display: none !important; }
-        .is-capturing .table-container { overflow: visible; border-radius: 0; }
-        
-        #modal-tecnicos { 
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
-            z-index: 9999; align-items: center; justify-content: center; padding: 20px;
-        }
 
+        /* Estilos generales */
         .wrap-text { white-space: pre-wrap; word-break: break-word; font-size: 10px; }
-        
-        /* Sugerencias de búsqueda flotantes */
         .sug-box {
             position: absolute;
             z-index: 100;
@@ -62,6 +74,11 @@
             overflow-y: auto;
             border: 2px solid #1e40af;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        }
+        
+        #modal-tecnicos { 
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); 
+            z-index: 9999; align-items: center; justify-content: center; padding: 20px;
         }
     </style>
 </head>
@@ -81,28 +98,27 @@
     </div>
 
     <div class="max-w-full mx-auto">
-        
         <div class="bg-slate-800 p-4 rounded-t-xl no-print-ui border-b border-slate-700">
             <input type="text" id="main-title" value="REPORTE DE CORTE - 22/02/2026" oninput="saveLocal()"
                    class="w-full text-center text-xl font-black uppercase italic bg-transparent border-none outline-none text-blue-400">
         </div>
 
-        <div id="capture-area" class="bg-white p-2">
-            <div class="hidden block-on-capture text-center py-4 border-b-4 border-blue-900 mb-4">
-                <h1 id="title-display" class="text-2xl font-black uppercase italic text-blue-900"></h1>
+        <div id="capture-area" class="bg-white">
+            <div class="hidden block-on-capture text-center py-6 border-b-4 border-blue-900 bg-white">
+                <h1 id="title-display" class="text-3xl font-black uppercase italic text-blue-900"></h1>
             </div>
 
             <div class="table-container">
-                <table>
+                <table id="main-table">
                     <thead>
                         <tr>
-                            <th style="width: 70px;">DIST.</th>
-                            <th style="width: 130px;">HORARIO</th>
-                            <th style="width: 220px;">SITIO / ID</th>
-                            <th style="width: 100px;">TORRERO</th>
-                            <th style="width: 250px;">COMENTARIO</th>
-                            <th style="width: 90px;">NIC</th>
-                            <th style="width: 140px;">ASIGNADO</th>
+                            <th class="col-dist">DIST.</th>
+                            <th class="col-horario">HORARIO</th>
+                            <th class="col-sitio">SITIO / ID</th>
+                            <th class="col-torrero">TORRERO</th>
+                            <th class="col-comm">COMENTARIO</th>
+                            <th class="col-nic">NIC</th>
+                            <th class="col-tech">ASIGNADO</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-cuerpo"></tbody>
@@ -111,17 +127,17 @@
         </div>
 
         <div class="fixed bottom-0 left-0 right-0 p-3 bg-slate-900/90 backdrop-blur border-t border-slate-700 flex gap-2 no-print-ui z-50">
-            <button onclick="addRow()" class="flex-1 bg-slate-700 py-3 rounded-lg font-bold text-[10px] uppercase">＋ Fila</button>
-            <button onclick="confirmAndSnapshot()" class="flex-1 bg-blue-600 py-3 rounded-lg font-bold text-[10px] uppercase">📸 Imagen</button>
-            <button onclick="sendToSheets()" class="flex-1 bg-emerald-600 py-3 rounded-lg font-bold text-[10px] uppercase">☁️ Guardar</button>
-            <button onclick="clearAll()" class="bg-red-600/20 text-red-400 px-3 py-3 rounded-lg font-bold text-[10px] uppercase border border-red-900/50">DEL</button>
+            <button onclick="addRow()" class="flex-1 bg-slate-700 py-3 rounded-lg font-bold text-[10px] uppercase text-white">＋ Fila</button>
+            <button onclick="confirmAndSnapshot()" class="flex-1 bg-blue-600 py-3 rounded-lg font-bold text-[10px] uppercase text-white">📸 Imagen</button>
+            <button onclick="sendToSheets()" class="flex-1 bg-emerald-600 py-3 rounded-lg font-bold text-[10px] uppercase text-white">☁️ Guardar</button>
+            <button onclick="clearAll()" class="bg-red-600/20 text-red-400 px-4 py-3 rounded-lg font-bold text-[10px] uppercase border border-red-900/50">DEL</button>
         </div>
     </div>
 
     <template id="row-edit-temp">
         <tr class="fila-dato">
             <td class="text-center">
-                <select class="dist w-full text-[11px] font-bold uppercase no-print-ui border bg-slate-50">
+                <select class="dist w-full text-[11px] font-bold uppercase no-print-ui border bg-slate-50 p-1">
                     <option value="">-</option><option value="AES">AES</option><option value="DELSUR">DELSUR</option>
                 </select>
                 <div class="dist-val hidden font-black text-blue-900 text-[11px]"></div>
@@ -135,8 +151,8 @@
                 <div class="duration-txt font-bold text-[8px] text-blue-600 text-center italic"></div>
             </td>
             <td class="relative">
-                <input type="text" oninput="searchByName(this)" class="nombre-input w-full font-bold text-blue-800 text-[12px] no-print-ui border p-2" placeholder="Toca para escribir sitio...">
-                <div class="nombre-val hidden font-black text-blue-800 text-[11px] uppercase wrap-text"></div>
+                <input type="text" oninput="searchByName(this)" class="nombre-input w-full font-bold text-blue-800 text-[12px] no-print-ui border p-2" placeholder="Sitio...">
+                <div class="nombre-val hidden font-black text-blue-800 text-[11px] uppercase wrap-text leading-tight"></div>
                 <div class="id-val text-[9px] font-bold text-slate-400 mt-1">ID: <span class="id-text text-slate-900">---</span></div>
                 <div class="sug-box hidden"></div>
             </td>
@@ -144,14 +160,14 @@
                 <div class="torrero-txt wrap-text font-bold text-slate-500 uppercase text-[10px] text-center">---</div>
             </td>
             <td>
-                <textarea rows="3" class="comm-input w-full text-[11px] italic border-b no-print-ui bg-slate-50 p-1" placeholder="Comentarios..." oninput="saveLocal()"></textarea>
-                <div class="comm-val hidden wrap-text italic text-[10px]"></div>
+                <textarea rows="2" class="comm-input w-full text-[11px] italic border-b no-print-ui bg-slate-50 p-1" placeholder="Nota..." oninput="saveLocal()"></textarea>
+                <div class="comm-val hidden wrap-text italic text-[10px] leading-tight"></div>
             </td>
             <td>
                 <div class="nic-txt font-mono font-black text-slate-900 text-[11px] text-center">---</div>
             </td>
             <td>
-                <button onclick="abrirModalTecnicos(this)" class="no-print-ui w-full bg-blue-50 text-[10px] font-bold border rounded p-2 mb-1">＋ EQUIPO</button>
+                <button onclick="abrirModalTecnicos(this)" class="no-print-ui w-full bg-blue-50 text-[9px] font-bold border rounded p-2 mb-1">＋ EQUIPO</button>
                 <div class="tech-display wrap-text text-[9px] font-bold text-slate-700 uppercase leading-tight"></div>
             </td>
         </tr>
@@ -169,12 +185,9 @@
                 loadSaved();
             }});
             
-            Papa.parse('tecnicos.csv', { download: true, complete: (r) => {
-                dbTecnicos = r.data.map(row => row[0]).filter(n => n && n !== "Nombre");
-                renderStaff();
-            }, error: () => {
-                dbTecnicos = ["EJEMPLO 1", "EJEMPLO 2"]; renderStaff();
-            }});
+            // Simulación de técnicos si no hay CSV
+            dbTecnicos = ["TECNICO A", "TECNICO B", "TECNICO C", "TECNICO D"];
+            renderStaff();
         };
 
         function addRow() {
@@ -207,7 +220,6 @@
                 d.className = 'p-4 border-b active:bg-blue-100 text-[12px] flex justify-between font-bold text-slate-800';
                 d.innerHTML = `<span>${m.name}</span> <span class="text-blue-600">${m.id}</span>`;
                 d.onclick = (e) => {
-                    e.stopPropagation();
                     const f = el.closest('tr');
                     el.value = m.name;
                     f.querySelector('.nombre-val').innerText = m.name;
@@ -229,9 +241,11 @@
 
         function cerrarModal() {
             const sels = [];
-            document.querySelectorAll('.tech-chip.bg-blue-600').forEach(c => sels.push(c.innerText));
+            document.querySelectorAll('.tech-chip.selected').forEach(c => sels.push(c.innerText));
             if(currentTechRow) currentTechRow.querySelector('.tech-display').innerText = sels.join(', ');
             document.getElementById('modal-tecnicos').style.display = 'none';
+            // Limpiar selección para la próxima
+            document.querySelectorAll('.tech-chip').forEach(c => c.classList.remove('selected', 'bg-blue-600', 'text-white'));
             saveLocal();
         }
 
@@ -240,9 +254,13 @@
             c.innerHTML = '';
             dbTecnicos.forEach(t => {
                 const d = document.createElement('div');
-                d.className = "tech-chip p-4 border rounded-xl font-bold text-[11px] cursor-pointer text-center uppercase bg-slate-50 active:bg-blue-200";
+                d.className = "tech-chip p-4 border rounded-xl font-bold text-[11px] cursor-pointer text-center uppercase bg-slate-50";
                 d.innerText = t;
-                d.onclick = function() { this.classList.toggle('bg-blue-600'); this.classList.toggle('text-white'); };
+                d.onclick = function() { 
+                    this.classList.toggle('selected');
+                    this.classList.toggle('bg-blue-600'); 
+                    this.classList.toggle('text-white'); 
+                };
                 c.appendChild(d);
             });
         }
@@ -276,6 +294,7 @@
             const s = JSON.parse(localStorage.getItem('corte_v16'));
             if(!s) return addRow();
             document.getElementById('main-title').value = s.t;
+            document.getElementById('tabla-cuerpo').innerHTML = '';
             s.r.forEach(r => {
                 const temp = document.getElementById('row-edit-temp').content.cloneNode(true);
                 const f = temp.querySelector('.fila-dato');
@@ -296,8 +315,11 @@
         function clearAll() { if(confirm("¿Borrar reporte actual?")) { localStorage.removeItem('corte_v16'); location.reload(); } }
 
         function confirmAndSnapshot() {
-            document.getElementById('title-display').innerText = document.getElementById('main-title').value;
             const area = document.getElementById('capture-area');
+            const title = document.getElementById('main-title').value;
+            document.getElementById('title-display').innerText = title;
+            
+            // Preparar UI para foto
             area.classList.add('is-capturing');
             document.querySelectorAll('.fila-dato').forEach(f => {
                 f.querySelector('.dist-val').innerText = f.querySelector('.dist').value;
@@ -307,11 +329,20 @@
                 f.querySelector('.comm-val').classList.remove('hidden');
             });
 
-            html2canvas(area, { scale: 3, scrollX: 0, scrollY: 0 }).then(canvas => {
+            html2canvas(area, { 
+                scale: 2, 
+                backgroundColor: "#ffffff",
+                width: 1050,
+                onclone: (clonedDoc) => {
+                    clonedDoc.getElementById('title-display').parentElement.classList.remove('hidden');
+                }
+            }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = `Corte_${Date.now()}.png`;
-                link.href = canvas.toDataURL();
+                link.download = `Reporte_${title}.png`;
+                link.href = canvas.toDataURL("image/png");
                 link.click();
+                
+                // Restaurar UI
                 area.classList.remove('is-capturing');
                 document.querySelectorAll('.dist-val, .nombre-val, .comm-val').forEach(el => el.classList.add('hidden'));
             });
@@ -329,7 +360,7 @@
             });
             try {
                 await fetch(WEBAPP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                alert("✅ Datos guardados en Sheets");
+                alert("✅ Datos guardados");
             } catch(e) { alert("❌ Error"); }
         }
     </script>
