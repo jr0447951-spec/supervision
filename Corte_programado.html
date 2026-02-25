@@ -304,10 +304,16 @@
             if(rows.length === 0) return alert("Tabla vacía");
 
             const payload = Array.from(rows).map(f => [
-                fecha, f.querySelector('.dist').value, f.querySelector('.horario-txt').innerText,
-                f.querySelector('.nombre-input').value, f.querySelector('.torrero-txt').innerText,
-                f.querySelector('.tech-display').innerText, f.querySelector('.comm-input').value
-            ]);
+    fecha,
+    f.querySelector('.dist').value,
+    f.querySelector('.horario-txt').innerText,
+    f.querySelector('.nombre-input').value,
+    f.querySelector('.torrero-txt').innerText,
+    f.querySelector('.tech-display').innerText,
+    f.querySelector('.comm-input').value,
+    f.querySelector('.id-text').innerText,   // <-- ID
+    f.querySelector('.nic-txt').innerText    // <-- NIC
+]);
 
             try {
                 btn.innerText = "ESPERE...";
