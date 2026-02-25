@@ -325,7 +325,7 @@
         function renderStaff() {
             const c = document.getElementById('lista-tecnicos');
             dbTecnicos.forEach(t => {
-                const d = document.createElement('div'); d.className = "tech-chip p-3 border rounded-xl font-bold text-[11px] text-center uppercase bg-slate-50 active:bg-blue-100";
+                const d = document.createElement('div'); d.className = "tech-chip p-3 border rounded-xl font-bold text-[11px] text-center uppercase bg-slate-200 text-slate-900 active:bg-blue-100";
                 d.innerText = t; d.onclick = function() { this.classList.toggle('selected'); this.classList.toggle('bg-blue-600'); this.classList.toggle('text-white'); };
                 c.appendChild(d);
             });
