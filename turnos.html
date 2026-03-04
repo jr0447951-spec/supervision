@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS - ADMIN v26</title>
+    <title>SISTEMA TURNOS - ADMIN v27</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -16,10 +16,9 @@
         .main { flex-grow: 1; display: flex; flex-direction: column; }
         .nav-bar { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; overflow-y: auto; flex-grow: 1; }
-        .day { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; min-height: 160px; position: relative; transition: 0.2s; cursor: pointer; }
+        .day { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; min-height: 160px; position: relative; cursor: pointer; }
         .day.weekend { background: #f1f5f9; }
         .day.vacio { background: var(--vacante); border-color: #fcd34d; }
-        .day.is-locked { opacity: 0.8; cursor: default; }
         .day-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; color: #64748b; margin-bottom: 8px; }
         .cell-lock { cursor: pointer; padding: 4px; border-radius: 6px; font-size: 0.8rem; }
         .cell-lock.locked { color: var(--locked); background: #fee2e2; }
@@ -34,58 +33,50 @@
         .btn { padding: 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 8px; }
         .btn-blue { background: var(--accent); color: white; }
         .btn-ghost { background: #f1f5f9; color: #64748b; }
-        .form-group { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
-        .form-group label { font-size: 0.7rem; color: #60a5fa; font-weight: bold; text-transform: uppercase; }
-        input[type="date"] { width: 90%; padding: 8px; border-radius: 5px; border: none; margin: 5px 0; font-family: inherit; }
+        .form-group { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        input[type="date"] { width: 90%; padding: 8px; border-radius: 5px; margin: 5px 0; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2 style="font-size: 1.2rem; margin-bottom: 5px;"><i class="fas fa-database"></i> ADMIN CLOUD</h2>
-    <p style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 25px;">Versión v26 - Instantánea</p>
-    
+    <h2 style="font-size: 1.1rem;"><i class="fas fa-shield-alt"></i> PANEL CONTROL</h2>
     <div class="form-group">
-        <label>Registrar Ausencia</label>
-        <select id="aus-tecnico" style="width:100%; margin-top:5px; padding:5px;"></select>
-        <div style="margin-top:10px;">
-            <label style="font-size:0.6rem; color:#94a3b8">Inicio / Fin</label>
-            <input type="date" id="aus-inicio">
-            <input type="date" id="aus-fin">
-        </div>
-        <button class="btn btn-blue" onclick="registrarAusencia()" style="margin-top:10px; font-size:0.75rem;">GUARDAR AUSENCIA</button>
+        <label style="font-size: 0.7rem; color: #60a5fa;">AUSENCIAS</label>
+        <select id="aus-tecnico" style="width:100%; margin-top:5px;"></select>
+        <input type="date" id="aus-inicio">
+        <input type="date" id="aus-fin">
+        <button class="btn btn-blue" onclick="registrarAusencia()" style="font-size:0.7rem;">GUARDAR</button>
     </div>
-
-    <div style="margin-top:auto; font-size: 0.65rem; color: #475569; border-top: 1px solid #334155; padding-top: 15px;">
-        <i class="fas fa-circle" id="status-icon" style="color:#64748b"></i> <span id="status-text">Carga Inicial...</span>
+    <div style="margin-top:auto; font-size: 0.6rem; color: #475569;">
+        <span id="status-ball">●</span> <span id="status-text">Iniciado</span>
     </div>
 </aside>
 
 <main class="main">
     <div class="nav-bar">
-        <button class="btn" onclick="cambiarMes(-1)" style="width:40px;"><i class="fas fa-chevron-left"></i></button>
+        <button onclick="cambiarMes(-1)" class="btn" style="width:40px;"><i class="fas fa-chevron-left"></i></button>
         <h2 id="mesTitulo"></h2>
-        <button class="btn" onclick="cambiarMes(1)" style="width:40px;"><i class="fas fa-chevron-right"></i></button>
+        <button onclick="cambiarMes(1)" class="btn" style="width:40px;"><i class="fas fa-chevron-right"></i></button>
     </div>
     <div class="grid" id="grid"></div>
 </main>
 
 <div id="modal">
     <div class="modal-box">
-        <h3 id="mFechaStr" style="margin-top:0">Editar Turno</h3>
+        <h3 id="mFechaStr">Editar Día</h3>
         <input type="hidden" id="mId">
-        <label style="font-size:0.7rem; font-weight:bold">GRUPO PRINCIPAL</label>
-        <select id="selP1"></select>
-        <select id="selP2"></select>
-        <label style="font-size:0.7rem; font-weight:bold; margin-top:10px; display:block">GRUPO APOYO</label>
-        <select id="selA1"></select>
-        <select id="selA2"></select>
-        <button class="btn btn-blue" onclick="guardarCambioManual()">ACEPTAR CAMBIOS</button>
-        <button class="btn btn-ghost" onclick="cerrarModal()">CANCELAR</button>
+        <label>PRINCIPAL</label>
+        <select id="selP1"></select><select id="selP2"></select>
+        <label>APOYO</label>
+        <select id="selA1"></select><select id="selA2"></select>
+        <button class="btn btn-blue" onclick="guardarCambioManual()">GUARDAR</button>
+        <button class="btn btn-ghost" onclick="cerrarModal()">CERRAR</button>
     </div>
 </div>
 
 <script>
+    // 1. CONFIGURACIÓN E INICIALIZACIÓN
     const SUPABASE_URL = 'https://qscaisgcttsnoavgfctj.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_IA9XB7EVhEMk2k6MbA4A4Q_M6og7SfO';
     const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -98,7 +89,22 @@
     let dbManual = [];
     let dbLocks = JSON.parse(localStorage.getItem('admin_locks')) || {};
 
-    // 1. RENDER INMEDIATO (Rotación base)
+    // 2. LÓGICA DE ROTACIÓN (DETALLE: MARZO 7 2026)
+    function getRotacion(fecha) {
+        const ref = new Date(2026, 2, 7); 
+        const diff = Math.floor((fecha - ref) / (1000*60*60*24));
+        const dw = fecha.getDay();
+        if (diff < 0 || (dw !== 0 && dw !== 6)) return null;
+        
+        const nSem = Math.floor(diff / 7);
+        const ciclo = nSem % 4;
+        let p, a;
+        if(ciclo===0){ p=1; a=2; } else if(ciclo===1){ p=3; a=4; }
+        else if(ciclo===2){ p=2; a=1; } else if(ciclo===3){ p=4; a=3; }
+        return { p: [tecnicos[gFijos[p][0]], tecnicos[gFijos[p][1]]], a: [tecnicos[gFijos[a][0]], tecnicos[gFijos[a][1]]] };
+    }
+
+    // 3. RENDERIZADO (DETALLE: INSTANTÁNEO)
     function render() {
         const grid = document.getElementById('grid');
         if(!grid) return;
@@ -130,51 +136,36 @@
             const locked = dbLocks[id];
 
             const cell = document.createElement('div');
-            cell.className = `day ${f.getDay()===0||f.getDay()===6?'weekend':''} ${locked?'is-locked':''} ${!p||vacante?'vacio':''}`;
+            cell.className = `day ${f.getDay()===0||f.getDay()===6?'weekend':''} ${vacante?'vacio':''}`;
             let html = `<div class="day-header"><span>${d}</span><i class="fas ${locked?'fa-lock locked':'fa-lock-open unlocked'} cell-lock" onclick="toggleLock(event, '${id}')"></i></div>`;
             if(p) {
                 html += `<div class="turno-card principal"><span class="names">${p.p[0]}<br>${p.p[1]}</span></div>`;
                 if(p.a[0]!=="---" || p.a[1]!=="---") html += `<div class="turno-card"><span class="names">${p.a[0]}<br>${p.a[1]}</span></div>`;
             }
-            if(!p || vacante) html += `<div class="vacante-aviso"><i class="fas fa-user-tag"></i> Puesto disponible</div>`;
+            if(vacante) html += `<div class="vacante-aviso"><i class="fas fa-user-tag"></i> Puesto disponible</div>`;
             cell.innerHTML = html;
             if(!locked) cell.onclick = () => abrirModal(id, p);
             grid.appendChild(cell);
         }
     }
 
-    // 2. CONEXIÓN EN SEGUNDO PLANO
-    async function conectarSupabase() {
+    // 4. CONEXIÓN (DETALLE: EN SEGUNDO PLANO)
+    async function sync() {
         try {
-            const { data: aus, error: err1 } = await supabase.from('ausencias').select('*');
-            const { data: man, error: err2 } = await supabase.from('programacion_manual').select('*');
-            
-            if (err1 || err2) throw new Error("Tablas no configuradas");
-
+            const { data: aus } = await supabase.from('ausencias').select('*');
+            const { data: man } = await supabase.from('programacion_manual').select('*');
             dbAusencias = aus || [];
             dbManual = man || [];
-            document.getElementById('status-icon').style.color = "#10b981";
-            document.getElementById('status-text').innerText = "Nube Sincronizada";
-            render(); // Re-renderiza con datos de la nube
+            document.getElementById('status-ball').style.color = "#10b981";
+            document.getElementById('status-text').innerText = "Nube Conectada";
+            render();
         } catch (e) {
-            document.getElementById('status-icon').style.color = "#f59e0b";
-            document.getElementById('status-text').innerText = "Modo Local Activo";
+            document.getElementById('status-ball').style.color = "#f59e0b";
+            document.getElementById('status-text').innerText = "Local";
         }
     }
 
-    function getRotacion(fecha) {
-        const ref = new Date(2026, 2, 7); 
-        const diff = Math.floor((fecha - ref) / (1000*60*60*24));
-        const dw = fecha.getDay();
-        if (diff < 0 || (dw !== 0 && dw !== 6)) return null;
-        const nSem = Math.floor(diff / 7);
-        const ciclo = nSem % 4;
-        let p, a;
-        if(ciclo===0){ p=1; a=2; } else if(ciclo===1){ p=3; a=4; }
-        else if(ciclo===2){ p=2; a=1; } else if(ciclo===3){ p=4; a=3; }
-        return { p: [tecnicos[gFijos[p][0]], tecnicos[gFijos[p][1]]], a: [tecnicos[gFijos[a][0]], tecnicos[gFijos[a][1]]] };
-    }
-
+    // MODAL Y FUNCIONES EXTRAS
     function abrirModal(id, data) {
         document.getElementById('modal').style.display = 'flex';
         document.getElementById('mId').value = id;
@@ -192,7 +183,7 @@
         const id = document.getElementById('mId').value;
         const body = { fecha: id, p1: selP1.value, p2: selP2.value, a1: selA1.value, a2: selA2.value };
         await supabase.from('programacion_manual').upsert(body);
-        cerrarModal(); conectarSupabase();
+        cerrarModal(); sync();
     }
 
     async function registrarAusencia() {
@@ -201,17 +192,17 @@
         const f = document.getElementById('aus-fin').value;
         if(!t || !i || !f) return alert("Completa los datos");
         await supabase.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
-        conectarSupabase();
+        sync();
     }
 
     function toggleLock(e, id) { e.stopPropagation(); dbLocks[id] = !dbLocks[id]; localStorage.setItem('admin_locks', JSON.stringify(dbLocks)); render(); }
     function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth()+v); render(); }
     function cerrarModal() { document.getElementById('modal').style.display = 'none'; }
     
-    // ARRANQUE
+    // INICIO
     document.getElementById('aus-tecnico').innerHTML = tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
-    render(); // <--- RENDERIZADO INSTANTÁNEO
-    conectarSupabase(); // <--- LUEGO BUSCA EN LA NUBE
+    render(); 
+    sync();
 </script>
 </body>
 </html>
