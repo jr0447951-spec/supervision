@@ -3,186 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS - ADMIN v41</title>
+    <title>SISTEMA TURNOS - CLOUD v42</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; --danger: #ef4444; }
-        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
-        
-        .sidebar { width: 310px; background: var(--sidebar); color: white; padding: 25px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
-        .section-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        .section-title { font-size: 0.7rem; color: #60a5fa; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; display: block; }
-
-        .main { flex-grow: 1; display: flex; flex-direction: column; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px; overflow-y: auto; flex-grow: 1; }
-        
-        .day { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; min-height: 150px; position: relative; }
-        .day.weekend { background: #f1f5f9; border-style: dashed; }
-        .day-header { font-weight: 800; color: #94a3b8; font-size: 0.8rem; margin-bottom: 8px; }
-
-        .turno-card { padding: 6px; border-radius: 8px; margin-bottom: 4px; font-size: 0.75rem; border-left: 4px solid #cbd5e1; background: white; border: 1px solid #eee; }
-        .principal { border-left-color: var(--accent); background: #f0f7ff; }
-        .ausente { text-decoration: line-through; color: var(--danger); opacity: 0.5; }
-
-        .group-tag { background: var(--accent); color: white; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: grab; font-size: 0.75rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        
-        input, select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: white; margin-bottom: 8px; font-size: 0.8rem; }
-        .btn-add { background: #10b981; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
-        
-        #status { font-size: 0.65rem; color: #10b981; margin-top: auto; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; font-family: monospace; }
+        :root { --sidebar: #1e293b; --accent: #3b82f6; --bg: #f1f5f9; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        .sidebar { width: 280px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; }
+        .main { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 15px; overflow-y: auto; }
+        .day { background: white; border-radius: 8px; padding: 8px; min-height: 120px; border: 1px solid #e2e8f0; }
+        .day.weekend { background: #f8fafc; border-style: dashed; }
+        .turno-card { background: #eff6ff; border-left: 4px solid var(--accent); padding: 5px; margin-top: 5px; font-size: 0.7rem; border-radius: 4px; }
+        .group-tag { background: var(--accent); padding: 10px; border-radius: 6px; margin-bottom: 8px; cursor: grab; font-weight: bold; font-size: 0.8rem; text-align: center; }
+        #status { font-size: 0.7rem; margin-top: auto; color: #94a3b8; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2 style="font-size: 1.2rem; margin-bottom: 20px;"><i class="fas fa-server"></i> ADMIN v41</h2>
-
-    <div class="section-box">
-        <span class="section-title">Personal y Grupos</span>
-        <div id="drag-groups">Cargando equipo...</div>
-    </div>
-
-    <div class="section-box">
-        <span class="section-title">Nueva Ausencia</span>
-        <select id="aus-tecnico"></select>
-        <div style="display:flex; gap:4px;">
-            <input type="date" id="aus-inicio">
-            <input type="date" id="aus-fin">
-        </div>
-        <button class="btn-add" onclick="registrarAusencia()" style="background:var(--accent)">GUARDAR PERMISO</button>
-    </div>
-
-    <div id="status">Iniciando...</div>
+    <h3>SISTEMA CLOUD</h3>
+    <div id="groups-container"> Cargando grupos... </div>
+    <div id="status">● Sincronizando con Google...</div>
 </aside>
 
 <main class="main">
-    <div style="background:white; padding:15px; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #ddd;">
-        <button onclick="cambiarMes(-1)" style="border:none; background:none; cursor:pointer; font-size: 1.2rem;"><i class="fas fa-chevron-left"></i></button>
-        <h2 id="mesTitulo" style="margin:0; font-size:1.1rem; font-weight: 800; color: #0f172a;"></h2>
-        <button onclick="cambiarMes(1)" style="border:none; background:none; cursor:pointer; font-size: 1.2rem;"><i class="fas fa-chevron-right"></i></button>
+    <div style="background:white; padding:15px; border-bottom:1px solid #ddd; display:flex; justify-content:space-between;">
+        <button onclick="cambiarMes(-1)">◀</button>
+        <h2 id="mesTitulo" style="margin:0; font-size:1.1rem;"></h2>
+        <button onclick="cambiarMes(1)">▶</button>
     </div>
     <div class="grid" id="grid"></div>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const SUPABASE_URL = 'https://qscaisgcttsnoavgfctj.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_IA9XB7EVhEMk2k6MbA4A4Q_M6og7SfO';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let tecnicosFull = []; 
-    let dbAusencias = [], dbManual = [];
+    const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxX6KxbNFAeIXb0rOg9IaCGS_BhTaISzl5LKrWiAnrvDTSiKW6BHFzjcQbAMG3ELLL3/exec'; // <--- PEGA AQUÍ TU URL
+    let dbManual = [], tecnicos = [];
     let mesActual = new Date();
 
-    async function sync() {
-        const st = document.getElementById('status');
+    async function fetchData() {
         try {
-            const { data: tData } = await supabase.from('tecnicos').select('nombre, grupo');
-            tecnicosFull = tData || [];
+            // Leer técnicos
+            const resT = await fetch(`${CLOUD_URL}?tabla=tecnicos`);
+            const dataT = await resT.json();
+            tecnicos = dataT.map(r => r[0]);
 
-            const { data: aData } = await supabase.from('ausencias').select('*');
-            dbAusencias = aData || [];
+            // Leer programación
+            const resP = await fetch(`${CLOUD_URL}?tabla=programacion`);
+            const dataP = await resP.json();
+            dbManual = dataP.slice(1).map(r => ({ fecha: r[0], p1: r[1], p2: r[2], a1: r[3], a2: r[4] }));
 
-            const { data: mData } = await supabase.from('programacion_manual').select('*');
-            dbManual = mData || [];
-
-            st.innerText = "● ONLINE: " + tecnicosFull.length + " Técnicos";
-            actualizarUI();
             render();
+            updateSidebar();
+            document.getElementById('status').innerText = "● ONLINE (Google Sheets)";
         } catch (e) {
-            st.innerText = "● Error: " + e.message;
+            document.getElementById('status').innerText = "❌ Error de conexión";
         }
     }
 
-    function actualizarUI() {
-        // Select ausencias
-        document.getElementById('aus-tecnico').innerHTML = tecnicosFull.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join('');
-
-        // Grupos arrastrables
-        const dGroups = document.getElementById('drag-groups');
-        dGroups.innerHTML = "";
-        const gruposIds = [...new Set(tecnicosFull.map(t => t.grupo))].sort();
-        
-        gruposIds.forEach(gNum => {
-            const integrantes = tecnicosFull.filter(t => t.grupo === gNum).map(t => t.nombre);
-            const t1 = integrantes[0] || "---";
-            const t2 = integrantes[1] || "---";
-            dGroups.innerHTML += `
-                <div class="group-tag" draggable="true" ondragstart="startDrag(event, '${t1}', '${t2}')">
-                    G${gNum}: ${t1.split(' ')[0]} / ${t2.split(' ')[0]}
-                </div>`;
-        });
+    function updateSidebar() {
+        const container = document.getElementById('groups-container');
+        container.innerHTML = "";
+        for(let i=1; i<=4; i++) {
+            const t1 = tecnicos[(i-1)*2] || "---";
+            const t2 = tecnicos[(i-1)*2+1] || "---";
+            container.innerHTML += `<div class="group-tag" draggable="true" ondragstart="event.dataTransfer.setData('t1','${t1}');event.dataTransfer.setData('t2','${t2}')">GRUPO ${i}: ${t1.split(' ')[0]}</div>`;
+        }
     }
 
-    function startDrag(e, t1, t2) {
-        e.dataTransfer.setData("t1", t1);
-        e.dataTransfer.setData("t2", t2);
-    }
-
-    async function onDropGrupo(e, fechaId) {
+    async function onDropGrupo(e, fecha) {
         e.preventDefault();
-        const t1 = e.dataTransfer.getData("t1");
-        const t2 = e.dataTransfer.getData("t2");
+        const payload = {
+            tabla: 'programacion',
+            fecha: fecha,
+            p1: e.dataTransfer.getData('t1'),
+            p2: e.dataTransfer.getData('t2'),
+            a1: "---", a2: "---"
+        };
         
-        const existente = dbManual.find(m => m.fecha === fechaId);
-        const payload = { fecha: fechaId, p1: t1, p2: t2, a1: "---", a2: "---" };
-        if (existente) payload.id = existente.id;
-
-        await supabase.from('programacion_manual').upsert(payload);
-        sync();
+        await fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify(payload) });
+        fetchData();
     }
 
     function render() {
         const grid = document.getElementById('grid');
         grid.innerHTML = "";
         const y = mesActual.getFullYear(), m = mesActual.getMonth();
-        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(mesActual).toUpperCase();
-
+        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(mesActual).toUpperCase();
+        
         const total = new Date(y, m+1, 0).getDate();
-        let start = (new Date(y, m, 1).getDay() + 6) % 7;
+        const start = (new Date(y, m, 1).getDay() + 6) % 7;
 
         for(let i=0; i<start; i++) grid.appendChild(document.createElement('div'));
 
         for(let d=1; d<=total; d++) {
-            const id = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const man = dbManual.find(x => x.fecha === id);
+            const fechaId = `${y}-${m+1}-${d}`;
+            const man = dbManual.find(x => x.fecha == fechaId);
             const celda = document.createElement('div');
-            celda.className = `day ${ (new Date(y,m,d).getDay()===0||new Date(y,m,d).getDay()===6) ? 'weekend' : '' }`;
-            
-            celda.ondragover = (e) => { e.preventDefault(); celda.style.borderColor = "#2563eb"; };
-            celda.ondragleave = () => { celda.style.borderColor = "#e2e8f0"; };
-            celda.ondrop = (e) => onDropGrupo(e, id);
-
-            celda.innerHTML = `<div class="day-header">${d}</div>`;
-            
-            if(man) {
-                const isAus = (nom) => dbAusencias.some(a => nom === a.tecnico_nombre && id >= a.fecha_inicio && id <= a.fecha_fin);
-                celda.innerHTML += `
-                    <div class="turno-card principal">
-                        <div class="${isAus(man.p1) ? 'ausente' : ''}">${man.p1}</div>
-                        <div class="${isAus(man.p2) ? 'ausente' : ''}">${man.p2}</div>
-                    </div>
-                    <div class="turno-card" style="opacity:0.6">
-                        <div>${man.a1}</div><div>${man.a2}</div>
-                    </div>
-                `;
-            }
+            celda.className = 'day';
+            celda.ondragover = (e) => e.preventDefault();
+            celda.ondrop = (e) => onDropGrupo(e, fechaId);
+            celda.innerHTML = `<b>${d}</b>`;
+            if(man) celda.innerHTML += `<div class="turno-card"><b>${man.p1}</b><br><b>${man.p2}</b></div>`;
             grid.appendChild(celda);
         }
     }
 
-    async function registrarAusencia() {
-        const t = document.getElementById('aus-tecnico').value;
-        const fi = document.getElementById('aus-inicio').value;
-        const ff = document.getElementById('aus-fin').value;
-        if(fi && ff) {
-            await supabase.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: fi, fecha_fin: ff }]);
-            sync();
-        }
-    }
-
     function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth()+v); render(); }
-    sync();
+    fetchData();
 </script>
 </body>
 </html>
