@@ -3,149 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Supervisión Pro - Gestión de Cambios</title>
+    <title>Dashboard Grupos Simultáneos | v5.0</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --sidebar: #0f172a; --panel: #1e293b; --accent: #3b82f6; --bg: #f1f5f9; }
-        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; --g12: #dbeafe; --g34: #fef3c7; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; color: #1e293b; }
         
-        /* Panel Izquierdo */
-        .sidebar { width: 380px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.2); }
-        .group-editor { background: var(--panel); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
-        .group-editor h3 { font-size: 0.9rem; color: var(--accent); margin-top: 0; display: flex; justify-content: space-between; }
-        .input-tecnico { background: transparent; border: none; border-bottom: 1px solid #334155; color: white; width: 100%; padding: 5px 0; font-size: 0.8rem; margin-bottom: 5px; }
-        .input-tecnico:focus { border-color: var(--accent); outline: none; }
-
-        /* Arrastrables */
-        .drag-handle { background: var(--accent); color: white; padding: 10px; border-radius: 6px; cursor: grab; text-align: center; font-weight: bold; margin-top: 10px; font-size: 0.85rem; }
-        .drag-handle:active { cursor: grabbing; opacity: 0.8; }
-
+        /* Lateral */
+        .sidebar { width: 340px; background: var(--primary); color: white; padding: 25px; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.3); }
+        .group-card { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--accent); }
+        .group-card strong { display: block; margin-bottom: 5px; color: #60a5fa; }
+        .group-card input { background: transparent; border: none; border-bottom: 1px solid #475569; color: white; width: 100%; font-size: 0.85rem; margin-bottom: 5px; outline: none; }
+        
         /* Calendario */
-        .main-content { flex-grow: 1; padding: 25px; overflow-y: auto; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; background: #e2e8f0; padding: 10px; border-radius: 12px; }
-        .day-cell { background: white; min-height: 120px; border-radius: 8px; padding: 10px; position: relative; }
-        .day-header { text-align: center; font-weight: bold; color: #64748b; padding-bottom: 10px; }
+        .main { flex-grow: 1; padding: 30px; overflow-y: auto; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day { background: white; min-height: 170px; border-radius: 12px; border: 1px solid #e2e8f0; padding: 12px; position: relative; }
+        .day-header { text-align: center; font-weight: bold; padding: 10px; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+        .weekend-active { border: 2px solid var(--accent); }
         
-        /* Turnos en Calendario */
-        .turno-card { background: #eff6ff; border-left: 4px solid var(--accent); padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; margin-top: 5px; position: relative; color: #1e40af; }
-        .remove-btn { position: absolute; right: 5px; top: 2px; cursor: pointer; color: #94a3b8; }
-        .remove-btn:hover { color: #ef4444; }
-
-        .btn-save { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: auto; }
+        /* Turnos */
+        .badge-1 { background: #2563eb; color: white; font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 800; margin-bottom: 4px; display: inline-block; }
+        .badge-2 { background: #64748b; color: white; font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; display: inline-block; }
+        .box-turno { margin-top: 8px; padding: 8px; border-radius: 6px; font-size: 0.8rem; line-height: 1.2; }
+        .box-g12 { background: var(--g12); color: #1e40af; border: 1px solid #bfdbfe; }
+        .box-g34 { background: var(--g34); color: #92400e; border: 1px solid #fde68a; }
+        
+        .names { display: block; font-size: 0.7rem; margin-top: 3px; font-weight: 500; }
+        .btn-save { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: auto; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2><i class="fas fa-users"></i> Grupos de Turno</h2>
-    <p style="font-size: 0.75rem; color: #94a3b8;">Edita los nombres abajo y luego arrastra el botón azul al calendario:</p>
-
-    <div id="config-grupos">
-        <div class="group-editor">
-            <h3>GRUPO 1 <i class="fas fa-edit"></i></h3>
-            <input type="text" class="input-tecnico" id="g1_t1" value="JUAN MEJIA">
-            <input type="text" class="input-tecnico" id="g1_t2" value="VALENTIN BOLAÑOS">
-            <div class="drag-handle" draggable="true" ondragstart="drag(event, 'G1')">ASIGNAR GRUPO 1</div>
-        </div>
-        <div class="group-editor">
-            <h3>GRUPO 2 <i class="fas fa-edit"></i></h3>
-            <input type="text" class="input-tecnico" id="g2_t1" value="DOUGLAS VENTURA">
-            <input type="text" class="input-tecnico" id="g2_t2" value="JOSE PALMA">
-            <div class="drag-handle" draggable="true" ondragstart="drag(event, 'G2')">ASIGNAR GRUPO 2</div>
-        </div>
-        <div class="group-editor">
-            <h3>GRUPO 3 <i class="fas fa-edit"></i></h3>
-            <input type="text" class="input-tecnico" id="g3_t1" value="DANIEL MELENDEZ">
-            <input type="text" class="input-tecnico" id="g3_t2" value="MIGUEL OCHOA">
-            <div class="drag-handle" draggable="true" ondragstart="drag(event, 'G3')">ASIGNAR GRUPO 3</div>
-        </div>
-        <div class="group-editor">
-            <h3>GRUPO 4 <i class="fas fa-edit"></i></h3>
-            <input type="text" class="input-tecnico" id="g4_t1" value="EDGARDO SORIANO">
-            <input type="text" class="input-tecnico" id="g4_t2" value="LUIS PALACIOS">
-            <div class="drag-handle" draggable="true" ondragstart="drag(event, 'G4')">ASIGNAR GRUPO 4</div>
-        </div>
+    <h2><i class="fas fa-users-cog"></i> EQUIPOS</h2>
+    <div id="setup">
+        <div class="group-card"><strong>GRUPO 1</strong><input id="g1t1" value="JUAN MEJIA"><input id="g1t2" value="VALENTIN BOLAÑOS"></div>
+        <div class="group-card"><strong>GRUPO 2</strong><input id="g2t1" value="DOUGLAS VENTURA"><input id="g2t2" value="JOSE PALMA"></div>
+        <div class="group-card"><strong>GRUPO 3</strong><input id="g3t1" value="DANIEL MELENDEZ"><input id="g3t2" value="MIGUEL OCHOA"></div>
+        <div class="group-card"><strong>GRUPO 4</strong><input id="g4t1" value="EDGARDO SORIANO"><input id="g4t2" value="LUIS PALACIOS"></div>
     </div>
-
-    <button class="btn-save" onclick="guardarConfig()"><i class="fas fa-save"></i> GUARDAR TODO</button>
+    <button class="btn-save" onclick="guardar()">💾 GUARDAR Y ACTUALIZAR</button>
 </aside>
 
-<main class="main-content">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-        <h1 style="margin:0">Planificación Mensual</h1>
-        <div id="mes-label" style="font-weight: bold; font-size: 1.2rem;">Marzo 2024</div>
+<main class="main">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h1 style="margin:0">Planificación de Turnos Simultáneos</h1>
+        <h3 id="mesActual" style="color:var(--accent)"></h3>
     </div>
-
-    <div class="calendar-grid" id="grid">
-        <div class="day-header">Lun</div><div class="day-header">Mar</div><div class="day-header">Mié</div>
-        <div class="day-header">Jue</div><div class="day-header">Vie</div><div class="day-header">Sáb</div>
+    <div class="grid" id="calendar">
+        <div class="day-header">Lun</div><div class="day-header">Mar</div><div class="day-header">Mie</div>
+        <div class="day-header">Jue</div><div class="day-header">Vie</div><div class="day-header">Sab</div>
         <div class="day-header">Dom</div>
-        </div>
+    </div>
 </main>
 
 <script>
-    let estado = JSON.parse(localStorage.getItem('turno_pro_v2')) || { asignaciones: {} };
+    let db = JSON.parse(localStorage.getItem('dash_simultaneo_v5')) || { manuales: {} };
+    const hoy = new Date();
 
     function render() {
-        const grid = document.getElementById('grid');
+        const grid = document.getElementById('calendar');
         const headers = Array.from(grid.querySelectorAll('.day-header'));
         grid.innerHTML = "";
         headers.forEach(h => grid.appendChild(h));
 
-        const fecha = new Date();
-        const dias = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
-        
-        for(let d=1; d<=dias; d++) {
-            const id = `${fecha.getFullYear()}-${fecha.getMonth()+1}-${d}`;
-            const turnos = estado.asignaciones[id] || [];
-            
-            let htmlTurnos = turnos.map((t, i) => `
-                <div class="turno-card">
-                    <strong>${t.grupo}</strong><br>${t.tecnicos}
-                    <span class="remove-btn" onclick="borrar('${id}', ${i})">&times;</span>
-                </div>
-            `).join('');
+        const mes = hoy.getMonth();
+        const año = hoy.getFullYear();
+        document.getElementById('mesActual').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(hoy);
 
-            grid.innerHTML += `
-                <div class="day-cell" ondrop="drop(event, '${id}')" ondragover="allow(event)">
-                    <span style="color:#94a3b8; font-size:0.8rem">${d}</span>
-                    <div>${htmlTurnos}</div>
-                </div>`;
+        const diasMes = new Date(año, mes+1, 0).getDate();
+        const primerDia = new Date(año, mes, 1).getDay();
+        const offset = (primerDia === 0) ? 6 : primerDia - 1;
+
+        // FECHA BASE: Sábado 7 de Marzo 2026 -> Empiezan G1 y G2
+        const fechaBase = new Date(2026, 2, 7);
+
+        for(let i=0; i<offset; i++) grid.innerHTML += `<div class="day" style="opacity:0.2; border:none;"></div>`;
+
+        for(let d=1; d<=diasMes; d++) {
+            const f = new Date(año, mes, d);
+            const id = `${año}-${mes+1}-${d}`;
+            const diaSemana = f.getDay(); // 6=Sab, 0=Dom
+            let contenido = "";
+
+            if(diaSemana === 6 || diaSemana === 0) {
+                const diffDays = Math.floor((f - fechaBase) / (1000*60*60*24));
+                const numSemana = Math.floor(diffDays / 7);
+                
+                let p1, p2, estilo;
+                
+                // ROTACIÓN SEMANAL G1+G2 vs G3+G4
+                if(Math.abs(numSemana) % 2 === 0) {
+                    // SEMANA G1 Y G2
+                    estilo = "box-g12";
+                    p1 = (diaSemana === 6) ? 1 : 2; // Sab: G1 es 1ra opc, Dom: G2 es 1ra opc
+                    p2 = (diaSemana === 6) ? 2 : 1;
+                } else {
+                    // SEMANA G3 Y G4
+                    estilo = "box-g34";
+                    p1 = (diaSemana === 6) ? 3 : 4; // Sab: G3 es 1ra opc, Dom: G4 es 1ra opc
+                    p2 = (diaSemana === 6) ? 4 : 3;
+                }
+
+                const n1 = `${document.getElementById('g'+p1+'t1').value} / ${document.getElementById('g'+p1+'t2').value}`;
+                const n2 = `${document.getElementById('g'+p2+'t1').value} / ${document.getElementById('g'+p2+'t2').value}`;
+
+                contenido = `
+                    <div class="box-turno ${estilo}">
+                        <span class="badge-1">1° OPCIÓN: GRUPO ${p1}</span>
+                        <span class="names">${n1}</span>
+                        <div style="margin-top:8px"></div>
+                        <span class="badge-2">APOYO: GRUPO ${p2}</span>
+                        <span class="names">${n2}</span>
+                    </div>`;
+            }
+
+            grid.innerHTML += `<div class="day ${diaSemana===6||diaSemana===0?'weekend-active':''}">
+                <strong style="color:#94a3b8">${d}</strong>${contenido}
+            </div>`;
         }
     }
 
-    function drag(ev, grupoId) {
-        // Al arrastrar, capturamos los nombres que están escritos en ese momento
-        const t1 = document.getElementById(`${grupoId.toLowerCase()}_t1`).value;
-        const t2 = document.getElementById(`${grupoId.toLowerCase()}_t2`).value;
-        ev.dataTransfer.setData("grupo", grupoId);
-        ev.dataTransfer.setData("tecnicos", `${t1} / ${t2}`);
+    function guardar() {
+        localStorage.setItem('dash_simultaneo_v5', JSON.stringify(db));
+        render(); // Refresca para aplicar cambios de nombres
+        alert("Configuración guardada.");
     }
 
-    function allow(ev) { ev.preventDefault(); }
-
-    function drop(ev, dateId) {
-        ev.preventDefault();
-        const grupo = ev.dataTransfer.getData("grupo");
-        const tecnicos = ev.dataTransfer.getData("tecnicos");
-        
-        if(!estado.asignaciones[dateId]) estado.asignaciones[dateId] = [];
-        // Guardamos los nombres literales, eliminando el desfase futuro
-        estado.asignaciones[dateId].push({ grupo, tecnicos });
-        render();
-    }
-
-    function borrar(dateId, idx) {
-        estado.asignaciones[dateId].splice(idx, 1);
-        render();
-    }
-
-    function guardarConfig() {
-        localStorage.setItem('turno_pro_v2', JSON.stringify(estado));
-        alert("Configuración y turnos guardados.");
-    }
-
-    render();
+    window.onload = render;
 </script>
 </body>
 </html>
