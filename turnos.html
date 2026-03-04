@@ -3,132 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Supervisión - Turnos Dinámicos</title>
+    <title>Sistema de Gestión de Turnos - Supervisión Pro</title>
     <style>
-        :root { --primary: #1a2a6c; --accent: #f2a365; --bg: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; color: #333; }
-        .dashboard { max-width: 900px; margin: auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; font-size: 1.2em; color: var(--primary); }
+        :root { --primary: #2c3e50; --accent: #e67e22; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; height: 100vh; }
         
-        /* Lista de Técnicos */
-        .tecnico-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-        .switch { cursor: pointer; }
-        .status-off { color: #e74c3c; font-weight: bold; }
+        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
-        /* Tabla de Resultados */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
-        th { background: var(--primary); color: white; padding: 10px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; }
-        .no-disponible { opacity: 0.5; text-decoration: line-through; }
+        .main-container { display: grid; grid-template-columns: 300px 1fr; gap: 20px; padding: 20px; flex-grow: 1; overflow: hidden; }
 
-        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-        button:hover { background: #0d1a4a; }
-        .alert { padding: 10px; background: #fff3cd; color: #856404; border-radius: 5px; margin-bottom: 15px; font-size: 0.85em; }
+        /* Panel Izquierdo: Configuración e Imprevistos */
+        .sidebar { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-y: auto; }
+        .sidebar h3 { color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 5px; }
+        .tecnico-input { display: flex; gap: 5px; margin-bottom: 8px; }
+        input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        /* Panel Derecho: Calendario y Asignación */
+        .calendar-view { background: white; padding: 20px; border-radius: 12px; overflow-y: auto; }
+        .semana-card { border: 1px solid #eee; border-radius: 8px; margin-bottom: 15px; padding: 15px; background: #fff; transition: 0.3s; }
+        .semana-card:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .header-semana { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: bold; color: var(--primary); }
+
+        /* Drag & Drop Styles */
+        .drop-zone { min-height: 60px; background: #f9f9f9; border: 2px dashed #ccc; border-radius: 6px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; }
+        .cliente-tag { background: var(--accent); color: white; padding: 6px 12px; border-radius: 20px; cursor: grab; font-size: 0.85em; display: flex; align-items: center; gap: 5px; }
+        
+        .btn { cursor: pointer; border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .btn-save { background: #27ae60; color: white; width: 100%; margin-top: 10px; }
+        .btn-add { background: var(--primary); color: white; margin-top: 10px; font-size: 0.8em; }
+        .btn-save:hover { background: #219150; }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <div class="card">
-        <h2>🛠️ Gestión de Técnicos</h2>
-        <p style="font-size: 0.8em; color: #666;">Desactiva a quienes tengan permiso o imprevistos:</p>
-        <div id="listaControl">
-            </div>
-        <button onclick="procesarTurnos()">Generar Turnos Disponibles</button>
+<header>
+    <div>
+        <h2 style="margin:0;">Control de Técnicos v2.0</h2>
+        <small id="fechaActual"></small>
     </div>
+    <button class="btn" style="background:white; color:var(--primary)" onclick="location.reload()">🔄 Actualizar Vista</button>
+</header>
 
-    <div class="card">
-        <h2>🗓️ Calendario de Turnos</h2>
-        <div id="mensajeAlerta" class="alert" style="display:none;"></div>
-        <table>
-            <thead>
-                <tr>
-                    <th>Semana</th>
-                    <th>Pareja Asignada</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="tablaResultados">
-                <tr><td colspan="3" style="text-align:center;">Presiona generar para ver la programación</td></tr>
-            </tbody>
-        </table>
-    </div>
+<div class="main-container">
+    <aside class="sidebar">
+        <h3>👥 Técnicos y Parejas</h3>
+        <div id="listaConfigTecnicos">
+            </div>
+        
+        <h3>📝 Bolsa de Clientes</h3>
+        <input type="text" id="nuevoCliente" placeholder="Nombre del cliente...">
+        <button class="btn btn-add" onclick="crearCliente()">+ Añadir a la bolsa</button>
+        <div id="bolsa" class="drop-zone" style="margin-top:15px;" ondrop="drop(event)" ondragover="allowDrop(event)">
+            </div>
+        
+        <button class="btn btn-save" onclick="guardarTodo()">💾 GUARDAR TODO</button>
+        <p style="font-size: 0.7em; color: gray; margin-top: 10px;">* Los datos se guardan localmente en este navegador.</p>
+    </aside>
+
+    <main class="calendar-view">
+        <div id="calendarioDinamico">
+            </div>
+    </main>
 </div>
 
 <script>
-    // Configuración de parejas (Edítalos aquí)
-    const tecnicos = [
-        { nombre: "Técnico 1", parejaId: 1, activo: true },
-        { nombre: "Técnico 2", parejaId: 1, activo: true },
-        { nombre: "Técnico 3", parejaId: 2, activo: true },
-        { nombre: "Técnico 4", parejaId: 2, activo: true },
-        { nombre: "Técnico 5", parejaId: 3, activo: true },
-        { nombre: "Técnico 6", parejaId: 3, activo: true },
-        { nombre: "Técnico 7", parejaId: 4, activo: true },
-        { nombre: "Técnico 8", parejaId: 4, activo: true }
-    ];
+    // Configuración inicial de las 4 parejas (8 técnicos)
+    let datos = JSON.parse(localStorage.getItem('sistemaTurnos')) || {
+        tecnicos: ["Técnico A", "Técnico B", "Técnico C", "Técnico D", "Técnico E", "Técnico F", "Técnico G", "Técnico H"],
+        asignaciones: {}, // Formato: { "semana_12_2023": [id_cliente1, id_cliente2] }
+        bolsa: []
+    };
 
-    function renderizarLista() {
-        const lista = document.getElementById('listaControl');
-        lista.innerHTML = "";
-        tecnicos.forEach((t, index) => {
-            lista.innerHTML += `
-                <div class="tecnico-row">
-                    <span>${t.nombre}</span>
-                    <input type="checkbox" ${t.activo ? 'checked' : ''} onchange="toggleTecnico(${index})">
+    function inicializar() {
+        document.getElementById('fechaActual').innerText = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        renderConfig();
+        renderCalendario();
+        renderBolsa();
+    }
+
+    // Renderiza la lista de nombres para que el supervisor los cambie
+    function renderConfig() {
+        const contenedor = document.getElementById('listaConfigTecnicos');
+        contenedor.innerHTML = "";
+        datos.tecnicos.forEach((nombre, i) => {
+            contenedor.innerHTML += `
+                <div class="tecnico-input">
+                    <small>${i+1}.</small>
+                    <input type="text" value="${nombre}" onchange="actualizarNombre(${i}, this.value)">
                 </div>
             `;
         });
     }
 
-    function toggleTecnico(index) {
-        tecnicos[index].activo = !tecnicos[index].activo;
+    function actualizarNombre(index, valor) {
+        datos.tecnicos[index] = valor;
     }
 
-    function procesarTurnos() {
-        const tabla = document.getElementById('tablaResultados');
-        const alerta = document.getElementById('mensajeAlerta');
-        tabla.innerHTML = "";
-        alerta.style.display = "none";
+    // Genera las próximas 8 semanas automáticamente
+    function renderCalendario() {
+        const contenedor = document.getElementById('calendarioDinamico');
+        contenedor.innerHTML = "<h3>🗓️ Planificación de Semanas</h3>";
+        
+        const hoy = new Date();
+        const parejas = [
+            `${datos.tecnicos[0]} y ${datos.tecnicos[1]}`,
+            `${datos.tecnicos[2]} y ${datos.tecnicos[3]}`,
+            `${datos.tecnicos[4]} y ${datos.tecnicos[5]}`,
+            `${datos.tecnicos[6]} y ${datos.tecnicos[7]}`
+        ];
 
-        // Agrupar por parejas y verificar disponibilidad
-        let parejasDisponibles = [];
-        for(let i=1; i<=4; i++) {
-            let integrantes = tecnicos.filter(t => t.parejaId === i);
-            let todosActivos = integrantes.every(t => t.activo);
+        for(let i=0; i<8; i++) {
+            let fechaSemana = new Date();
+            fechaSemana.setDate(hoy.getDate() + (i * 7));
+            let numSemana = getSemana(fechaSemana);
+            let idSemana = `sem_${numSemana}_${fechaSemana.getFullYear()}`;
             
-            if(todosActivos) {
-                parejasDisponibles.push(`Pareja ${i}: ${integrantes[0].nombre} y ${integrantes[1].nombre}`);
-            }
-        }
+            // Lógica de rotación automática (0, 1, 2, 3)
+            let indexPareja = i % 4; 
 
-        // Aleatorizar
-        parejasDisponibles.sort(() => Math.random() - 0.5);
-
-        if(parejasDisponibles.length === 0) {
-            alerta.innerText = "⚠️ No hay parejas completas disponibles para asignar.";
-            alerta.style.display = "block";
-            return;
-        }
-
-        // Mostrar en tabla
-        parejasDisponibles.forEach((pareja, i) => {
-            let fila = `<tr>
-                <td>Semana ${i+1}</td>
-                <td><strong>${pareja}</strong></td>
-                <td>✅ Asignado</td>
-            </tr>`;
-            tabla.innerHTML += fila;
-        });
-
-        if(parejasDisponibles.length < 4) {
-            alerta.innerText = "Nota: Solo se muestran parejas donde AMBOS técnicos están activos.";
-            alerta.style.display = "block";
+            contenedor.innerHTML += `
+                <div class="semana-card">
+                    <div class="header-semana">
+                        <span>Semana ${numSemana} (Inicia ${fechaSemana.toLocaleDateString()})</span>
+                        <span style="color:var(--accent)">Pareja de Turno: ${parejas[indexPareja]}</span>
+                    </div>
+                    <div class="drop-zone" id="${idSemana}" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        ${renderAsignados(idSemana)}
+                    </div>
+                </div>
+            `;
         }
     }
 
-    renderizarLista();
+    // Funciones Drag & Drop mejoradas
+    function allowDrop(ev) { ev.preventDefault(); }
+    
+    function drag(ev) {
+        ev.dataTransfer.setData("textId", ev.target.id);
+        ev.dataTransfer.setData("textNombre", ev.target.innerText);
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        const idCliente = ev.dataTransfer.getData("textId");
+        const nombreCliente = ev.dataTransfer.getData("textNombre");
+        const zonaDestino = ev.target.closest('.drop-zone');
+        
+        if (zonaDestino) {
+            zonaDestino.appendChild(document.getElementById(idCliente));
+            // Actualizar el objeto de datos
+            recalcularDatosDesdeDOM();
+        }
+    }
+
+    function crearCliente() {
+        const input = document.getElementById('nuevoCliente');
+        if(!input.value) return;
+        const id = "cli_" + Date.now();
+        datos.bolsa.push({ id: id, nombre: input.value });
+        input.value = "";
+        renderBolsa();
+    }
+
+    function renderBolsa() {
+        const bolsa = document.getElementById('bolsa');
+        bolsa.innerHTML = "";
+        datos.bolsa.forEach(c => {
+            bolsa.innerHTML += `<div class="cliente-tag" draggable="true" ondragstart="drag(event)" id="${c.id}">${c.nombre}</div>`;
+        });
+    }
+
+    function renderAsignados(idSemana) {
+        if(!datos.asignaciones[idSemana]) return "";
+        return datos.asignaciones[idSemana].map(c => 
+            `<div class="cliente-tag" draggable="true" ondragstart="drag(event)" id="${c.id}">${c.nombre}</div>`
+        ).join("");
+    }
+
+    function recalcularDatosDesdeDOM() {
+        // Esta función lee el estado visual y lo guarda en el objeto JS
+        const zonas = document.querySelectorAll('.drop-zone');
+        datos.asignaciones = {};
+        datos.bolsa = [];
+
+        zonas.forEach(zona => {
+            const items = zona.querySelectorAll('.cliente-tag');
+            const lista = Array.from(items).map(i => ({ id: i.id, nombre: i.innerText }));
+            
+            if(zona.id === "bolsa") {
+                datos.bolsa = lista;
+            } else {
+                datos.asignaciones[zona.id] = lista;
+            }
+        });
+    }
+
+    function guardarTodo() {
+        recalcularDatosDesdeDOM();
+        localStorage.setItem('sistemaTurnos', JSON.stringify(datos));
+        alert("✅ Datos guardados con éxito. Podrás verlos la próxima vez que abras esta página.");
+    }
+
+    function getSemana(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        return Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
+    }
+
+    inicializar();
 </script>
 
 </body>
