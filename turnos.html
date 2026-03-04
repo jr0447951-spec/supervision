@@ -3,45 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS - ADMIN v32 (GESTIÓN PERSONAL)</title>
+    <title>SISTEMA TURNOS - ADMIN v34</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; }
         body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
-        
-        /* Estilos Sidebar */
-        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
-        .section-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        .section-title { font-size: 0.7rem; color: #60a5fa; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; display: block; }
-        
-        /* Lista de Personal */
-        .tech-list { list-style: none; padding: 0; margin: 10px 0; max-height: 150px; overflow-y: auto; }
-        .tech-item { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 5px 10px; border-radius: 6px; margin-bottom: 4px; font-size: 0.75rem; }
-        .btn-del { color: #ef4444; cursor: pointer; border: none; background: none; }
-
-        /* Grupos Arrastrables */
-        .group-tag { background: var(--accent); color: white; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: grab; font-weight: bold; font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
-
-        /* Grid */
+        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        .section-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .main { flex-grow: 1; display: flex; flex-direction: column; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px; overflow-y: auto; flex-grow: 1; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px; overflow-y: auto; }
         .day { background: var(--card); border-radius: 12px; border: 2px solid #e2e8f0; padding: 10px; min-height: 150px; position: relative; }
-        .day.drag-over { border-color: var(--accent); background: #eff6ff; }
-        .turno-card { padding: 5px 8px; border-radius: 6px; margin-bottom: 4px; font-size: 0.7rem; border-left: 4px solid #cbd5e1; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .day.weekend { background: #f8fafc; border-style: dashed; }
+        .turno-card { padding: 5px 8px; border-radius: 6px; margin-bottom: 4px; font-size: 0.7rem; border-left: 4px solid #cbd5e1; background: white; }
         .principal { border-left-color: var(--accent); background: #f0f7ff; }
-        
-        input, select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; font-size: 0.8rem; }
+        .group-tag { background: var(--accent); color: white; padding: 8px; border-radius: 6px; margin-bottom: 5px; cursor: grab; font-size: 0.7rem; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #1e293b; color: white; margin-bottom: 10px; }
         .btn-add { background: #10b981; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2>ADMIN v32</h2>
+    <h2 style="font-size: 1.2rem;">ADMIN v34</h2>
 
     <div class="section-box">
-        <span class="section-title">Nómina de Personal</span>
-        <ul id="lista-personal" class="tech-list"></ul>
+        <span style="font-size: 0.7rem; color: #60a5fa; font-weight: bold;">PERSONAL (TABLA: tecnicos)</span>
+        <ul id="lista-personal" style="list-style: none; padding: 0; font-size: 0.75rem; margin: 10px 0;"></ul>
         <div style="display:flex; gap:5px;">
             <input type="text" id="nuevo-tecnico" placeholder="Nombre..." style="margin:0;">
             <button class="btn-add" onclick="agregarTecnico()" style="width:40px;">+</button>
@@ -49,27 +36,24 @@
     </div>
 
     <div class="section-box">
-        <span class="section-title">Asignación de Grupos</span>
-        <div id="drag-groups">
-            </div>
+        <span style="font-size: 0.7rem; color: #60a5fa; font-weight: bold;">ARRASTRAR GRUPOS</span>
+        <div id="drag-groups"></div>
     </div>
 
     <div class="section-box">
-        <span class="section-title">Registrar Ausencia</span>
+        <span style="font-size: 0.7rem; color: #60a5fa; font-weight: bold;">AUSENCIA</span>
         <select id="aus-tecnico"></select>
-        <input type="date" id="aus-inicio">
-        <input type="date" id="aus-fin">
         <button class="btn-add" onclick="registrarAusencia()" style="background:var(--accent)">GUARDAR</button>
     </div>
 
-    <div id="status" style="font-size:0.6rem; color:#94a3b8;">● Sincronizando...</div>
+    <div id="status" style="font-size:0.6rem; color:#94a3b8;">● Conectando...</div>
 </aside>
 
 <main class="main">
     <div style="background:white; padding:15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ddd;">
-        <button onclick="cambiarMes(-1)" style="border:none; cursor:pointer;"><i class="fas fa-chevron-left"></i></button>
-        <h2 id="mesTitulo" style="margin:0; font-size:1.2rem;"></h2>
-        <button onclick="cambiarMes(1)" style="border:none; cursor:pointer;"><i class="fas fa-chevron-right"></i></button>
+        <button onclick="cambiarMes(-1)" style="border:none; background:none; cursor:pointer;"><i class="fas fa-chevron-left"></i></button>
+        <h2 id="mesTitulo" style="margin:0; font-size:1.1rem;"></h2>
+        <button onclick="cambiarMes(1)" style="border:none; background:none; cursor:pointer;"><i class="fas fa-chevron-right"></i></button>
     </div>
     <div class="grid" id="grid"></div>
 </main>
@@ -80,68 +64,60 @@
     const SUPABASE_KEY = 'sb_publishable_IA9XB7EVhEMk2k6MbA4A4Q_M6og7SfO';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let tecnicos = []; 
+    let tecnicos = [];
     let mesActual = new Date();
     let dbAusencias = [], dbManual = [];
 
     async function sync() {
-        // Cargar Técnicos
-        const { data: tData } = await supabase.from('tecnicos_db').select('*').order('nombre');
-        tecnicos = tData ? tData.map(t => t.nombre) : [];
-        
-        // Cargar Datos
-        const { data: aus } = await supabase.from('ausencias').select('*');
-        const { data: man } = await supabase.from('programacion_manual').select('*');
-        
-        dbAusencias = aus || []; 
-        dbManual = man || [];
-        
-        actualizarUI();
-        render();
-        document.getElementById('status').innerText = "● Nube Actualizada";
+        try {
+            // 1. Cargar técnicos de tu tabla 'tecnicos'
+            const { data: tData, error: tErr } = await supabase.from('tecnicos').select('nombre');
+            if (tErr) throw tErr;
+            tecnicos = tData.map(t => t.nombre);
+            
+            // 2. Cargar Ausencias y Manuales
+            const { data: aus } = await supabase.from('ausencias').select('*');
+            const { data: man } = await supabase.from('programacion_manual').select('*');
+            
+            dbAusencias = aus || [];
+            dbManual = man || [];
+
+            document.getElementById('status').innerText = "● Conectado a 'tecnicos', 'ausencias' y 'programacion_manual'";
+            actualizarUI();
+            render();
+        } catch (e) {
+            console.error("Error de sincronización:", e);
+            document.getElementById('status').innerText = "● Error: Revisa nombres de tablas en Supabase";
+        }
     }
 
     function actualizarUI() {
-        // Actualizar lista de técnicos en sidebar
+        // Lista Personal
         const lista = document.getElementById('lista-personal');
         lista.innerHTML = tecnicos.map(t => `
-            <li class="tech-item">${t} <button class="btn-del" onclick="eliminarTecnico('${t}')"><i class="fas fa-times"></i></button></li>
+            <li style="display:flex; justify-content:space-between; background:#1e293b; padding:5px; border-radius:4px; margin-bottom:2px;">
+                ${t} <i class="fas fa-times" style="color:#ef4444; cursor:pointer;" onclick="eliminarTecnico('${t}')"></i>
+            </li>
         `).join('');
 
-        // Actualizar select de ausencias
+        // Select Ausencias
         document.getElementById('aus-tecnico').innerHTML = tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
 
-        // Actualizar Grupos Arrastrables (Lógica de los 4 grupos originales)
+        // Grupos Arrastrables
         const dGroups = document.getElementById('drag-groups');
         dGroups.innerHTML = "";
         for(let i=1; i<=4; i++) {
             const t1 = tecnicos[(i-1)*2] || "VACANTE";
             const t2 = tecnicos[(i-1)*2+1] || "VACANTE";
-            dGroups.innerHTML += `
-                <div class="group-tag" draggable="true" ondragstart="e => { e.dataTransfer.setData('t1','${t1}'); e.dataTransfer.setData('t2','${t2}'); }">
-                    G${i}: ${t1.split(' ')[0]}/${t2.split(' ')[0]}
-                </div>
-            `;
+            dGroups.innerHTML += `<div class="group-tag" draggable="true" ondragstart="startDrag(event, '${t1}', '${t2}')">G${i}: ${t1.split(' ')[0]}/${t2.split(' ')[0]}</div>`;
         }
     }
 
-    // GESTIÓN DE PERSONAL
-    async function agregarTecnico() {
-        const nombre = document.getElementById('nuevo-tecnico').value.toUpperCase();
-        if(!nombre) return;
-        await supabase.from('tecnicos_db').insert([{ nombre }]);
-        document.getElementById('nuevo-tecnico').value = "";
-        sync();
+    function startDrag(e, t1, t2) {
+        e.dataTransfer.setData("t1", t1);
+        e.dataTransfer.setData("t2", t2);
     }
 
-    async function eliminarTecnico(nombre) {
-        if(confirm(`¿Eliminar a ${nombre}?`)) {
-            await supabase.from('tecnicos_db').delete().eq('nombre', nombre);
-            sync();
-        }
-    }
-
-    // ARRASTRAR Y SOLTAR
     async function onDropGrupo(e, fechaId) {
         e.preventDefault();
         const t1 = e.dataTransfer.getData("t1");
@@ -165,16 +141,15 @@
         for(let d=1; d<=total; d++) {
             const f = new Date(y, m, d);
             const id = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            
             const man = dbManual.find(x => x.fecha === id);
+
             const celda = document.createElement('div');
             celda.className = `day ${f.getDay()===0||f.getDay()===6?'weekend':''}`;
-            
-            celda.ondragover = (e) => { e.preventDefault(); celda.classList.add('drag-over'); };
-            celda.ondragleave = () => celda.classList.remove('drag-over');
-            celda.ondrop = (e) => { celda.classList.remove('drag-over'); onDropGrupo(e, id); };
+            celda.ondragover = (e) => { e.preventDefault(); celda.style.borderColor = "#2563eb"; };
+            celda.ondragleave = () => celda.style.borderColor = "#e2e8f0";
+            celda.ondrop = (e) => onDropGrupo(e, id);
 
-            celda.innerHTML = `<div class="day-header">${d}</div>`;
+            celda.innerHTML = `<div style="font-weight:bold; color:#64748b;">${d}</div>`;
             if(man) {
                 celda.innerHTML += `
                     <div class="turno-card principal"><b>${man.p1}</b><br><b>${man.p2}</b></div>
@@ -185,15 +160,21 @@
         }
     }
 
-    async function registrarAusencia() {
-        const t = document.getElementById('aus-tecnico').value;
-        const i = document.getElementById('aus-inicio').value;
-        const f = document.getElementById('aus-fin').value;
-        await supabase.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
-        sync();
+    async function agregarTecnico() {
+        const n = document.getElementById('nuevo-tecnico').value.toUpperCase();
+        if(n) { await supabase.from('tecnicos').insert([{ nombre: n }]); sync(); }
+    }
+
+    async function eliminarTecnico(nombre) {
+        if(confirm(`¿Quitar a ${nombre}?`)) {
+            await supabase.from('tecnicos').delete().eq('nombre', nombre);
+            sync();
+        }
     }
 
     function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth()+v); render(); }
+    
+    // ARRANQUE
     sync();
 </script>
 </body>
