@@ -3,53 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Grupos Simultáneos | v5.0</title>
+    <title>Dashboard de Supervisión v6 - Editor de Imprevistos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; --g12: #dbeafe; --g34: #fef3c7; }
+        :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; --g12: #dbeafe; --g34: #fef3c7; --danger: #ef4444; }
         body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; color: #1e293b; }
         
         /* Lateral */
-        .sidebar { width: 340px; background: var(--primary); color: white; padding: 25px; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.3); }
-        .group-card { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid var(--accent); }
-        .group-card strong { display: block; margin-bottom: 5px; color: #60a5fa; }
-        .group-card input { background: transparent; border: none; border-bottom: 1px solid #475569; color: white; width: 100%; font-size: 0.85rem; margin-bottom: 5px; outline: none; }
-        
+        .sidebar { width: 300px; background: var(--primary); color: white; padding: 20px; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.3); }
+        .group-card { background: #1e293b; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent); font-size: 0.8rem; }
+        .group-card strong { color: #60a5fa; display: block; margin-bottom: 5px; }
+
         /* Calendario */
-        .main { flex-grow: 1; padding: 30px; overflow-y: auto; }
+        .main { flex-grow: 1; padding: 20px; overflow-y: auto; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-        .day { background: white; min-height: 170px; border-radius: 12px; border: 1px solid #e2e8f0; padding: 12px; position: relative; }
+        .day { background: white; min-height: 160px; border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; position: relative; cursor: pointer; transition: 0.2s; }
+        .day:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .day-header { text-align: center; font-weight: bold; padding: 10px; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
-        .weekend-active { border: 2px solid var(--accent); }
         
         /* Turnos */
-        .badge-1 { background: #2563eb; color: white; font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; font-weight: 800; margin-bottom: 4px; display: inline-block; }
-        .badge-2 { background: #64748b; color: white; font-size: 0.65rem; padding: 3px 6px; border-radius: 4px; display: inline-block; }
-        .box-turno { margin-top: 8px; padding: 8px; border-radius: 6px; font-size: 0.8rem; line-height: 1.2; }
-        .box-g12 { background: var(--g12); color: #1e40af; border: 1px solid #bfdbfe; }
-        .box-g34 { background: var(--g34); color: #92400e; border: 1px solid #fde68a; }
-        
-        .names { display: block; font-size: 0.7rem; margin-top: 3px; font-weight: 500; }
-        .btn-save { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: auto; }
+        .box-turno { margin-top: 5px; padding: 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid transparent; }
+        .box-g12 { background: var(--g12); color: #1e40af; border-color: #bfdbfe; }
+        .box-g34 { background: var(--g34); color: #92400e; border-color: #fde68a; }
+        .badge-1 { background: var(--accent); color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold; font-size: 0.6rem; }
+        .is-modified { border: 2px dashed var(--danger); }
+
+        /* Modal / Ventana de edición */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-content h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-ok { background: var(--accent); color: white; }
+        .btn-cancel { background: #e2e8f0; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2><i class="fas fa-users-cog"></i> EQUIPOS</h2>
-    <div id="setup">
-        <div class="group-card"><strong>GRUPO 1</strong><input id="g1t1" value="JUAN MEJIA"><input id="g1t2" value="VALENTIN BOLAÑOS"></div>
-        <div class="group-card"><strong>GRUPO 2</strong><input id="g2t1" value="DOUGLAS VENTURA"><input id="g2t2" value="JOSE PALMA"></div>
-        <div class="group-card"><strong>GRUPO 3</strong><input id="g3t1" value="DANIEL MELENDEZ"><input id="g3t2" value="MIGUEL OCHOA"></div>
-        <div class="group-card"><strong>GRUPO 4</strong><input id="g4t1" value="EDGARDO SORIANO"><input id="g4t2" value="LUIS PALACIOS"></div>
+    <h2><i class="fas fa-users-cog"></i> BASE</h2>
+    <div id="base-info">
+        <div class="group-card"><strong>GRUPO 1:</strong> JUAN MEJIA / VALENTIN BOLAÑOS</div>
+        <div class="group-card"><strong>GRUPO 2:</strong> DOUGLAS VENTURA / JOSE PALMA</div>
+        <div class="group-card"><strong>GRUPO 3:</strong> DANIEL MELENDEZ / MIGUEL OCHOA</div>
+        <div class="group-card"><strong>GRUPO 4:</strong> EDGARDO SORIANO / LUIS PALACIOS</div>
     </div>
-    <button class="btn-save" onclick="guardar()">💾 GUARDAR Y ACTUALIZAR</button>
+    <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 20px;">
+        <i class="fas fa-info-circle"></i> Haz clic en un día del calendario para modificar técnicos específicos o cubrir bajas.
+    </div>
 </aside>
 
 <main class="main">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1 style="margin:0">Planificación de Turnos Simultáneos</h1>
-        <h3 id="mesActual" style="color:var(--accent)"></h3>
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <h1 style="margin:0">Control de Imprevistos</h1>
+        <h3 id="mesLabel"></h3>
     </div>
     <div class="grid" id="calendar">
         <div class="day-header">Lun</div><div class="day-header">Mar</div><div class="day-header">Mie</div>
@@ -58,9 +68,41 @@
     </div>
 </main>
 
+<div id="modal">
+    <div class="modal-content">
+        <h3 id="modalFecha">Editar Día</h3>
+        <input type="hidden" id="editId">
+        
+        <div class="form-group">
+            <label>1° OPCIÓN (Técnicos):</label>
+            <input type="text" id="editP1" placeholder="Ej: JUAN MEJIA (Solo)">
+        </div>
+        
+        <div class="form-group">
+            <label>APOYO (Técnicos):</label>
+            <input type="text" id="editP2" placeholder="Ej: LUIS PALACIOS (Cubre baja)">
+        </div>
+
+        <div class="modal-btns">
+            <button class="btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
+            <button class="btn btn-ok" onclick="guardarCambio()">Aplicar Cambio</button>
+        </div>
+        <p style="font-size: 0.6rem; color: gray; margin-top: 10px;">* Escribir aquí sobreescribirá la programación automática de este día.</p>
+    </div>
+</div>
+
 <script>
-    let db = JSON.parse(localStorage.getItem('dash_simultaneo_v5')) || { manuales: {} };
+    // Memoria del sistema
+    let dbManual = JSON.parse(localStorage.getItem('turnos_imprevistos_v6')) || {};
     const hoy = new Date();
+    const fechaBase = new Date(2026, 2, 7); // Sab 7 Marzo
+
+    const gruposBase = {
+        1: "JUAN MEJIA / VALENTIN BOLAÑOS",
+        2: "DOUGLAS VENTURA / JOSE PALMA",
+        3: "DANIEL MELENDEZ / MIGUEL OCHOA",
+        4: "EDGARDO SORIANO / LUIS PALACIOS"
+    };
 
     function render() {
         const grid = document.getElementById('calendar');
@@ -70,65 +112,91 @@
 
         const mes = hoy.getMonth();
         const año = hoy.getFullYear();
-        document.getElementById('mesActual').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(hoy);
+        document.getElementById('mesLabel').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(hoy);
 
         const diasMes = new Date(año, mes+1, 0).getDate();
         const primerDia = new Date(año, mes, 1).getDay();
         const offset = (primerDia === 0) ? 6 : primerDia - 1;
 
-        // FECHA BASE: Sábado 7 de Marzo 2026 -> Empiezan G1 y G2
-        const fechaBase = new Date(2026, 2, 7);
-
-        for(let i=0; i<offset; i++) grid.innerHTML += `<div class="day" style="opacity:0.2; border:none;"></div>`;
+        for(let i=0; i<offset; i++) grid.innerHTML += `<div class="day" style="opacity:0.2; cursor:default"></div>`;
 
         for(let d=1; d<=diasMes; d++) {
             const f = new Date(año, mes, d);
             const id = `${año}-${mes+1}-${d}`;
-            const diaSemana = f.getDay(); // 6=Sab, 0=Dom
+            const diaSemana = f.getDay();
             let contenido = "";
 
             if(diaSemana === 6 || diaSemana === 0) {
                 const diffDays = Math.floor((f - fechaBase) / (1000*60*60*24));
                 const numSemana = Math.floor(diffDays / 7);
                 
-                let p1, p2, estilo;
+                let p1, p2, estilo, nombreP1, nombreP2;
                 
-                // ROTACIÓN SEMANAL G1+G2 vs G3+G4
+                // Cálculo automático
                 if(Math.abs(numSemana) % 2 === 0) {
-                    // SEMANA G1 Y G2
                     estilo = "box-g12";
-                    p1 = (diaSemana === 6) ? 1 : 2; // Sab: G1 es 1ra opc, Dom: G2 es 1ra opc
+                    p1 = (diaSemana === 6) ? 1 : 2;
                     p2 = (diaSemana === 6) ? 2 : 1;
                 } else {
-                    // SEMANA G3 Y G4
                     estilo = "box-g34";
-                    p1 = (diaSemana === 6) ? 3 : 4; // Sab: G3 es 1ra opc, Dom: G4 es 1ra opc
+                    p1 = (diaSemana === 6) ? 3 : 4;
                     p2 = (diaSemana === 6) ? 4 : 3;
                 }
 
-                const n1 = `${document.getElementById('g'+p1+'t1').value} / ${document.getElementById('g'+p1+'t2').value}`;
-                const n2 = `${document.getElementById('g'+p2+'t1').value} / ${document.getElementById('g'+p2+'t2').value}`;
+                // ¿Hay cambios manuales para este día?
+                const manual = dbManual[id];
+                nombreP1 = manual ? manual.p1 : gruposBase[p1];
+                nombreP2 = manual ? manual.p2 : gruposBase[p2];
 
                 contenido = `
-                    <div class="box-turno ${estilo}">
-                        <span class="badge-1">1° OPCIÓN: GRUPO ${p1}</span>
-                        <span class="names">${n1}</span>
-                        <div style="margin-top:8px"></div>
-                        <span class="badge-2">APOYO: GRUPO ${p2}</span>
-                        <span class="names">${n2}</span>
+                    <div class="box-turno ${estilo} ${manual ? 'is-modified' : ''}">
+                        <span class="badge-1">1° OPCIÓN</span><br>
+                        <strong>${nombreP1}</strong>
+                        <div style="margin-top:10px"></div>
+                        <span style="font-size:0.6rem; font-weight:bold; color:#64748b">APOYO</span><br>
+                        <strong>${nombreP2}</strong>
+                        ${manual ? '<div style="color:red; font-size:0.5rem; margin-top:5px">⚠️ MODIFICADO</div>' : ''}
                     </div>`;
             }
 
-            grid.innerHTML += `<div class="day ${diaSemana===6||diaSemana===0?'weekend-active':''}">
-                <strong style="color:#94a3b8">${d}</strong>${contenido}
-            </div>`;
+            const cell = document.createElement('div');
+            cell.className = 'day';
+            cell.innerHTML = `<strong style="color:#94a3b8">${d}</strong>${contenido}`;
+            cell.onclick = () => (diaSemana===6||diaSemana===0) ? abrirModal(id, contenido) : null;
+            grid.appendChild(cell);
         }
     }
 
-    function guardar() {
-        localStorage.setItem('dash_simultaneo_v5', JSON.stringify(db));
-        render(); // Refresca para aplicar cambios de nombres
-        alert("Configuración guardada.");
+    function abrirModal(id, contenido) {
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('editId').value = id;
+        document.getElementById('modalFecha').innerText = "Editar Turno: " + id;
+        
+        // Si ya hay algo manual, lo cargamos en los inputs
+        if(dbManual[id]) {
+            document.getElementById('editP1').value = dbManual[id].p1;
+            document.getElementById('editP2').value = dbManual[id].p2;
+        } else {
+            document.getElementById('editP1').value = "";
+            document.getElementById('editP2').value = "";
+        }
+    }
+
+    function guardarCambio() {
+        const id = document.getElementById('editId').value;
+        const p1 = document.getElementById('editP1').value;
+        const p2 = document.getElementById('editP2').value;
+
+        if(p1 || p2) {
+            dbManual[id] = { p1, p2 };
+        }
+        localStorage.setItem('turnos_imprevistos_v6', JSON.stringify(dbManual));
+        cerrarModal();
+        render();
+    }
+
+    function cerrarModal() {
+        document.getElementById('modal').style.display = 'none';
     }
 
     window.onload = render;
