@@ -3,251 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA DE TURNOS PRO v45 - CLOUD</title>
+    <title>SISTEMA DE TURNOS V51 - GESTIÓN TOTAL</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { 
-            --sidebar: #0f172a; 
-            --accent: #2563eb; 
-            --bg: #f8fafc; 
-            --card: #ffffff; 
-            --danger: #ef4444; 
-            --success: #10b981;
-        }
+        :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; --danger: #ef4444; }
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
         
-        body { font-family: 'Inter', system-ui, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
-        
-        /* Barra Lateral */
-        .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
-        .section-box { background: rgba(255,255,255,0.05); padding: 16px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        .section-title { font-size: 0.75rem; color: #60a5fa; font-weight: 800; text-transform: uppercase; margin-bottom: 12px; display: block; letter-spacing: 1px; }
+        .sidebar { width: 340px; background: var(--sidebar); color: white; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        .section-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .section-title { font-size: 0.7rem; color: #60a5fa; font-weight: 800; text-transform: uppercase; margin-bottom: 10px; display: block; }
 
-        /* Calendario */
-        .main { flex-grow: 1; display: flex; flex-direction: column; min-width: 0; }
-        .header-bar { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .main { flex-grow: 1; display: flex; flex-direction: column; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px; overflow-y: auto; }
+        .day { background: white; border-radius: 10px; border: 1px solid #e2e8f0; min-height: 140px; padding: 10px; }
         
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px; overflow-y: auto; flex-grow: 1; align-content: start; }
+        .group-tag { background: var(--accent); color: white; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: grab; font-size: 0.8rem; font-weight: bold; }
+        .btn-action { width: 100%; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-motor { background: #10b981; color: white; }
         
-        .day { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; min-height: 150px; transition: all 0.2s; position: relative; }
-        .day.weekend { background: #f1f5f9; border-style: dashed; }
-        .day:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .day-header { font-weight: 800; color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px; display: flex; justify-content: space-between; }
-
-        /* Tarjetas de Turno */
-        .turno-card { padding: 8px; border-radius: 8px; margin-bottom: 6px; font-size: 0.8rem; border: 1px solid #f1f5f9; border-left: 5px solid #cbd5e1; background: white; }
-        .principal { border-left-color: var(--accent); background: #f0f7ff; }
-        .name-row { font-weight: 700; color: #1e293b; display: block; margin-bottom: 2px; }
-        .ausente-text { text-decoration: line-through; color: var(--danger); opacity: 0.5; font-style: italic; }
-
-        /* Grupos Arrastrables */
-        .group-tag { background: var(--accent); color: white; padding: 12px; border-radius: 10px; margin-bottom: 8px; cursor: grab; font-size: 0.8rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-        .group-tag:active { cursor: grabbing; transform: scale(0.98); }
-        
-        /* Formulario Ausencias */
-        input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: white; margin-bottom: 8px; box-sizing: border-box; }
-        .btn-action { background: var(--success); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 800; transition: opacity 0.2s; }
-        .btn-action:hover { opacity: 0.9; }
-        
-        #status { font-size: 0.7rem; color: #94a3b8; margin-top: auto; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 10px; border-left: 3px solid var(--success); }
+        .alert-box { font-size: 0.75rem; padding: 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid var(--danger); }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2 style="font-size: 1.4rem; margin-bottom: 25px; font-weight: 900;"><i class="fas fa-calendar-check"></i> PANEL ADMIN</h2>
+    <h2 style="margin-bottom:20px;">ADMIN V51</h2>
 
     <div class="section-box">
-        <span class="section-title">Grupos de Trabajo</span>
-        <div id="drag-groups">Cargando equipo...</div>
+        <span class="section-title">Cuadrillas Activas</span>
+        <div id="lista-cuadrillas">Cargando...</div>
+        <button class="btn-action btn-motor" onclick="ejecutarMotor()"><i class="fas fa-robot"></i> REFRESCAR 6 MESES</button>
     </div>
 
     <div class="section-box">
-        <span class="section-title">Registrar Ausencia</span>
-        <select id="aus-tecnico"></select>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-            <input type="date" id="aus-inicio">
-            <input type="date" id="aus-fin">
-        </div>
-        <input type="text" id="aus-motivo" placeholder="Motivo (Vacaciones, Permiso...)">
-        <button class="btn-action" onclick="registrarAusencia()">GUARDAR EN NUBE</button>
+        <span class="section-title">Alta de Técnico</span>
+        <input type="text" id="add-nom" placeholder="Nombre" style="width:100%; margin-bottom:5px;">
+        <input type="number" id="add-gru" placeholder="Grupo" style="width:100%;">
+        <button class="btn-action" style="background:#475569; color:white;" onclick="accionPersonal('alta')">REGISTRAR</button>
     </div>
 
-    <div id="status">Sincronizando con Google Cloud...</div>
+    <div class="section-box">
+        <span class="section-title">Alertas de Reglas de Oro</span>
+        <div id="panel-alertas">Sistema monitoreando...</div>
+    </div>
 </aside>
 
 <main class="main">
-    <div class="header-bar">
-        <button onclick="cambiarMes(-1)" style="border:none; background:none; cursor:pointer; font-size: 1.5rem; color: #94a3b8;"><i class="fas fa-chevron-left"></i></button>
-        <h2 id="mesTitulo" style="margin:0; font-size:1.3rem; font-weight: 900; color: #0f172a;"></h2>
-        <button onclick="cambiarMes(1)" style="border:none; background:none; cursor:pointer; font-size: 1.5rem; color: #94a3b8;"><i class="fas fa-chevron-right"></i></button>
+    <div style="background:white; padding:15px; border-bottom:1px solid #ddd; display:flex; justify-content: space-between;">
+        <button onclick="cambiarMes(-1)">Anterior</button>
+        <h2 id="mesTitulo" style="margin:0">MARZO 2024</h2>
+        <button onclick="cambiarMes(1)">Siguiente</button>
     </div>
-    <div class="grid" id="grid"></div>
+    <div class="grid" id="calendar-grid"></div>
 </main>
 
 <script>
-    // URL DE TU APLICACIÓN WEB DE GOOGLE
-    const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbwuvZofgJNtXCXYwN7oMaoxOqlrXmayGuD0of-0qfiMm9Kft840EJqzHZmmr4rI7p1d/exec';
+    const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbw1YtfK0VoKq6Acnr6cB0mH--3i6i-Dbtk3omFwCxb8jRkKEBkASDvwnFKOlTmEuWCI/exec'; // <--- PEGA AQUÍ TU URL
+    let dbTecnicos = [], dbProgramacion = [], dbAusencias = [];
+    let fechaActual = new Date();
 
-    let tecnicosFull = []; 
-    let dbAusencias = [], dbManual = [];
-    let mesActual = new Date();
-
-    // --- SINCRONIZACIÓN TOTAL ---
     async function sync() {
-        const statusDiv = document.getElementById('status');
         try {
-            // 1. Obtener Técnicos
             const resT = await fetch(`${CLOUD_URL}?tabla=tecnicos`);
-            const dataT = await resT.json();
-            // Mapeamos asumiendo Col A: Nombre, Col B: Grupo
-            tecnicosFull = dataT.slice(1).map(r => ({ nombre: r[0], grupo: r[1] }));
-
-            // 2. Obtener Ausencias
-            const resA = await fetch(`${CLOUD_URL}?tabla=ausencias`);
-            const dataA = await resA.json();
-            dbAusencias = dataA.slice(1).map(r => ({ 
-                tecnico_nombre: r[0], fecha_inicio: r[1], fecha_fin: r[2], motivo: r[3] 
-            }));
-
-            // 3. Obtener Programación
-            const resP = await fetch(`${CLOUD_URL}?tabla=programacion`);
-            const dataP = await resP.json();
-            dbManual = dataP.slice(1).map(r => ({ 
-                fecha: r[0], p1: r[1], p2: r[2], a1: r[3], a2: r[4] 
-            }));
-
-            statusDiv.innerHTML = `<span style="color:#10b981">● ONLINE: GOOGLE SHEETS</span><br>Sincronizado: ${new Date().toLocaleTimeString()}`;
+            dbTecnicos = await resT.json();
             
-            actualizarInterfazLateral();
+            const resP = await fetch(`${CLOUD_URL}?tabla=programacion`);
+            dbProgramacion = await resP.json();
+
+            renderSidebar();
             renderCalendario();
-        } catch (e) {
-            statusDiv.innerHTML = `<span style="color:#ef4444">● ERROR DE CONEXIÓN</span><br>Revisa las pestañas de tu Excel.`;
-            console.error(e);
-        }
+        } catch (e) { document.getElementById('panel-alertas').innerText = "Error de conexión"; }
     }
 
-    function actualizarInterfazLateral() {
-        // Selector de ausencias
-        const sel = document.getElementById('aus-tecnico');
-        sel.innerHTML = tecnicosFull.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join('');
+    function renderSidebar() {
+        const cont = document.getElementById('lista-cuadrillas');
+        cont.innerHTML = "";
+        // Agrupar técnicos por grupo (Col B = índice 1)
+        let grupos = {};
+        dbTecnicos.slice(1).forEach(t => {
+            if(!grupos[t[1]]) grupos[t[1]] = [];
+            grupos[t[1]].push(t[0]);
+        });
 
-        // Generar grupos arrastrables
-        const dGroups = document.getElementById('drag-groups');
-        dGroups.innerHTML = "";
-        const gruposIds = [...new Set(tecnicosFull.map(t => t.grupo))].sort();
-        
-        gruposIds.forEach(gNum => {
-            if(!gNum) return;
-            const integrantes = tecnicosFull.filter(t => t.grupo === gNum).map(t => t.nombre);
-            const t1 = integrantes[0] || "Vacante";
-            const t2 = integrantes[1] || "Vacante";
-            dGroups.innerHTML += `
-                <div class="group-tag" draggable="true" ondragstart="startDrag(event, '${t1}', '${t2}')">
-                    <span>GRUPO ${gNum}: ${t1.split(' ')[0]} & ${t2.split(' ')[0]}</span>
-                    <i class="fas fa-grip-vertical"></i>
+        Object.keys(grupos).forEach(g => {
+            const t1 = grupos[g][0] || "Vacante";
+            const t2 = grupos[g][1] || "Vacante";
+            cont.innerHTML += `
+                <div class="group-tag" draggable="true" ondragstart="event.dataTransfer.setData('t1','${t1}');event.dataTransfer.setData('t2','${t2}')">
+                    GRUPO ${g}: ${t1.split(' ')[0]} & ${t2.split(' ')[0]}
                 </div>`;
         });
     }
 
-    function startDrag(e, t1, t2) {
-        e.dataTransfer.setData("t1", t1);
-        e.dataTransfer.setData("t2", t2);
-    }
-
-    async function onDropGrupo(e, fechaId) {
-        e.preventDefault();
-        const t1 = e.dataTransfer.getData("t1");
-        const t2 = e.dataTransfer.getData("t2");
-
-        const payload = { 
-            tabla: 'programacion',
-            fecha: fechaId, 
-            p1: t1, p2: t2, 
-            a1: "---", a2: "---" 
-        };
-
-        document.getElementById('status').innerText = "💾 Guardando turno...";
-        await fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify(payload) });
-        sync();
-    }
-
-    async function registrarAusencia() {
-        const payload = {
-            tabla: 'ausencias',
-            tecnico_nombre: document.getElementById('aus-tecnico').value,
-            fecha_inicio: document.getElementById('aus-inicio').value,
-            fecha_fin: document.getElementById('aus-fin').value,
-            motivo: document.getElementById('aus-motivo').value
-        };
-
-        if(!payload.fecha_inicio || !payload.fecha_fin) return alert("Faltan fechas");
-
-        document.getElementById('status').innerText = "💾 Registrando ausencia...";
-        // Nota: El Apps Script debe estar preparado para manejar 'tabla: ausencias'
-        await fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify(payload) });
-        sync();
-    }
-
     function renderCalendario() {
-        const grid = document.getElementById('grid');
+        const grid = document.getElementById('calendar-grid');
         grid.innerHTML = "";
-        const y = mesActual.getFullYear(), m = mesActual.getMonth();
-        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(mesActual).toUpperCase();
+        const y = fechaActual.getFullYear(), m = fechaActual.getMonth();
+        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES',{month:'long',year:'numeric'}).format(fechaActual).toUpperCase();
 
-        const totalDias = new Date(y, m+1, 0).getDate();
-        let primerDiaSemana = (new Date(y, m, 1).getDay() + 6) % 7;
-
-        for(let i=0; i<primerDiaSemana; i++) grid.appendChild(document.createElement('div'));
-
-        for(let d=1; d<=totalDias; d++) {
-            const fechaId = `${y}-${m+1}-${d}`; // Formato simple para buscar
-            const infoTurno = dbManual.find(x => {
-                // Normalización de fecha para comparar
-                const dExcel = new Date(x.fecha);
-                const dCal = new Date(y, m, d);
-                return dExcel.toDateString() === dCal.toDateString();
-            });
-
+        for(let d=1; d<=31; d++) {
+            const f = new Date(y, m, d);
+            if(f.getMonth() !== m) continue;
+            const fStr = f.toDateString();
+            const turno = dbProgramacion.find(r => r[0] && new Date(r[0]).toDateString() === fStr);
+            
             const celda = document.createElement('div');
-            const fechaObj = new Date(y, m, d);
-            const esFinde = (fechaObj.getDay() === 0 || fechaObj.getDay() === 6);
+            celda.className = 'day';
+            celda.innerHTML = `<b>${d}</b>`;
             
-            celda.className = `day ${ esFinde ? 'weekend' : '' }`;
-            celda.ondragover = (e) => { e.preventDefault(); celda.style.borderColor = "#2563eb"; };
-            celda.ondragleave = () => { celda.style.borderColor = "#e2e8f0"; };
-            celda.ondrop = (e) => onDropGrupo(e, fechaId);
-
-            celda.innerHTML = `<div class="day-header"><span>${d}</span></div>`;
-            
-            if(infoTurno) {
-                // Función para verificar si un técnico está ausente en este día específico
-                const verificarAusencia = (nombre) => {
-                    return dbAusencias.some(a => {
-                        const inicio = new Date(a.fecha_inicio);
-                        const fin = new Date(a.fecha_fin);
-                        const actual = new Date(y, m, d);
-                        return nombre === a.tecnico_nombre && actual >= inicio && actual <= fin;
-                    });
-                };
-
-                celda.innerHTML += `
-                    <div class="turno-card principal">
-                        <span class="name-row ${verificarAusencia(infoTurno.p1) ? 'ausente-text' : ''}">${infoTurno.p1}</span>
-                        <span class="name-row ${verificarAusencia(infoTurno.p2) ? 'ausente-text' : ''}">${infoTurno.p2}</span>
-                    </div>
-                    <div class="turno-card">
-                        <span class="name-row">${infoTurno.a1}</span>
-                        <span class="name-row">${infoTurno.a2}</span>
-                    </div>
-                `;
+            if(turno) {
+                celda.innerHTML += `<div style="font-size:0.7rem; margin-top:5px; padding:5px; background:#f0f7ff; border-left:3px solid #2563eb;">
+                    ${turno[1]}<br>${turno[2]}<br><small style="color:blue">${turno[5] || ''}</small>
+                </div>`;
             }
+
+            celda.ondragover = e => e.preventDefault();
+            celda.ondrop = async e => {
+                const p1 = e.dataTransfer.getData('t1');
+                const p2 = e.dataTransfer.getData('t2');
+                // Aquí se activa la REGLA DE ORO (Validación de ausencias próximamente)
+                await fetch(CLOUD_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({accion:'guardar_manual', fecha: `${y}-${m+1}-${d}`, p1, p2, a1:'M', a2:'M'})
+                });
+                sync();
+            };
             grid.appendChild(celda);
         }
     }
 
-    function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth()+v); renderCalendario(); }
-    
-    // Inicio automático
+    async function ejecutarMotor() {
+        if(!confirm("Refrescar 6 meses respetando manuales?")) return;
+        await fetch(CLOUD_URL, {method:'POST', body: JSON.stringify({accion:'ejecutar_motor'})});
+        sync();
+    }
+
+    async function accionPersonal(sub) {
+        const nombre = document.getElementById('add-nom').value;
+        const grupo = document.getElementById('add-gru').value;
+        await fetch(CLOUD_URL, {method:'POST', body: JSON.stringify({accion:'gestion_personal', sub, nombre, grupo})});
+        sync();
+    }
+
+    function cambiarMes(v) { fechaActual.setMonth(fechaActual.getMonth()+v); renderCalendario(); }
     sync();
 </script>
 </body>
