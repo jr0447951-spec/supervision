@@ -3,222 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS - ADMIN v29</title>
+    <title>SISTEMA TURNOS - ADMIN v32 (GESTIÓN PERSONAL)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; --vacante: #fef3c7; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
-        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
-        .main { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .nav-bar { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; overflow-y: auto; flex-grow: 1; align-content: start; }
-        .day { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; min-height: 150px; cursor: pointer; position: relative; }
-        .day.weekend { background: #f1f5f9; }
-        .day.vacio { background: var(--vacante); border-color: #fcd34d; }
-        .day-header { font-weight: bold; color: #64748b; margin-bottom: 8px; font-size: 0.9rem; }
-        .turno-card { padding: 6px; border-radius: 6px; margin-bottom: 4px; font-size: 0.7rem; border-left: 4px solid #94a3b8; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .principal { border-left-color: var(--accent); background: #eff6ff; }
-        .names { font-weight: bold; color: #1e293b; line-height: 1.2; display: block; }
-        .vacante-aviso { color: #b45309; font-size: 0.65rem; font-weight: bold; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 25px; border-radius: 16px; width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        select { width: 100%; padding: 10px; margin: 5px 0 12px 0; border-radius: 8px; border: 1px solid #cbd5e1; }
-        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; width: 100%; }
-        .btn-blue { background: var(--accent); color: white; }
+        :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; }
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
+        
+        /* Estilos Sidebar */
+        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+        .section-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+        .section-title { font-size: 0.7rem; color: #60a5fa; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; display: block; }
+        
+        /* Lista de Personal */
+        .tech-list { list-style: none; padding: 0; margin: 10px 0; max-height: 150px; overflow-y: auto; }
+        .tech-item { display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 5px 10px; border-radius: 6px; margin-bottom: 4px; font-size: 0.75rem; }
+        .btn-del { color: #ef4444; cursor: pointer; border: none; background: none; }
+
+        /* Grupos Arrastrables */
+        .group-tag { background: var(--accent); color: white; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: grab; font-weight: bold; font-size: 0.75rem; display: flex; align-items: center; gap: 8px; }
+
+        /* Grid */
+        .main { flex-grow: 1; display: flex; flex-direction: column; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px; overflow-y: auto; flex-grow: 1; }
+        .day { background: var(--card); border-radius: 12px; border: 2px solid #e2e8f0; padding: 10px; min-height: 150px; position: relative; }
+        .day.drag-over { border-color: var(--accent); background: #eff6ff; }
+        .turno-card { padding: 5px 8px; border-radius: 6px; margin-bottom: 4px; font-size: 0.7rem; border-left: 4px solid #cbd5e1; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .principal { border-left-color: var(--accent); background: #f0f7ff; }
+        
+        input, select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; font-size: 0.8rem; }
+        .btn-add { background: #10b981; color: white; border: none; padding: 8px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2 style="font-size: 1.2rem; margin-top: 0;"><i class="fas fa-calendar-check"></i> Turnos Admin</h2>
-    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-        <label style="font-size: 0.7rem; color: #60a5fa; font-weight: bold;">REGISTRAR AUSENCIA</label>
-        <select id="aus-tecnico" style="background: #1e293b; color: white; border: 1px solid #334155;"></select>
-        <input type="date" id="aus-inicio" style="width:92%; margin-bottom: 8px; padding: 8px; border-radius: 6px; border: none;">
-        <input type="date" id="aus-fin" style="width:92%; margin-bottom: 12px; padding: 8px; border-radius: 6px; border: none;">
-        <button class="btn btn-blue" onclick="registrarAusencia()" style="font-size: 0.8rem;">APLICAR</button>
+    <h2>ADMIN v32</h2>
+
+    <div class="section-box">
+        <span class="section-title">Nómina de Personal</span>
+        <ul id="lista-personal" class="tech-list"></ul>
+        <div style="display:flex; gap:5px;">
+            <input type="text" id="nuevo-tecnico" placeholder="Nombre..." style="margin:0;">
+            <button class="btn-add" onclick="agregarTecnico()" style="width:40px;">+</button>
+        </div>
     </div>
-    <div id="status" style="margin-top: auto; font-size: 0.65rem; color: #94a3b8;">
-        <i class="fas fa-circle"></i> Estado: Iniciando...
+
+    <div class="section-box">
+        <span class="section-title">Asignación de Grupos</span>
+        <div id="drag-groups">
+            </div>
     </div>
+
+    <div class="section-box">
+        <span class="section-title">Registrar Ausencia</span>
+        <select id="aus-tecnico"></select>
+        <input type="date" id="aus-inicio">
+        <input type="date" id="aus-fin">
+        <button class="btn-add" onclick="registrarAusencia()" style="background:var(--accent)">GUARDAR</button>
+    </div>
+
+    <div id="status" style="font-size:0.6rem; color:#94a3b8;">● Sincronizando...</div>
 </aside>
 
 <main class="main">
-    <div class="nav-bar">
-        <button onclick="cambiarMes(-1)" class="btn" style="width: 45px; background: #f1f5f9;"><i class="fas fa-chevron-left"></i></button>
-        <h2 id="mesTitulo" style="margin: 0; font-size: 1.3rem; color: #0f172a;">CARGANDO...</h2>
-        <button onclick="cambiarMes(1)" class="btn" style="width: 45px; background: #f1f5f9;"><i class="fas fa-chevron-right"></i></button>
+    <div style="background:white; padding:15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #ddd;">
+        <button onclick="cambiarMes(-1)" style="border:none; cursor:pointer;"><i class="fas fa-chevron-left"></i></button>
+        <h2 id="mesTitulo" style="margin:0; font-size:1.2rem;"></h2>
+        <button onclick="cambiarMes(1)" style="border:none; cursor:pointer;"><i class="fas fa-chevron-right"></i></button>
     </div>
     <div class="grid" id="grid"></div>
 </main>
 
-<div id="modal">
-    <div class="modal-box">
-        <h3 id="mFechaStr" style="margin-top: 0;">Editar Turno</h3>
-        <input type="hidden" id="mId">
-        <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">PRINCIPAL</label>
-        <select id="selP1"></select><select id="selP2"></select>
-        <label style="font-size: 0.75rem; font-weight: bold; color: #64748b; margin-top: 10px; display: block;">APOYO</label>
-        <select id="selA1"></select><select id="selA2"></select>
-        <button class="btn btn-blue" onclick="guardarCambioManual()">GUARDAR CAMBIOS</button>
-        <button class="btn" style="background: none; color: #94a3b8; margin-top: 5px;" onclick="cerrarModal()">CANCELAR</button>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // 1. DATOS MAESTROS (No se tocan)
-    const tecnicos = ["JUAN MEJIA", "VALENTIN BOLAÑOS", "DOUGLAS VENTURA", "JOSE PALMA", "DANIEL MELENDEZ", "MIGUEL OCHOA", "EDGARDO SORIANO", "LUIS PALACIOS"];
-    const gFijos = { 1: [0,1], 2: [2,3], 3: [4,5], 4: [6,7] };
-    let mesActual = new Date();
-    let dbAusencias = [];
-    let dbManual = [];
-
-    // 2. FUNCIÓN DE RENDERIZADO ULTRA-ROBUSTA
-    function render() {
-        try {
-            const grid = document.getElementById('grid');
-            const titulo = document.getElementById('mesTitulo');
-            if(!grid || !titulo) return;
-
-            grid.innerHTML = "";
-            const y = mesActual.getFullYear();
-            const m = mesActual.getMonth();
-            
-            // Mostrar el mes (Esto garantiza que ya no verás "Cargando")
-            const nombresMeses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
-            titulo.innerText = `${nombresMeses[m]} ${y}`;
-
-            const totalDias = new Date(y, m + 1, 0).getDate();
-            let startDay = new Date(y, m, 1).getDay(); // 0 es Domingo
-            startDay = (startDay === 0) ? 6 : startDay - 1; // Ajuste para que empiece en Lunes
-
-            // Espacios vacíos
-            for(let i=0; i < startDay; i++) {
-                const empty = document.createElement('div');
-                grid.appendChild(empty);
-            }
-
-            // Dibujar cada día
-            for(let d=1; d <= totalDias; d++) {
-                const fecha = new Date(y, m, d);
-                const fechaID = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                
-                let asignacion = null;
-                
-                // A. Rotación Base (Fines de semana)
-                const ref = new Date(2026, 2, 7); // 7 de Marzo 2026
-                const diffDays = Math.floor((fecha - ref) / (1000*60*60*24));
-                const diaSemana = fecha.getDay();
-
-                if (diffDays >= 0 && (diaSemana === 0 || diaSemana === 6)) {
-                    const numSemana = Math.floor(diffDays / 7);
-                    const ciclo = numSemana % 4;
-                    let p, a;
-                    if(ciclo===0){ p=1; a=2; } else if(ciclo===1){ p=3; a=4; }
-                    else if(ciclo===2){ p=2; a=1; } else if(ciclo===3){ p=4; a=3; }
-                    asignacion = { 
-                        p: [tecnicos[gFijos[p][0]], tecnicos[gFijos[p][1]]], 
-                        a: [tecnicos[gFijos[a][0]], tecnicos[gFijos[a][1]]] 
-                    };
-                }
-
-                // B. Sobrescritura Manual
-                const manual = dbManual.find(x => x.fecha === fechaID);
-                if(manual) asignacion = { p: [manual.p1, manual.p2], a: [manual.a1, manual.a2] };
-
-                // C. Filtro de Ausencias
-                if(asignacion) {
-                    const ausentes = dbAusencias.filter(aus => fechaID >= aus.fecha_inicio && fechaID <= aus.fecha_fin).map(aus => aus.tecnico_nombre);
-                    asignacion.p = asignacion.p.map(n => ausentes.includes(n) ? "---" : n);
-                    asignacion.a = asignacion.a.map(n => ausentes.includes(n) ? "---" : n);
-                }
-
-                const esVacante = asignacion && (asignacion.p.includes("---") || asignacion.a.includes("---"));
-                
-                const celda = document.createElement('div');
-                celda.className = `day ${diaSemana === 0 || diaSemana === 6 ? 'weekend' : ''} ${esVacante ? 'vacio' : ''}`;
-                
-                let contenidoHtml = `<div class="day-header">${d}</div>`;
-                if(asignacion) {
-                    contenidoHtml += `<div class="turno-card principal"><span class="names">${asignacion.p[0]}<br>${asignacion.p[1]}</span></div>`;
-                    if(asignacion.a[0] !== "---" || asignacion.a[1] !== "---") {
-                        contenidoHtml += `<div class="turno-card"><span class="names">${asignacion.a[0]}<br>${asignacion.a[1]}</span></div>`;
-                    }
-                }
-                if(esVacante) {
-                    contenidoHtml += `<div class="vacante-aviso"><i class="fas fa-exclamation-circle"></i> PUESTO LIBRE</div>`;
-                }
-
-                celda.innerHTML = contenidoHtml;
-                celda.onclick = () => abrirModal(fechaID, asignacion);
-                grid.appendChild(celda);
-            }
-        } catch (err) {
-            console.error("Error en render:", err);
-            document.getElementById('mesTitulo').innerText = "ERROR DE CARGA";
-        }
-    }
-
-    // 3. CONEXIÓN A SUPABASE
     const SUPABASE_URL = 'https://qscaisgcttsnoavgfctj.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_IA9XB7EVhEMk2k6MbA4A4Q_M6og7SfO';
-    let supabaseClient = null;
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function cargarNube() {
-        try {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            const { data: aus } = await supabaseClient.from('ausencias').select('*');
-            const { data: man } = await supabaseClient.from('programacion_manual').select('*');
-            dbAusencias = aus || [];
-            dbManual = man || [];
-            document.getElementById('status').innerHTML = '<i class="fas fa-circle" style="color:#10b981"></i> Nube: Conectada';
-            render();
-        } catch (e) {
-            document.getElementById('status').innerHTML = '<i class="fas fa-circle" style="color:#f59e0b"></i> Estado: Local';
+    let tecnicos = []; 
+    let mesActual = new Date();
+    let dbAusencias = [], dbManual = [];
+
+    async function sync() {
+        // Cargar Técnicos
+        const { data: tData } = await supabase.from('tecnicos_db').select('*').order('nombre');
+        tecnicos = tData ? tData.map(t => t.nombre) : [];
+        
+        // Cargar Datos
+        const { data: aus } = await supabase.from('ausencias').select('*');
+        const { data: man } = await supabase.from('programacion_manual').select('*');
+        
+        dbAusencias = aus || []; 
+        dbManual = man || [];
+        
+        actualizarUI();
+        render();
+        document.getElementById('status').innerText = "● Nube Actualizada";
+    }
+
+    function actualizarUI() {
+        // Actualizar lista de técnicos en sidebar
+        const lista = document.getElementById('lista-personal');
+        lista.innerHTML = tecnicos.map(t => `
+            <li class="tech-item">${t} <button class="btn-del" onclick="eliminarTecnico('${t}')"><i class="fas fa-times"></i></button></li>
+        `).join('');
+
+        // Actualizar select de ausencias
+        document.getElementById('aus-tecnico').innerHTML = tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
+
+        // Actualizar Grupos Arrastrables (Lógica de los 4 grupos originales)
+        const dGroups = document.getElementById('drag-groups');
+        dGroups.innerHTML = "";
+        for(let i=1; i<=4; i++) {
+            const t1 = tecnicos[(i-1)*2] || "VACANTE";
+            const t2 = tecnicos[(i-1)*2+1] || "VACANTE";
+            dGroups.innerHTML += `
+                <div class="group-tag" draggable="true" ondragstart="e => { e.dataTransfer.setData('t1','${t1}'); e.dataTransfer.setData('t2','${t2}'); }">
+                    G${i}: ${t1.split(' ')[0]}/${t2.split(' ')[0]}
+                </div>
+            `;
         }
     }
 
-    // 4. FUNCIONES DE CONTROL
-    function abrirModal(id, data) {
-        document.getElementById('modal').style.display = 'flex';
-        document.getElementById('mId').value = id;
-        document.getElementById('mFechaStr').innerText = "Turno: " + id;
-        ['selP1', 'selP2', 'selA1', 'selA2'].forEach(s => {
-            const sel = document.getElementById(s);
-            sel.innerHTML = `<option value="---">--- VACANTE ---</option>` + tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
-            if(data) {
-                if(s==='selP1') sel.value = data.p[0]; if(s==='selP2') sel.value = data.p[1];
-                if(s==='selA1') sel.value = data.a[0]; if(s==='selA2') sel.value = data.a[1];
-            }
-        });
+    // GESTIÓN DE PERSONAL
+    async function agregarTecnico() {
+        const nombre = document.getElementById('nuevo-tecnico').value.toUpperCase();
+        if(!nombre) return;
+        await supabase.from('tecnicos_db').insert([{ nombre }]);
+        document.getElementById('nuevo-tecnico').value = "";
+        sync();
     }
 
-    async function guardarCambioManual() {
-        const id = document.getElementById('mId').value;
-        const record = { fecha: id, p1: selP1.value, p2: selP2.value, a1: selA1.value, a2: selA2.value };
-        if(supabaseClient) await supabaseClient.from('programacion_manual').upsert(record);
-        cerrarModal(); cargarNube();
+    async function eliminarTecnico(nombre) {
+        if(confirm(`¿Eliminar a ${nombre}?`)) {
+            await supabase.from('tecnicos_db').delete().eq('nombre', nombre);
+            sync();
+        }
+    }
+
+    // ARRASTRAR Y SOLTAR
+    async function onDropGrupo(e, fechaId) {
+        e.preventDefault();
+        const t1 = e.dataTransfer.getData("t1");
+        const t2 = e.dataTransfer.getData("t2");
+        await supabase.from('programacion_manual').upsert({ fecha: fechaId, p1: t1, p2: t2, a1: "---", a2: "---" });
+        sync();
+    }
+
+    function render() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = "";
+        const y = mesActual.getFullYear(), m = mesActual.getMonth();
+        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(mesActual).toUpperCase();
+
+        const total = new Date(y, m+1, 0).getDate();
+        let start = new Date(y, m, 1).getDay();
+        start = (start === 0) ? 6 : start - 1;
+
+        for(let i=0; i<start; i++) grid.appendChild(document.createElement('div'));
+
+        for(let d=1; d<=total; d++) {
+            const f = new Date(y, m, d);
+            const id = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            
+            const man = dbManual.find(x => x.fecha === id);
+            const celda = document.createElement('div');
+            celda.className = `day ${f.getDay()===0||f.getDay()===6?'weekend':''}`;
+            
+            celda.ondragover = (e) => { e.preventDefault(); celda.classList.add('drag-over'); };
+            celda.ondragleave = () => celda.classList.remove('drag-over');
+            celda.ondrop = (e) => { celda.classList.remove('drag-over'); onDropGrupo(e, id); };
+
+            celda.innerHTML = `<div class="day-header">${d}</div>`;
+            if(man) {
+                celda.innerHTML += `
+                    <div class="turno-card principal"><b>${man.p1}</b><br><b>${man.p2}</b></div>
+                    <div class="turno-card">${man.a1}<br>${man.a2}</div>
+                `;
+            }
+            grid.appendChild(celda);
+        }
     }
 
     async function registrarAusencia() {
         const t = document.getElementById('aus-tecnico').value;
         const i = document.getElementById('aus-inicio').value;
         const f = document.getElementById('aus-fin').value;
-        if(supabaseClient && t && i && f) {
-            await supabaseClient.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
-            cargarNube();
-            alert("Ausencia guardada correctamente");
-        }
+        await supabase.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
+        sync();
     }
 
-    function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth() + v); render(); }
-    function cerrarModal() { document.getElementById('modal').style.display = 'none'; }
-
-    // ARRANQUE DEFINITIVO
-    document.getElementById('aus-tecnico').innerHTML = tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
-    render(); 
-    setTimeout(cargarNube, 300);
+    function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth()+v); render(); }
+    sync();
 </script>
 </body>
 </html>
