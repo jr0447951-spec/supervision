@@ -3,192 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADMIN v21 - Rotación y Candados Inteligentes</title>
+    <title>SISTEMA TURNOS - ADMIN v24</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { 
-            --sidebar: #0f172a; --accent: #2563eb; --bg: #f1f5f9; 
-            --card: #ffffff; --locked: #ef4444; --unlocked: #10b981; --danger: #fee2e2;
+            --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; 
+            --card: #ffffff; --locked: #ef4444; --unlocked: #10b981; --vacante: #fef3c7;
         }
         body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
 
-        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #334155; }
-        .group-item { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: grab; border: 1px solid #334155; transition: 0.2s; }
-        .group-item:hover { border-color: var(--accent); }
-
+        .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #334155; }
         .main { flex-grow: 1; display: flex; flex-direction: column; }
-        .nav-bar { background: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 15px; overflow-y: auto; flex-grow: 1; }
-        
-        .day { background: var(--card); border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px; min-height: 160px; position: relative; transition: 0.2s; }
-        .day.weekend { background: #f8fafc; }
-        .day.is-locked { opacity: 0.95; }
-        .day.vacio { background: var(--danger); border: 1px solid #f87171; }
+        .nav-bar { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; overflow-y: auto; flex-grow: 1; }
 
-        .day-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.8rem; color: #64748b; margin-bottom: 5px; }
-        .cell-lock { cursor: pointer; padding: 3px; border-radius: 4px; z-index: 10; font-size: 0.9rem; }
+        .day { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; min-height: 160px; position: relative; transition: all 0.2s; cursor: pointer; }
+        .day.weekend { background: #f1f5f9; }
+        .day.vacio { background: var(--vacante); border-color: #fcd34d; }
+        .day.is-locked { opacity: 0.8; cursor: default; }
+
+        .day-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; color: #64748b; margin-bottom: 8px; }
+        .cell-lock { cursor: pointer; padding: 4px; border-radius: 6px; font-size: 0.8rem; }
         .cell-lock.locked { color: var(--locked); background: #fee2e2; }
         .cell-lock.unlocked { color: var(--unlocked); background: #dcfce7; }
 
-        .turno-card { padding: 5px 8px; border-radius: 4px; margin-bottom: 4px; font-size: 0.65rem; border-left: 4px solid #94a3b8; background: white; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .turno-card { padding: 6px 10px; border-radius: 6px; margin-bottom: 5px; font-size: 0.7rem; border-left: 4px solid #94a3b8; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .principal { border-left-color: var(--accent); background: #eff6ff; }
         .names { font-weight: 700; color: #1e293b; display: block; }
+        
+        .vacante-aviso { color: #b45309; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 10px; }
 
-        #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center; }
-        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 400px; }
-        .btn { padding: 10px 15px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; }
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 25px; border-radius: 16px; width: 400px; }
+        .modal-box select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 8px; }
         .btn-blue { background: var(--accent); color: white; }
+        .btn-ghost { background: #f1f5f9; color: #64748b; }
+
+        .form-group { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+        .form-group label { font-size: 0.7rem; color: #60a5fa; font-weight: bold; text-transform: uppercase; }
+        input[type="date"] { width: 90%; padding: 8px; border-radius: 5px; border: none; margin: 5px 0; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h3><i class="fas fa-calendar-alt"></i> ADMIN v21</h3>
-    <div id="grupos-drag">
-        <div class="group-item" draggable="true" ondragstart="drag(event, 1)"><strong>G1</strong> <span>JUAN / VALENTIN</span></div>
-        <div class="group-item" draggable="true" ondragstart="drag(event, 2)"><strong>G2</strong> <span>DOUGLAS / JOSE</span></div>
-        <div class="group-item" draggable="true" ondragstart="drag(event, 3)"><strong>G3</strong> <span>DANIEL / MIGUEL</span></div>
-        <div class="group-item" draggable="true" ondragstart="drag(event, 4)"><strong>G4</strong> <span>EDGARDO / LUIS</span></div>
+    <h2 style="font-size: 1.2rem; margin-bottom: 5px;"><i class="fas fa-database"></i> ADMIN CLOUD</h2>
+    <p style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 25px;">Conectado a Supabase</p>
+    
+    <div class="form-group">
+        <label>Registrar Ausencia</label>
+        <select id="aus-tecnico" style="width:100%; margin-top:5px; padding:5px;"></select>
+        <div style="margin-top:10px;">
+            <label style="font-size:0.6rem; color:#94a3b8">Inicio / Fin</label>
+            <input type="date" id="aus-inicio">
+            <input type="date" id="aus-fin">
+        </div>
+        <button class="btn btn-blue" onclick="registrarAusencia()" style="margin-top:10px; font-size:0.75rem;">GUARDAR AUSENCIA</button>
     </div>
-    <button class="btn btn-blue" style="margin-top:auto; width:100%" onclick="saveAll()">GUARDAR TODO</button>
+
+    <div style="margin-top:auto; font-size: 0.65rem; color: #475569; border-top: 1px solid #334155; padding-top: 15px;">
+        <i class="fas fa-circle" style="color:#10b981"></i> Servidor Activo
+    </div>
 </aside>
 
 <main class="main">
     <div class="nav-bar">
-        <button class="btn" onclick="changeMonth(-1)"> < </button>
+        <button class="btn" onclick="cambiarMes(-1)" style="width:40px;"><i class="fas fa-chevron-left"></i></button>
         <h2 id="mesTitulo"></h2>
-        <button class="btn" onclick="changeMonth(1)"> > </button>
+        <button class="btn" onclick="cambiarMes(1)" style="width:40px;"><i class="fas fa-chevron-right"></i></button>
     </div>
     <div class="grid" id="grid"></div>
 </main>
 
 <div id="modal">
     <div class="modal-box">
-        <h3 id="mTitle">Editar Día</h3>
-        <div id="mList" style="margin-bottom:15px;"></div>
-        <button class="btn btn-blue" onclick="closeModal()" style="width:100%">CERRAR</button>
-        <button class="btn" onclick="resetDay()" style="width:100%; margin-top:10px; background:#fee2e2; color:#ef4444;">VACIAR DÍA</button>
+        <h3 id="mFechaStr" style="margin-top:0">Editar Grupo</h3>
+        <input type="hidden" id="mId">
+        
+        <label style="font-size:0.7rem; font-weight:bold">GRUPO PRINCIPAL</label>
+        <select id="selP1"></select>
+        <select id="selP2"></select>
+
+        <label style="font-size:0.7rem; font-weight:bold; margin-top:10px; display:block">GRUPO APOYO</label>
+        <select id="selA1"></select>
+        <select id="selA2"></select>
+
+        <button class="btn btn-blue" onclick="guardarCambioManual()">ACEPTAR CAMBIOS</button>
+        <button class="btn btn-ghost" onclick="cerrarModal()">CANCELAR</button>
     </div>
 </div>
 
 <script>
-    let currentMonth = new Date();
-    const gBase = {
-        1: "JUAN MEJIA / VALENTIN BOLAÑOS",
-        2: "DOUGLAS VENTURA / JOSE PALMA",
-        3: "DANIEL MELENDEZ / MIGUEL OCHOA",
-        4: "EDGARDO SORIANO / LUIS PALACIOS"
-    };
+    const SUPABASE_URL = 'https://qscaisgcttsnoavgfctj.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_IA9XB7EVhEMk2k6MbA4A4Q_M6og7SfO';
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    let db = JSON.parse(localStorage.getItem('admin_v21')) || { manual: {}, locks: {} };
+    const tecnicos = ["JUAN MEJIA", "VALENTIN BOLAÑOS", "DOUGLAS VENTURA", "JOSE PALMA", "DANIEL MELENDEZ", "MIGUEL OCHOA", "EDGARDO SORIANO", "LUIS PALACIOS"];
+    const gFijos = { 1: [0,1], 2: [2,3], 3: [4,5], 4: [6,7] };
+    
+    let mesActual = new Date();
+    let dbAusencias = [];
+    let dbManual = [];
+    let dbLocks = JSON.parse(localStorage.getItem('admin_locks')) || {};
 
-    function getAutoTurno(dateObj) {
-        const refDate = new Date(2026, 2, 7); // 7 de Marzo
-        const diffDays = Math.floor((dateObj - refDate) / (1000*60*60*24));
-        const numSemanas = Math.floor(diffDays / 7);
-        const dw = dateObj.getDay(); // 6: Sab, 0: Dom
+    async function cargarDatos() {
+        const { data: aus } = await supabase.from('ausencias').select('*');
+        const { data: man } = await supabase.from('programacion_manual').select('*');
+        dbAusencias = aus || [];
+        dbManual = man || [];
+        render();
+    }
 
-        if (dw !== 6 && dw !== 0) return null;
-        if (numSemanas < 0) return null;
-
-        // Ciclo de 4 semanas para cubrir todas las combinaciones
-        const ciclo = numSemanas % 4;
+    function getRotacion(fecha) {
+        const ref = new Date(2026, 2, 7); 
+        const diff = Math.floor((fecha - ref) / (1000*60*60*24));
+        if (diff < 0 || (fecha.getDay() !== 6 && fecha.getDay() !== 0)) return null;
+        
+        const ciclo = Math.floor(diff / 7) % 4;
         let p, a;
+        if(ciclo===0){ p=1; a=2; } else if(ciclo===1){ p=3; a=4; }
+        else if(ciclo===2){ p=2; a=1; } else if(ciclo===3){ p=4; a=3; }
 
-        switch(ciclo) {
-            case 0: p = 1; a = 2; break; // Semana 1: G1-P, G2-A
-            case 1: p = 3; a = 4; break; // Semana 2: G3-P, G4-A
-            case 2: p = 2; a = 1; break; // Semana 3: G2-P, G1-A
-            case 3: p = 4; a = 3; break; // Semana 4: G4-P, G3-A
-        }
-        return [gBase[p], gBase[a]];
+        return { p: [tecnicos[gFijos[p][0]], tecnicos[gFijos[p][1]]], a: [tecnicos[gFijos[a][0]], tecnicos[gFijos[a][1]]] };
     }
 
     function render() {
         const grid = document.getElementById('grid'); grid.innerHTML = "";
-        const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
-        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(currentMonth).toUpperCase();
+        const y = mesActual.getFullYear(), m = mesActual.getMonth();
+        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(mesActual).toUpperCase();
 
-        const totalDays = new Date(y, m + 1, 0).getDate();
-        const startOffset = (new Date(y, m, 1).getDay() === 0) ? 6 : new Date(y, m, 1).getDay() - 1;
+        const total = new Date(y, m+1, 0).getDate();
+        const start = (new Date(y, m, 1).getDay() === 0) ? 6 : new Date(y, m, 1).getDay() - 1;
 
-        for(let i=0; i<startOffset; i++) grid.innerHTML += `<div></div>`;
+        for(let i=0; i<start; i++) grid.innerHTML += `<div></div>`;
 
-        for(let d=1; d<=totalDays; d++) {
-            const dateObj = new Date(y, m, d);
-            const id = `${y}-${m+1}-${d}`;
-            const dw = dateObj.getDay();
+        for(let d=1; d<=total; d++) {
+            const f = new Date(y, m, d);
+            const id = `${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             
-            let grupos = [];
-            const auto = getAutoTurno(dateObj);
+            let p = getRotacion(f);
+            const man = dbManual.find(x => x.fecha === id);
+            if(man) p = { p: [man.p1, man.p2], a: [man.a1, man.a2] };
 
-            if (db.manual[id] && db.manual[id].length > 0) {
-                grupos = db.manual[id];
-            } else if (auto) {
-                grupos = auto;
+            if(p) {
+                const ausentes = dbAusencias.filter(a => id >= a.fecha_inicio && id <= a.fecha_fin).map(a => a.tecnico_nombre);
+                p.p = p.p.map(n => ausentes.includes(n) ? "---" : n);
+                p.a = p.a.map(n => ausentes.includes(n) ? "---" : n);
             }
 
-            // Lógica de Candado: Si hay información, CERRADO por default. Si no hay, ABIERTO.
-            if (db.locks[id] === undefined) {
-                db.locks[id] = (grupos.length > 0);
-            }
-            const isLocked = db.locks[id];
-            const esVacio = (grupos.length === 0);
-
-            let htmlContent = grupos.map((g, i) => `
-                <div class="turno-card ${i===0?'principal':''}">
-                    <span style="font-size:0.55rem; color:#64748b; font-weight:bold">${i===0?'PRINCIPAL':'APOYO'}</span>
-                    <span class="names">${g}</span>
-                </div>
-            `).join('');
+            const vacante = p && (p.p.includes("---") || p.a.includes("---"));
+            if (dbLocks[id] === undefined) dbLocks[id] = (p && !vacante);
+            const locked = dbLocks[id];
 
             const cell = document.createElement('div');
-            cell.className = `day ${dw===6||dw===0?'weekend':''} ${isLocked?'is-locked':''} ${esVacio?'vacio':''}`;
-            cell.innerHTML = `
-                <div class="day-header">
-                    <span>${d}</span>
-                    <i class="fas ${isLocked?'fa-lock locked':'fa-lock-open unlocked'} cell-lock" onclick="toggleLock(event, '${id}')"></i>
-                </div>
-                <div class="cell-content">
-                    ${htmlContent}
-                    ${esVacio ? '<span style="color:#dc2626; font-size:0.6rem; font-weight:bold; display:block; text-align:center; margin-top:15px;">SIN ASIGNAR</span>' : ''}
-                </div>
-            `;
-
-            cell.onclick = () => !isLocked ? openModal(id, d) : null;
-            if(!isLocked) {
-                cell.ondragover = (e) => e.preventDefault();
-                cell.ondrop = (e) => {
-                    e.preventDefault();
-                    const gNum = e.dataTransfer.getData("g");
-                    if(!db.manual[id]) db.manual[id] = [];
-                    if(db.manual[id].includes(gBase[gNum])) return;
-                    db.manual[id].push(gBase[gNum]);
-                    render();
-                };
+            cell.className = `day ${f.getDay()===0||f.getDay()===6?'weekend':''} ${locked?'is-locked':''} ${!p||vacante?'vacio':''}`;
+            
+            let html = `<div class="day-header"><span>${d}</span><i class="fas ${locked?'fa-lock locked':'fa-lock-open unlocked'} cell-lock" onclick="toggleLock(event, '${id}')"></i></div>`;
+            if(p) {
+                html += `<div class="turno-card principal"><span class="names">${p.p[0]}<br>${p.p[1]}</span></div>`;
+                if(p.a[0]!=="---" || p.a[1]!=="---") html += `<div class="turno-card"><span class="names">${p.a[0]}<br>${p.a[1]}</span></div>`;
             }
+            if(!p || vacante) html += `<div class="vacante-aviso"><i class="fas fa-user-tag"></i> Puesto disponible</div>`;
+
+            cell.innerHTML = html;
+            if(!locked) cell.onclick = () => abrirModal(id, p);
             grid.appendChild(cell);
         }
     }
 
-    function toggleLock(e, id) { e.stopPropagation(); db.locks[id] = !db.locks[id]; render(); }
-    function openModal(id, d) {
+    function abrirModal(id, data) {
         document.getElementById('modal').style.display = 'flex';
         document.getElementById('mId').value = id;
-        document.getElementById('mTitle').innerText = "Gestión Día " + d;
-        document.getElementById('mList').innerHTML = (db.manual[id] || []).map((g, i) => `
-            <div style="display:flex; justify-content:space-between; padding:8px; background:#f1f5f9; margin-bottom:5px; border-radius:5px;">
-                <span style="font-size:0.75rem">${g}</span>
-                <i class="fas fa-trash" style="color:#ef4444; cursor:pointer" onclick="removeGroup('${id}', ${i})"></i>
-            </div>`).join('') || "<p style='font-size:0.8rem; color:#64748b'>No hay asignaciones manuales.</p>";
+        const selects = ['selP1', 'selP2', 'selA1', 'selA2'];
+        selects.forEach(s => {
+            const sel = document.getElementById(s);
+            sel.innerHTML = `<option value="---">--- VACANTE ---</option>` + tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
+            if(data) {
+                if(s==='selP1') sel.value = data.p[0]; if(s==='selP2') sel.value = data.p[1];
+                if(s==='selA1') sel.value = data.a[0]; if(s==='selA2') sel.value = data.a[1];
+            }
+        });
     }
-    function removeGroup(id, idx) { db.manual[id].splice(idx, 1); render(); openModal(id, id.split('-')[2]); }
-    function resetDay() { delete db.manual[document.getElementById('mId').value]; closeModal(); render(); }
-    function closeModal() { document.getElementById('modal').style.display = 'none'; }
-    function drag(e, g) { e.dataTransfer.setData("g", g); }
-    function changeMonth(v) { currentMonth.setMonth(currentMonth.getMonth()+v); render(); }
-    function saveAll() { localStorage.setItem('admin_v21', JSON.stringify(db)); alert("✅ Guardado."); }
-    window.onload = render;
+
+    async function guardarCambioManual() {
+        const id = document.getElementById('mId').value;
+        const body = { fecha: id, p1: selP1.value, p2: selP2.value, a1: selA1.value, a2: selA2.value };
+        await supabase.from('programacion_manual').upsert(body);
+        cerrarModal(); cargarDatos();
+    }
+
+    async function registrarAusencia() {
+        const t = document.getElementById('aus-tecnico').value;
+        const i = document.getElementById('aus-inicio').value;
+        const f = document.getElementById('aus-fin').value;
+        if(!t || !i || !f) return alert("Datos incompletos");
+        await supabase.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
+        cargarDatos();
+    }
+
+    function toggleLock(e, id) { e.stopPropagation(); dbLocks[id] = !dbLocks[id]; localStorage.setItem('admin_locks', JSON.stringify(dbLocks)); render(); }
+    function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth()+v); render(); }
+    function cerrarModal() { document.getElementById('modal').style.display = 'none'; }
+    
+    document.getElementById('aus-tecnico').innerHTML = tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
+    cargarDatos();
 </script>
 </body>
 </html>
