@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Supervisión - Turnos Dinámicos</title>
+    <style>
+        :root { --primary: #1a2a6c; --accent: #f2a365; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; color: #333; }
+        .dashboard { max-width: 900px; margin: auto; display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; font-size: 1.2em; color: var(--primary); }
+        
+        /* Lista de Técnicos */
+        .tecnico-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .switch { cursor: pointer; }
+        .status-off { color: #e74c3c; font-weight: bold; }
+        
+        /* Tabla de Resultados */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9em; }
+        th { background: var(--primary); color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        .no-disponible { opacity: 0.5; text-decoration: line-through; }
+
+        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
+        button:hover { background: #0d1a4a; }
+        .alert { padding: 10px; background: #fff3cd; color: #856404; border-radius: 5px; margin-bottom: 15px; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="card">
+        <h2>🛠️ Gestión de Técnicos</h2>
+        <p style="font-size: 0.8em; color: #666;">Desactiva a quienes tengan permiso o imprevistos:</p>
+        <div id="listaControl">
+            </div>
+        <button onclick="procesarTurnos()">Generar Turnos Disponibles</button>
+    </div>
+
+    <div class="card">
+        <h2>🗓️ Calendario de Turnos</h2>
+        <div id="mensajeAlerta" class="alert" style="display:none;"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Semana</th>
+                    <th>Pareja Asignada</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="tablaResultados">
+                <tr><td colspan="3" style="text-align:center;">Presiona generar para ver la programación</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Configuración de parejas (Edítalos aquí)
+    const tecnicos = [
+        { nombre: "Técnico 1", parejaId: 1, activo: true },
+        { nombre: "Técnico 2", parejaId: 1, activo: true },
+        { nombre: "Técnico 3", parejaId: 2, activo: true },
+        { nombre: "Técnico 4", parejaId: 2, activo: true },
+        { nombre: "Técnico 5", parejaId: 3, activo: true },
+        { nombre: "Técnico 6", parejaId: 3, activo: true },
+        { nombre: "Técnico 7", parejaId: 4, activo: true },
+        { nombre: "Técnico 8", parejaId: 4, activo: true }
+    ];
+
+    function renderizarLista() {
+        const lista = document.getElementById('listaControl');
+        lista.innerHTML = "";
+        tecnicos.forEach((t, index) => {
+            lista.innerHTML += `
+                <div class="tecnico-row">
+                    <span>${t.nombre}</span>
+                    <input type="checkbox" ${t.activo ? 'checked' : ''} onchange="toggleTecnico(${index})">
+                </div>
+            `;
+        });
+    }
+
+    function toggleTecnico(index) {
+        tecnicos[index].activo = !tecnicos[index].activo;
+    }
+
+    function procesarTurnos() {
+        const tabla = document.getElementById('tablaResultados');
+        const alerta = document.getElementById('mensajeAlerta');
+        tabla.innerHTML = "";
+        alerta.style.display = "none";
+
+        // Agrupar por parejas y verificar disponibilidad
+        let parejasDisponibles = [];
+        for(let i=1; i<=4; i++) {
+            let integrantes = tecnicos.filter(t => t.parejaId === i);
+            let todosActivos = integrantes.every(t => t.activo);
+            
+            if(todosActivos) {
+                parejasDisponibles.push(`Pareja ${i}: ${integrantes[0].nombre} y ${integrantes[1].nombre}`);
+            }
+        }
+
+        // Aleatorizar
+        parejasDisponibles.sort(() => Math.random() - 0.5);
+
+        if(parejasDisponibles.length === 0) {
+            alerta.innerText = "⚠️ No hay parejas completas disponibles para asignar.";
+            alerta.style.display = "block";
+            return;
+        }
+
+        // Mostrar en tabla
+        parejasDisponibles.forEach((pareja, i) => {
+            let fila = `<tr>
+                <td>Semana ${i+1}</td>
+                <td><strong>${pareja}</strong></td>
+                <td>✅ Asignado</td>
+            </tr>`;
+            tabla.innerHTML += fila;
+        });
+
+        if(parejasDisponibles.length < 4) {
+            alerta.innerText = "Nota: Solo se muestran parejas donde AMBOS técnicos están activos.";
+            alerta.style.display = "block";
+        }
+    }
+
+    renderizarLista();
+</script>
+
+</body>
+</html>
