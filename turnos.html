@@ -3,171 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Supervisión | Gestión de Turnos</title>
+    <title>Dashboard Supervisión Pro - Gestión de Cambios</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --sidebar-bg: #1e293b;
-            --main-bg: #f1f5f9;
-            --accent: #3b82f6;
-            --text-main: #334155;
-            --white: #ffffff;
-            --danger: #ef4444;
-        }
-
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--main-bg); display: flex; height: 100vh; overflow: hidden; }
-
-        /* SIDEBAR - PANEL DE RECURSOS */
-        .sidebar { width: 350px; background: var(--sidebar-bg); color: white; padding: 20px; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.1); }
-        .sidebar h2 { font-size: 1.2rem; border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px; color: #94a3b8; }
+        :root { --sidebar: #0f172a; --panel: #1e293b; --accent: #3b82f6; --bg: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
         
-        .pareja-box { background: #334155; padding: 15px; border-radius: 8px; margin-bottom: 15px; cursor: grab; border: 1px solid transparent; transition: 0.3s; }
-        .pareja-box:hover { border-color: var(--accent); background: #475569; }
-        .pareja-box i { color: var(--accent); margin-right: 10px; }
-        .integrantes { font-size: 0.85rem; color: #cbd5e1; margin-top: 5px; }
+        /* Panel Izquierdo */
+        .sidebar { width: 380px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.2); }
+        .group-editor { background: var(--panel); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+        .group-editor h3 { font-size: 0.9rem; color: var(--accent); margin-top: 0; display: flex; justify-content: space-between; }
+        .input-tecnico { background: transparent; border: none; border-bottom: 1px solid #334155; color: white; width: 100%; padding: 5px 0; font-size: 0.8rem; margin-bottom: 5px; }
+        .input-tecnico:focus { border-color: var(--accent); outline: none; }
 
-        /* CONTENIDO PRINCIPAL - CALENDARIO */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; padding: 30px; overflow-y: auto; }
-        .header-dash { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        /* Arrastrables */
+        .drag-handle { background: var(--accent); color: white; padding: 10px; border-radius: 6px; cursor: grab; text-align: center; font-weight: bold; margin-top: 10px; font-size: 0.85rem; }
+        .drag-handle:active { cursor: grabbing; opacity: 0.8; }
+
+        /* Calendario */
+        .main-content { flex-grow: 1; padding: 25px; overflow-y: auto; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; background: #e2e8f0; padding: 10px; border-radius: 12px; }
+        .day-cell { background: white; min-height: 120px; border-radius: 8px; padding: 10px; position: relative; }
+        .day-header { text-align: center; font-weight: bold; color: #64748b; padding-bottom: 10px; }
         
-        .calendar-card { background: var(--white); border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px; }
-        .grid-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
-        .day-header { background: #f8fafc; padding: 15px; text-align: center; font-weight: 700; color: #64748b; text-transform: uppercase; font-size: 0.75rem; }
-        .day-cell { background: white; min-height: 130px; padding: 10px; position: relative; transition: 0.2s; }
-        .day-cell:hover { background: #f8fafc; }
-        .day-cell.weekend { background: #fafafa; }
-        .day-num { font-size: 0.9rem; font-weight: bold; color: #94a3b8; }
+        /* Turnos en Calendario */
+        .turno-card { background: #eff6ff; border-left: 4px solid var(--accent); padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; margin-top: 5px; position: relative; color: #1e40af; }
+        .remove-btn { position: absolute; right: 5px; top: 2px; cursor: pointer; color: #94a3b8; }
+        .remove-btn:hover { color: #ef4444; }
 
-        /* ELEMENTOS DENTRO DEL CALENDARIO */
-        .turno-asignado { background: #dbeafe; color: #1e40af; padding: 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; margin-top: 5px; border-left: 4px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
-        .incidencia { background: #fee2e2; color: #991b1b; padding: 4px; border-radius: 4px; font-size: 0.7rem; margin-top: 5px; border-left: 4px solid var(--danger); }
-        .delete-btn { color: #94a3b8; cursor: pointer; font-size: 0.8rem; }
-        .delete-btn:hover { color: var(--danger); }
-
-        .btn-save { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: auto; }
+        .btn-save { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: auto; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2><i class="fas fa-layer-group"></i> PAREJAS TÉCNICAS</h2>
-    <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 20px;">Arrastra la pareja al fin de semana correspondiente:</p>
+    <h2><i class="fas fa-users"></i> Grupos de Turno</h2>
+    <p style="font-size: 0.75rem; color: #94a3b8;">Edita los nombres abajo y luego arrastra el botón azul al calendario:</p>
 
-    <div class="pareja-box" draggable="true" ondragstart="drag(event)" id="p1">
-        <div><i class="fas fa-user-friends"></i> <strong>PAREJA 1</strong></div>
-        <div class="integrantes">Técnico Alberto / Técnico Bruno</div>
+    <div id="config-grupos">
+        <div class="group-editor">
+            <h3>GRUPO 1 <i class="fas fa-edit"></i></h3>
+            <input type="text" class="input-tecnico" id="g1_t1" value="JUAN MEJIA">
+            <input type="text" class="input-tecnico" id="g1_t2" value="VALENTIN BOLAÑOS">
+            <div class="drag-handle" draggable="true" ondragstart="drag(event, 'G1')">ASIGNAR GRUPO 1</div>
+        </div>
+        <div class="group-editor">
+            <h3>GRUPO 2 <i class="fas fa-edit"></i></h3>
+            <input type="text" class="input-tecnico" id="g2_t1" value="DOUGLAS VENTURA">
+            <input type="text" class="input-tecnico" id="g2_t2" value="JOSE PALMA">
+            <div class="drag-handle" draggable="true" ondragstart="drag(event, 'G2')">ASIGNAR GRUPO 2</div>
+        </div>
+        <div class="group-editor">
+            <h3>GRUPO 3 <i class="fas fa-edit"></i></h3>
+            <input type="text" class="input-tecnico" id="g3_t1" value="DANIEL MELENDEZ">
+            <input type="text" class="input-tecnico" id="g3_t2" value="MIGUEL OCHOA">
+            <div class="drag-handle" draggable="true" ondragstart="drag(event, 'G3')">ASIGNAR GRUPO 3</div>
+        </div>
+        <div class="group-editor">
+            <h3>GRUPO 4 <i class="fas fa-edit"></i></h3>
+            <input type="text" class="input-tecnico" id="g4_t1" value="EDGARDO SORIANO">
+            <input type="text" class="input-tecnico" id="g4_t2" value="LUIS PALACIOS">
+            <div class="drag-handle" draggable="true" ondragstart="drag(event, 'G4')">ASIGNAR GRUPO 4</div>
+        </div>
     </div>
 
-    <div class="pareja-box" draggable="true" ondragstart="drag(event)" id="p2">
-        <div><i class="fas fa-user-friends"></i> <strong>PAREJA 2</strong></div>
-        <div class="integrantes">Técnico Carlos / Técnico Daniel</div>
-    </div>
-
-    <div class="pareja-box" draggable="true" ondragstart="drag(event)" id="p3">
-        <div><i class="fas fa-user-friends"></i> <strong>PAREJA 3</strong></div>
-        <div class="integrantes">Técnico Eduardo / Técnico Felipe</div>
-    </div>
-
-    <div class="pareja-box" draggable="true" ondragstart="drag(event)" id="p4">
-        <div><i class="fas fa-user-friends"></i> <strong>PAREJA 4</strong></div>
-        <div class="integrantes">Técnico Gabriel / Técnico Hugo</div>
-    </div>
-
-    <div style="margin-top: 30px;">
-        <h3><i class="fas fa-exclamation-triangle"></i> NOTAS</h3>
-        <textarea id="notasSemanales" style="width: 100%; height: 100px; background: #334155; border: none; color: white; padding: 10px; border-radius: 5px;" placeholder="Escribe imprevistos aquí..."></textarea>
-    </div>
-
-    <button class="btn-save" onclick="guardarTodo()"><i class="fas fa-cloud-upload-alt"></i> GUARDAR CALENDARIO</button>
+    <button class="btn-save" onclick="guardarConfig()"><i class="fas fa-save"></i> GUARDAR TODO</button>
 </aside>
 
 <main class="main-content">
-    <div class="header-dash">
-        <h1 style="margin:0; color: var(--sidebar-bg);">Dashboard de Turnos</h1>
-        <div id="mesActual" style="font-weight: bold; font-size: 1.2rem;"></div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+        <h1 style="margin:0">Planificación Mensual</h1>
+        <div id="mes-label" style="font-weight: bold; font-size: 1.2rem;">Marzo 2024</div>
     </div>
 
-    <div class="calendar-card">
-        <div class="grid-calendar" id="calendario">
-            <div class="day-header">Lun</div><div class="day-header">Mar</div><div class="day-header">Mié</div>
-            <div class="day-header">Jue</div><div class="day-header">Vie</div><div class="day-header">Sáb</div>
-            <div class="day-header">Dom</div>
+    <div class="calendar-grid" id="grid">
+        <div class="day-header">Lun</div><div class="day-header">Mar</div><div class="day-header">Mié</div>
+        <div class="day-header">Jue</div><div class="day-header">Vie</div><div class="day-header">Sáb</div>
+        <div class="day-header">Dom</div>
         </div>
-    </div>
 </main>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('dashboard_v1')) || { turnos: {}, notas: "" };
-    const fecha = new Date();
+    let estado = JSON.parse(localStorage.getItem('turno_pro_v2')) || { asignaciones: {} };
 
-    function init() {
-        document.getElementById('mesActual').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fecha);
-        document.getElementById('notasSemanales').value = db.notas;
-        renderCalendar();
-    }
-
-    function renderCalendar() {
-        const grid = document.getElementById('calendario');
+    function render() {
+        const grid = document.getElementById('grid');
         const headers = Array.from(grid.querySelectorAll('.day-header'));
         grid.innerHTML = "";
         headers.forEach(h => grid.appendChild(h));
 
-        const diasMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
-        const primerDia = new Date(fecha.getFullYear(), fecha.getMonth(), 1).getDay();
-        const offset = (primerDia === 0) ? 6 : primerDia - 1;
-
-        for(let i=0; i<offset; i++) grid.innerHTML += `<div class="day-cell" style="background:#f1f5f9"></div>`;
-
-        for(let d=1; d<=diasMes; d++) {
-            const dateId = `${fecha.getFullYear()}-${fecha.getMonth()+1}-${d}`;
-            const esFinDeSemana = new Date(fecha.getFullYear(), fecha.getMonth(), d).getDay() % 6 === 0;
+        const fecha = new Date();
+        const dias = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0).getDate();
+        
+        for(let d=1; d<=dias; d++) {
+            const id = `${fecha.getFullYear()}-${fecha.getMonth()+1}-${d}`;
+            const turnos = estado.asignaciones[id] || [];
             
-            let turnosHtml = "";
-            if(db.turnos[dateId]) {
-                db.turnos[dateId].forEach((t, index) => {
-                    turnosHtml += `
-                        <div class="turno-asignado">
-                            <span>${t}</span>
-                            <i class="fas fa-times delete-btn" onclick="eliminarTurno('${dateId}', ${index})"></i>
-                        </div>`;
-                });
-            }
+            let htmlTurnos = turnos.map((t, i) => `
+                <div class="turno-card">
+                    <strong>${t.grupo}</strong><br>${t.tecnicos}
+                    <span class="remove-btn" onclick="borrar('${id}', ${i})">&times;</span>
+                </div>
+            `).join('');
 
             grid.innerHTML += `
-                <div class="day-cell ${esFinDeSemana ? 'weekend' : ''}" ondrop="drop(event, '${dateId}')" ondragover="allowDrop(event)">
-                    <span class="day-num">${d}</span>
-                    <div id="box-${dateId}">${turnosHtml}</div>
+                <div class="day-cell" ondrop="drop(event, '${id}')" ondragover="allow(event)">
+                    <span style="color:#94a3b8; font-size:0.8rem">${d}</span>
+                    <div>${htmlTurnos}</div>
                 </div>`;
         }
     }
 
-    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
-    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev, grupoId) {
+        // Al arrastrar, capturamos los nombres que están escritos en ese momento
+        const t1 = document.getElementById(`${grupoId.toLowerCase()}_t1`).value;
+        const t2 = document.getElementById(`${grupoId.toLowerCase()}_t2`).value;
+        ev.dataTransfer.setData("grupo", grupoId);
+        ev.dataTransfer.setData("tecnicos", `${t1} / ${t2}`);
+    }
+
+    function allow(ev) { ev.preventDefault(); }
 
     function drop(ev, dateId) {
         ev.preventDefault();
-        const idPareja = ev.dataTransfer.setData("text", ev.target.id); 
-        // Obtenemos el nombre de la pareja del elemento arrastrado
-        const data = ev.dataTransfer.getData("text");
-        const nombre = document.getElementById(data).querySelector('strong').innerText;
+        const grupo = ev.dataTransfer.getData("grupo");
+        const tecnicos = ev.dataTransfer.getData("tecnicos");
         
-        if(!db.turnos[dateId]) db.turnos[dateId] = [];
-        db.turnos[dateId].push(nombre);
-        renderCalendar();
+        if(!estado.asignaciones[dateId]) estado.asignaciones[dateId] = [];
+        // Guardamos los nombres literales, eliminando el desfase futuro
+        estado.asignaciones[dateId].push({ grupo, tecnicos });
+        render();
     }
 
-    function eliminarTurno(dateId, index) {
-        db.turnos[dateId].splice(index, 1);
-        renderCalendar();
+    function borrar(dateId, idx) {
+        estado.asignaciones[dateId].splice(idx, 1);
+        render();
     }
 
-    function guardarTodo() {
-        db.notas = document.getElementById('notasSemanales').value;
-        localStorage.setItem('dashboard_v1', JSON.stringify(db));
-        alert("📊 Planificación guardada correctamente.");
+    function guardarConfig() {
+        localStorage.setItem('turno_pro_v2', JSON.stringify(estado));
+        alert("Configuración y turnos guardados.");
     }
 
-    init();
+    render();
 </script>
 </body>
 </html>
