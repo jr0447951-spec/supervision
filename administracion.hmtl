@@ -104,7 +104,7 @@
 
 <script>
     // 1. CONFIGURACIÓN: PEGA TU URL AQUÍ
-    const API_URL = "https://script.google.com/macros/s/AKfycby2z6FHW7GIj5WCEIltflNUvYWfPKJlrsPxeIT5RbVTS5plaYfffIyc0hiPC_vp9tyH/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbx3tuI4t79ASohAAuJkrkInMNO_mN7kbAuG9AwpL_uhcX4dkjE6ew_OPYvGZCgptFmk/exec";
 
     let currentMonth = new Date();
     // Datos de ejemplo para los grupos (puedes cambiarlos)
