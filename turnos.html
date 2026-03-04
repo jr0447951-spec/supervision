@@ -2,214 +2,230 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA DE TURNOS PRO v52</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA DE TURNOS v18 - LOCALSTORAGE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary: #1e293b; --accent: #3b82f6; --success: #10b981; --text: #334155; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; display: flex; height: 100vh; background: #f8fafc; color: var(--text); }
-        
-        /* Sidebar Estilo Pro */
-        .sidebar { width: 320px; background: var(--primary); color: white; padding: 25px; display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
-        .sidebar h2 { font-size: 1.2rem; margin-bottom: 30px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
-        .group-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: grab; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
-        .group-item:hover { background: var(--accent); }
+        :root {
+            --primary: #1e293b; --accent: #3b82f6; --danger: #ef4444;
+            --success: #10b981; --warning: #f59e0b; --bg: #f1f5f9;
+        }
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
 
-        /* Calendario */
-        .content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .header-cal { background: white; padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; padding: 25px; overflow-y: auto; }
-        .day { background: white; border-radius: 12px; border: 1px solid #e2e8f0; min-height: 150px; padding: 12px; transition: 0.2s; cursor: pointer; position: relative; }
-        .day:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: var(--accent); }
-        .day-num { font-weight: 800; color: #94a3b8; font-size: 1.1rem; }
+        /* PANEL IZQUIERDO */
+        .sidebar { width: 320px; background: var(--primary); color: white; padding: 20px; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
+        .sidebar h2 { font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-top: 0; }
+        .group-box { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); cursor: grab; }
+        .group-box:hover { background: var(--accent); }
+        .alert-panel { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); padding: 10px; border-radius: 8px; font-size: 0.8rem; color: #f87171; overflow-y: auto; max-height: 150px; }
+
+        /* CALENDARIO */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; }
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px; overflow-y: auto; flex-grow: 1; }
         
-        /* Ventana Emergente (Modal) */
-        .modal { display: none; position: fixed; z-index: 999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
-        .modal-content { background: white; margin: 8% auto; padding: 30px; width: 450px; border-radius: 20px; position: relative; animation: slideIn 0.3s; }
-        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .day { background: white; border-radius: 10px; border: 1px solid #e2e8f0; min-height: 120px; padding: 10px; position: relative; transition: 0.2s; cursor: pointer; }
+        .day:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .day.weekend { background: #f8fafc; }
+        .day.empty { border: 2px dashed var(--danger); background: #fff1f2; }
+        .day-num { font-weight: bold; color: #64748b; }
+
+        /* ELEMENTOS INTERNOS DEL DÍA */
+        .turno-info { margin-top: 8px; font-size: 0.85rem; line-height: 1.2; }
+        .lock-icon { position: absolute; top: 10px; right: 10px; color: var(--warning); font-size: 0.8rem; }
+        .label-auto { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
+
+        /* VENTANA EMERGENTE (MODAL) */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); }
+        .modal-content { background: white; margin: 10% auto; padding: 25px; width: 400px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #ddd; }
         
-        input, select { width: 100%; padding: 12px; margin: 8px 0 20px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; }
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-save { background: var(--accent); color: white; }
+        .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; width: 100%; }
         .btn-motor { background: var(--success); color: white; margin-top: auto; }
-
-        /* Estilo de los turnos en el calendario */
-        .turno-tag { font-size: 0.8rem; padding: 6px; border-radius: 6px; margin-top: 5px; background: #eff6ff; color: #1e40af; border-left: 4px solid var(--accent); }
-        .tag-manual { color: #f59e0b; font-size: 0.65rem; font-weight: bold; text-transform: uppercase; }
+        .btn-save { background: var(--accent); color: white; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2><i class="fas fa-th-large"></i> PANEL CONTROL</h2>
-    <div id="lista-grupos">Cargando grupos...</div>
+    <h2><i class="fas fa-users"></i> CUADRILLAS</h2>
+    <div id="panel-grupos"></div>
     
-    <div style="margin-top: 30px;">
-        <span style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase;">Estado del Motor</span>
-        <p id="motor-status" style="font-size: 0.8rem;">Sincronizado con Sheets</p>
-    </div>
+    <h3><i class="fas fa-exclamation-triangle"></i> ALERTAS</h3>
+    <div id="panel-alertas" class="alert-panel">No hay días vacíos</div>
 
-    <button class="btn btn-motor" onclick="ejecutarMotor()">
-        <i class="fas fa-magic"></i> PROYECTAR 6 MESES
-    </button>
+    <button class="btn btn-motor" onclick="ejecutarMotor()"><i class="fas fa-bolt"></i> PROYECTAR 180 DÍAS</button>
 </aside>
 
-<main class="content">
-    <div class="header-cal">
-        <button onclick="moverMes(-1)" class="btn" style="width:auto; background:#f1f5f9;"><i class="fas fa-chevron-left"></i></button>
-        <h2 id="tituloMes" style="margin:0">MARZO 2024</h2>
-        <button onclick="moverMes(1)" class="btn" style="width:auto; background:#f1f5f9;"><i class="fas fa-chevron-right"></i></button>
+<main class="main-content">
+    <div class="header">
+        <button onclick="cambiarMes(-1)" class="btn" style="width:auto; background:#eee;"><i class="fas fa-chevron-left"></i></button>
+        <h2 id="mes-titulo" style="margin:0">MARZO 2024</h2>
+        <button onclick="cambiarMes(1)" class="btn" style="width:auto; background:#eee;"><i class="fas fa-chevron-right"></i></button>
     </div>
-    <div class="grid" id="calendario"></div>
+    <div id="grid-calendario" class="grid"></div>
 </main>
 
 <div id="modalEdicion" class="modal">
     <div class="modal-content">
-        <h3 id="fechaModal" style="margin-top:0; color:var(--primary);"></h3>
-        <label><i class="fas fa-user-shield"></i> Técnico Principal</label>
-        <select id="p1"></select>
-        
-        <label><i class="fas fa-user-friends"></i> Segundo Técnico</label>
-        <select id="p2"></select>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div><label>Apoyo 1</label><input type="text" id="a1"></div>
-            <div><label>Apoyo 2</label><input type="text" id="a2"></div>
-        </div>
-
-        <button class="btn btn-save" onclick="guardarCambios()">ACTUALIZAR TURNO</button>
-        <button class="btn" onclick="cerrarModal()" style="background:none; color:#64748b; margin-top:10px;">Cancelar</button>
+        <div class="modal-header"><h3 id="modal-fecha"></h3><i class="fas fa-times" onclick="cerrarModal()" style="cursor:pointer"></i></div>
+        <label>Técnico Principal</label>
+        <select id="input-p1"></select>
+        <label>Técnico Secundario</label>
+        <select id="input-p2"></select>
+        <label>Apoyo 1</label><input type="text" id="input-a1">
+        <label>Apoyo 2</label><input type="text" id="input-a2">
+        <button class="btn btn-save" onclick="guardarCambiosModal()">GUARDAR (MANUAL)</button>
     </div>
 </div>
 
 <script>
-    const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbyAooQqoK1tGUxXeFKD3U-56fRraepdjP78MxYYGq12cFGkcmjXCfsg_CrAarRug2Q_/exec'; // <--- PEGA TU URL DE IMPLEMENTACIÓN AQUÍ
-    let tecnicos = [], programacion = [], fechaRef = new Date();
-    let fechaActiva = null;
+    // --- ESTADO DE LA V18 ---
+    let db = JSON.parse(localStorage.getItem('v18_turnos')) || {
+        tecnicos: [
+            {n: "JUAN PEREZ", g: 1}, {n: "PEDRO LUIS", g: 1},
+            {n: "MARIA CANO", g: 2}, {n: "JOSE RUIZ", g: 2},
+            {n: "CARLOS SOSA", g: 3}, {n: "LUIS MERA", g: 3}
+        ],
+        programacion: {} // Formato: "YYYY-MM-DD": {p1, p2, a1, a2, manual: true/false}
+    };
 
-    async function inicializar() {
-        const [resT, resP] = await Promise.all([
-            fetch(`${CLOUD_URL}?tabla=tecnicos`),
-            fetch(`${CLOUD_URL}?tabla=programacion`)
-        ]);
-        tecnicos = await resT.json();
-        programacion = await resP.json();
-        
+    let fechaVisual = new Date();
+    let fechaEdicionActiva = null;
+
+    function init() {
         renderGrupos();
         renderCalendario();
         poblarSelects();
     }
 
     function renderGrupos() {
-        const container = document.getElementById('lista-grupos');
-        container.innerHTML = "";
-        let gruposMap = {};
-        tecnicos.slice(1).forEach(t => {
-            if(!gruposMap[t[1]]) gruposMap[t[1]] = [];
-            gruposMap[t[1]].push(t[0]);
-        });
-        
-        Object.keys(gruposMap).forEach(g => {
+        const panel = document.getElementById('panel-grupos');
+        panel.innerHTML = "";
+        const grupos = db.tecnicos.reduce((acc, t) => {
+            acc[t.g] = acc[t.g] || []; acc[t.g].push(t.n); return acc;
+        }, {});
+
+        Object.keys(grupos).forEach(g => {
             const div = document.createElement('div');
-            div.className = 'group-item';
+            div.className = 'group-box';
             div.draggable = true;
-            div.innerHTML = `<i class="fas fa-users"></i> GRUPO ${g}: ${gruposMap[g][0].split(' ')[0]} & ${gruposMap[g][1] ? gruposMap[g][1].split(' ')[0] : '...'}`;
+            div.innerHTML = `<b>GRUPO ${g}:</b><br>${grupos[g][0]} & ${grupos[g][1] || '...'}`;
             div.ondragstart = (e) => {
-                e.dataTransfer.setData('p1', gruposMap[g][0]);
-                e.dataTransfer.setData('p2', gruposMap[g][1] || "");
+                e.dataTransfer.setData('t1', grupos[g][0]);
+                e.dataTransfer.setData('t2', grupos[g][1] || "");
             };
-            container.appendChild(div);
+            panel.appendChild(div);
         });
     }
 
     function renderCalendario() {
-        const grid = document.getElementById('calendario');
+        const grid = document.getElementById('grid-calendario');
+        const alertPanel = document.getElementById('panel-alertas');
         grid.innerHTML = "";
-        const y = fechaRef.getFullYear(), m = fechaRef.getMonth();
-        document.getElementById('tituloMes').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(fechaRef).toUpperCase();
+        alertPanel.innerHTML = "";
+        
+        const y = fechaVisual.getFullYear(), m = fechaVisual.getMonth();
+        document.getElementById('mes-titulo').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(fechaVisual).toUpperCase();
 
-        const primerDia = (new Date(y, m, 1).getDay() + 6) % 7;
-        const diasMes = new Date(y, m + 1, 0).getDate();
+        const totalDias = new Date(y, m + 1, 0).getDate();
+        for(let d=1; d<=totalDias; d++) {
+            const f = new Date(y, m, d);
+            const id = f.toISOString().split('T')[0];
+            const turno = db.programacion[id];
+            const isWeekend = (f.getDay() === 0 || f.getDay() === 6);
 
-        for(let i=0; i<primerDia; i++) grid.appendChild(document.createElement('div'));
-
-        for(let d=1; d<=diasMes; d++) {
-            const fStr = new Date(y, m, d).toDateString();
-            const turno = programacion.find(r => r[0] && new Date(r[0]).toDateString() === fStr);
-            
             const celda = document.createElement('div');
-            celda.className = 'day';
-            celda.innerHTML = `<span class="day-num">${d}</span>`;
-            
-            if(turno) {
-                celda.innerHTML += `
-                    <div class="turno-tag">
-                        <b>${turno[1]}</b><br>${turno[2]}
-                        ${turno[5] === 'MANUAL' ? '<br><span class="tag-manual">Bloqueado</span>' : ''}
-                    </div>`;
-            }
+            celda.className = `day ${isWeekend ? 'weekend' : ''} ${!turno ? 'empty' : ''}`;
+            if(!turno) alertPanel.innerHTML += `<div>⚠️ ${d}/${m+1} sin asignar</div>`;
 
-            celda.onclick = () => abrirModal(fStr, turno);
+            celda.innerHTML = `
+                <span class="day-num">${d}</span>
+                ${turno && turno.manual ? '<i class="fas fa-lock lock-icon"></i>' : ''}
+                <div class="turno-info">
+                    ${turno ? `<b>${turno.p1}</b><br>${turno.p2}<br><span class="label-auto">${turno.manual ? 'Manual' : 'Auto'}</span>` : ''}
+                </div>
+            `;
+
+            celda.onclick = () => abrirModal(id, turno);
             celda.ondragover = e => e.preventDefault();
-            celda.ondrop = e => handleDrop(e, fStr);
+            celda.ondrop = e => handleDrop(e, id);
             grid.appendChild(celda);
         }
+        if(alertPanel.innerHTML === "") alertPanel.innerHTML = "✅ Todo asignado";
     }
 
-    function abrirModal(fecha, turno) {
-        fechaActiva = fecha;
-        document.getElementById('fechaModal').innerText = new Date(fecha).toLocaleDateString('es-ES', { dateStyle: 'full' });
-        document.getElementById('p1').value = turno ? turno[1] : "";
-        document.getElementById('p2').value = turno ? turno[2] : "";
-        document.getElementById('a1').value = turno ? turno[3] : "";
-        document.getElementById('a2').value = turno ? turno[4] : "";
+    // --- EL MOTOR LOCAL DE 180 DÍAS ---
+    function ejecutarMotor() {
+        const hoy = new Date();
+        const gruposDisponibles = [...new Set(db.tecnicos.map(t => t.g))];
+        
+        for(let i=0; i<180; i++) {
+            const d = new Date(hoy);
+            d.setDate(hoy.getDate() + i);
+            const id = d.toISOString().split('T')[0];
+
+            // SI NO EXISTE O NO ES MANUAL, EL MOTOR LLENA
+            if(!db.programacion[id] || !db.programacion[id].manual) {
+                const idGrupo = gruposDisponibles[i % gruposDisponibles.length];
+                const integrantes = db.tecnicos.filter(t => t.g === idGrupo).map(t => t.n);
+                db.programacion[id] = {
+                    p1: integrantes[0] || "Vacante",
+                    p2: integrantes[1] || "Vacante",
+                    a1: "", a2: "",
+                    manual: false
+                };
+            }
+        }
+        guardarYRefrescar();
+    }
+
+    function handleDrop(e, id) {
+        e.preventDefault();
+        db.programacion[id] = {
+            p1: e.dataTransfer.getData('t1'),
+            p2: e.dataTransfer.getData('t2'),
+            a1: "...", a2: "...",
+            manual: true // EL DROP ACTIVA EL CANDADO
+        };
+        guardarYRefrescar();
+    }
+
+    function abrirModal(id, turno) {
+        fechaEdicionActiva = id;
+        document.getElementById('modal-fecha').innerText = id;
+        document.getElementById('input-p1').value = turno ? turno.p1 : "";
+        document.getElementById('input-p2').value = turno ? turno.p2 : "";
         document.getElementById('modalEdicion').style.display = "block";
     }
 
-    async function guardarCambios() {
-        const payload = {
-            accion: 'guardar_dia',
-            fecha: fechaActiva,
-            p1: document.getElementById('p1').value,
-            p2: document.getElementById('p2').value,
-            a1: document.getElementById('a1').value,
-            a2: document.getElementById('a2').value
+    function guardarCambiosModal() {
+        db.programacion[fechaEdicionActiva] = {
+            p1: document.getElementById('input-p1').value,
+            p2: document.getElementById('input-p2').value,
+            a1: document.getElementById('input-a1').value,
+            a2: document.getElementById('input-a2').value,
+            manual: true // LA EDICIÓN ACTIVA EL CANDADO
         };
-        document.getElementById('modalEdicion').style.display = "none";
-        await fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify(payload) });
-        inicializar();
+        cerrarModal();
+        guardarYRefrescar();
     }
 
-    async function handleDrop(e, fecha) {
-        e.preventDefault();
-        const payload = {
-            accion: 'guardar_dia',
-            fecha: fecha,
-            p1: e.dataTransfer.getData('p1'),
-            p2: e.dataTransfer.getData('p2'),
-            a1: "...", a2: "..."
-        };
-        await fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify(payload) });
-        inicializar();
-    }
-
-    async function ejecutarMotor() {
-        if(!confirm("El motor proyectará 6 meses. Los días marcados como 'Bloqueado' no se tocarán. ¿Continuar?")) return;
-        document.getElementById('motor-status').innerText = "🤖 Trabajando...";
-        await fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify({accion: 'motor_proyeccion'}) });
-        inicializar();
-        document.getElementById('motor-status').innerText = "✅ Proyección Completa";
-    }
-
-    function poblarSelects() {
-        const lista = tecnicos.slice(1).map(t => `<option value="${t[0]}">${t[0]}</option>`).join('');
-        document.getElementById('p1').innerHTML = lista;
-        document.getElementById('p2').innerHTML = lista;
+    function guardarYRefrescar() {
+        localStorage.setItem('v18_turnos', JSON.stringify(db));
+        renderCalendario();
     }
 
     function cerrarModal() { document.getElementById('modalEdicion').style.display = "none"; }
-    function moverMes(v) { fechaRef.setMonth(fechaRef.getMonth() + v); renderCalendario(); }
-    
-    inicializar();
+    function cambiarMes(v) { fechaVisual.setMonth(fechaVisual.getMonth() + v); renderCalendario(); }
+    function poblarSelects() {
+        const ops = db.tecnicos.map(t => `<option value="${t.n}">${t.n}</option>`).join('');
+        document.getElementById('input-p1').innerHTML = ops;
+        document.getElementById('input-p2').innerHTML = ops;
+    }
+
+    init();
 </script>
 </body>
 </html>
