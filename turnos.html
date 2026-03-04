@@ -3,112 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS - ADMIN v27</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>SISTEMA TURNOS - ADMIN v28</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { 
-            --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; 
-            --card: #ffffff; --locked: #ef4444; --unlocked: #10b981; --vacante: #fef3c7;
-        }
-        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
-        .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #334155; overflow-y: auto; }
-        .main { flex-grow: 1; display: flex; flex-direction: column; }
-        .nav-bar { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; overflow-y: auto; flex-grow: 1; }
-        .day { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; min-height: 160px; position: relative; cursor: pointer; }
+        :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; --vacante: #fef3c7; }
+        body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; }
+        .main { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; }
+        .nav-bar { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .day { background: var(--card); border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px; min-height: 140px; position: relative; cursor: pointer; }
         .day.weekend { background: #f1f5f9; }
-        .day.vacio { background: var(--vacante); border-color: #fcd34d; }
-        .day-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; color: #64748b; margin-bottom: 8px; }
-        .cell-lock { cursor: pointer; padding: 4px; border-radius: 6px; font-size: 0.8rem; }
-        .cell-lock.locked { color: var(--locked); background: #fee2e2; }
-        .cell-lock.unlocked { color: var(--unlocked); background: #dcfce7; }
-        .turno-card { padding: 6px 10px; border-radius: 6px; margin-bottom: 5px; font-size: 0.7rem; border-left: 4px solid #94a3b8; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .day.vacio { background: var(--vacante); }
+        .day-header { display: flex; justify-content: space-between; font-weight: bold; color: #64748b; margin-bottom: 5px; }
+        .turno-card { padding: 4px 8px; border-radius: 4px; margin-bottom: 4px; font-size: 0.75rem; border-left: 3px solid #94a3b8; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .principal { border-left-color: var(--accent); background: #eff6ff; }
-        .names { font-weight: 700; color: #1e293b; display: block; }
-        .vacante-aviso { color: #b45309; font-size: 0.65rem; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 10px; }
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 25px; border-radius: 16px; width: 400px; }
-        .modal-box select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #cbd5e1; }
-        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 8px; }
+        .names { font-weight: bold; color: #1e293b; }
+        .vacante-aviso { color: #b45309; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 20px; border-radius: 12px; width: 350px; }
+        select { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; }
+        .btn { padding: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         .btn-blue { background: var(--accent); color: white; }
-        .btn-ghost { background: #f1f5f9; color: #64748b; }
-        .form-group { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        input[type="date"] { width: 90%; padding: 8px; border-radius: 5px; margin: 5px 0; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2 style="font-size: 1.1rem;"><i class="fas fa-shield-alt"></i> PANEL CONTROL</h2>
-    <div class="form-group">
-        <label style="font-size: 0.7rem; color: #60a5fa;">AUSENCIAS</label>
-        <select id="aus-tecnico" style="width:100%; margin-top:5px;"></select>
-        <input type="date" id="aus-inicio">
-        <input type="date" id="aus-fin">
-        <button class="btn btn-blue" onclick="registrarAusencia()" style="font-size:0.7rem;">GUARDAR</button>
+    <h3>SISTEMA v28</h3>
+    <div style="background:#1e293b; padding:10px; border-radius:8px;">
+        <label style="font-size:0.7rem;">REGISTRAR AUSENCIA</label>
+        <select id="aus-tecnico"></select>
+        <input type="date" id="aus-inicio" style="width:90%; margin-top:5px;">
+        <input type="date" id="aus-fin" style="width:90%; margin-top:5px;">
+        <button class="btn btn-blue" onclick="registrarAusencia()">GUARDAR</button>
     </div>
-    <div style="margin-top:auto; font-size: 0.6rem; color: #475569;">
-        <span id="status-ball">●</span> <span id="status-text">Iniciado</span>
-    </div>
+    <div id="status" style="margin-top:auto; font-size:0.7rem; color:#64748b;">● Iniciando...</div>
 </aside>
 
 <main class="main">
     <div class="nav-bar">
-        <button onclick="cambiarMes(-1)" class="btn" style="width:40px;"><i class="fas fa-chevron-left"></i></button>
-        <h2 id="mesTitulo"></h2>
-        <button onclick="cambiarMes(1)" class="btn" style="width:40px;"><i class="fas fa-chevron-right"></i></button>
+        <button onclick="cambiarMes(-1)" style="padding:5px 10px;"><i class="fas fa-chevron-left"></i></button>
+        <h2 id="mesTitulo" style="margin:0; font-size:1.2rem;"></h2>
+        <button onclick="cambiarMes(1)" style="padding:5px 10px;"><i class="fas fa-chevron-right"></i></button>
     </div>
     <div class="grid" id="grid"></div>
 </main>
 
 <div id="modal">
     <div class="modal-box">
-        <h3 id="mFechaStr">Editar Día</h3>
+        <h3 id="mFechaStr">Editar Turno</h3>
         <input type="hidden" id="mId">
-        <label>PRINCIPAL</label>
+        <p style="font-size:0.7rem; margin:0;">PRINCIPAL</p>
         <select id="selP1"></select><select id="selP2"></select>
-        <label>APOYO</label>
+        <p style="font-size:0.7rem; margin:10px 0 0 0;">APOYO</p>
         <select id="selA1"></select><select id="selA2"></select>
         <button class="btn btn-blue" onclick="guardarCambioManual()">GUARDAR</button>
-        <button class="btn btn-ghost" onclick="cerrarModal()">CERRAR</button>
+        <button class="btn" style="background:#ddd" onclick="cerrarModal()">CANCELAR</button>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // 1. CONFIGURACIÓN E INICIALIZACIÓN
-    const SUPABASE_URL = 'https://qscaisgcttsnoavgfctj.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_IA9XB7EVhEMk2k6MbA4A4Q_M6og7SfO';
-    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+    // DATOS MAESTROS
     const tecnicos = ["JUAN MEJIA", "VALENTIN BOLAÑOS", "DOUGLAS VENTURA", "JOSE PALMA", "DANIEL MELENDEZ", "MIGUEL OCHOA", "EDGARDO SORIANO", "LUIS PALACIOS"];
     const gFijos = { 1: [0,1], 2: [2,3], 3: [4,5], 4: [6,7] };
-    
     let mesActual = new Date();
     let dbAusencias = [];
     let dbManual = [];
-    let dbLocks = JSON.parse(localStorage.getItem('admin_locks')) || {};
 
-    // 2. LÓGICA DE ROTACIÓN (DETALLE: MARZO 7 2026)
-    function getRotacion(fecha) {
-        const ref = new Date(2026, 2, 7); 
-        const diff = Math.floor((fecha - ref) / (1000*60*60*24));
-        const dw = fecha.getDay();
-        if (diff < 0 || (dw !== 0 && dw !== 6)) return null;
-        
-        const nSem = Math.floor(diff / 7);
-        const ciclo = nSem % 4;
-        let p, a;
-        if(ciclo===0){ p=1; a=2; } else if(ciclo===1){ p=3; a=4; }
-        else if(ciclo===2){ p=2; a=1; } else if(ciclo===3){ p=4; a=3; }
-        return { p: [tecnicos[gFijos[p][0]], tecnicos[gFijos[p][1]]], a: [tecnicos[gFijos[a][0]], tecnicos[gFijos[a][1]]] };
-    }
-
-    // 3. RENDERIZADO (DETALLE: INSTANTÁNEO)
+    // 1. DIBUJAR CALENDARIO (ESTO DEBE FUNCIONAR SÍ O SÍ)
     function render() {
         const grid = document.getElementById('grid');
         if(!grid) return;
         grid.innerHTML = "";
+        
         const y = mesActual.getFullYear(), m = mesActual.getMonth();
         document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(mesActual).toUpperCase();
 
@@ -121,57 +90,71 @@
             const f = new Date(y, m, d);
             const id = `${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
             
-            let p = getRotacion(f);
+            // Lógica rotación
+            let p = null;
+            const ref = new Date(2026, 2, 7); 
+            const diff = Math.floor((f - ref) / (1000*60*60*24));
+            if (diff >= 0 && (f.getDay() === 0 || f.getDay() === 6)) {
+                const ciclo = Math.floor(diff / 7) % 4;
+                let gP, gA;
+                if(ciclo===0){ gP=1; gA=2; } else if(ciclo===1){ gP=3; gA=4; }
+                else if(ciclo===2){ gP=2; gA=1; } else if(ciclo===3){ gP=4; gA=3; }
+                p = { p: [tecnicos[gFijos[gP][0]], tecnicos[gFijos[gP][1]]], a: [tecnicos[gFijos[gA][0]], tecnicos[gFijos[gA][1]]] };
+            }
+
+            // Sobrescritura Supabase
             const man = dbManual.find(x => x.fecha === id);
             if(man) p = { p: [man.p1, man.p2], a: [man.a1, man.a2] };
 
+            // Filtro Ausencias
             if(p) {
-                const ausentes = dbAusencias.filter(a => id >= a.fecha_inicio && id <= a.fecha_fin).map(a => a.tecnico_nombre);
-                p.p = p.p.map(n => ausentes.includes(n) ? "---" : n);
-                p.a = p.a.map(n => ausentes.includes(n) ? "---" : n);
+                const aus = dbAusencias.filter(a => id >= a.fecha_inicio && id <= a.fecha_fin).map(a => a.tecnico_nombre);
+                p.p = p.p.map(n => aus.includes(n) ? "---" : n);
+                p.a = p.a.map(n => aus.includes(n) ? "---" : n);
             }
 
             const vacante = p && (p.p.includes("---") || p.a.includes("---"));
-            if (dbLocks[id] === undefined) dbLocks[id] = (p && !vacante);
-            const locked = dbLocks[id];
-
             const cell = document.createElement('div');
             cell.className = `day ${f.getDay()===0||f.getDay()===6?'weekend':''} ${vacante?'vacio':''}`;
-            let html = `<div class="day-header"><span>${d}</span><i class="fas ${locked?'fa-lock locked':'fa-lock-open unlocked'} cell-lock" onclick="toggleLock(event, '${id}')"></i></div>`;
-            if(p) {
-                html += `<div class="turno-card principal"><span class="names">${p.p[0]}<br>${p.p[1]}</span></div>`;
-                if(p.a[0]!=="---" || p.a[1]!=="---") html += `<div class="turno-card"><span class="names">${p.a[0]}<br>${p.a[1]}</span></div>`;
-            }
-            if(vacante) html += `<div class="vacante-aviso"><i class="fas fa-user-tag"></i> Puesto disponible</div>`;
-            cell.innerHTML = html;
-            if(!locked) cell.onclick = () => abrirModal(id, p);
+            cell.innerHTML = `
+                <div class="day-header">${d}</div>
+                ${p ? `
+                    <div class="turno-card principal"><span class="names">${p.p[0]}<br>${p.p[1]}</span></div>
+                    ${(p.a[0]!=="---" || p.a[1]!=="---") ? `<div class="turno-card"><span class="names">${p.a[0]}<br>${p.a[1]}</span></div>` : ''}
+                ` : ''}
+                ${vacante ? `<div class="vacante-aviso">PENDIENTE</div>` : ''}
+            `;
+            cell.onclick = () => abrirModal(id, p);
             grid.appendChild(cell);
         }
     }
 
-    // 4. CONEXIÓN (DETALLE: EN SEGUNDO PLANO)
-    async function sync() {
+    // 2. CONEXIÓN SUPABASE (EN SEGUNDO PLANO)
+    const SUPABASE_URL = 'https://qscaisgcttsnoavgfctj.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_IA9XB7EVhEMk2k6MbA4A4Q_M6og7SfO';
+    let supabase = null;
+
+    async function initCloud() {
         try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             const { data: aus } = await supabase.from('ausencias').select('*');
             const { data: man } = await supabase.from('programacion_manual').select('*');
             dbAusencias = aus || [];
             dbManual = man || [];
-            document.getElementById('status-ball').style.color = "#10b981";
-            document.getElementById('status-text').innerText = "Nube Conectada";
+            document.getElementById('status').innerHTML = "● Nube: OK";
             render();
         } catch (e) {
-            document.getElementById('status-ball').style.color = "#f59e0b";
-            document.getElementById('status-text').innerText = "Local";
+            document.getElementById('status').innerHTML = "● Local Mode";
         }
     }
 
-    // MODAL Y FUNCIONES EXTRAS
+    // FUNCIONES MODAL
     function abrirModal(id, data) {
         document.getElementById('modal').style.display = 'flex';
         document.getElementById('mId').value = id;
         ['selP1', 'selP2', 'selA1', 'selA2'].forEach(s => {
             const sel = document.getElementById(s);
-            sel.innerHTML = `<option value="---">--- VACANTE ---</option>` + tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
+            sel.innerHTML = `<option value="---">VACANTE</option>` + tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
             if(data) {
                 if(s==='selP1') sel.value = data.p[0]; if(s==='selP2') sel.value = data.p[1];
                 if(s==='selA1') sel.value = data.a[0]; if(s==='selA2') sel.value = data.a[1];
@@ -182,27 +165,25 @@
     async function guardarCambioManual() {
         const id = document.getElementById('mId').value;
         const body = { fecha: id, p1: selP1.value, p2: selP2.value, a1: selA1.value, a2: selA2.value };
-        await supabase.from('programacion_manual').upsert(body);
-        cerrarModal(); sync();
+        if(supabase) await supabase.from('programacion_manual').upsert(body);
+        cerrarModal(); initCloud();
     }
 
     async function registrarAusencia() {
         const t = document.getElementById('aus-tecnico').value;
         const i = document.getElementById('aus-inicio').value;
         const f = document.getElementById('aus-fin').value;
-        if(!t || !i || !f) return alert("Completa los datos");
-        await supabase.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
-        sync();
+        if(supabase && t && i && f) await supabase.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
+        initCloud();
     }
 
-    function toggleLock(e, id) { e.stopPropagation(); dbLocks[id] = !dbLocks[id]; localStorage.setItem('admin_locks', JSON.stringify(dbLocks)); render(); }
     function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth()+v); render(); }
     function cerrarModal() { document.getElementById('modal').style.display = 'none'; }
-    
-    // INICIO
+
+    // ARRANQUE MANUAL
     document.getElementById('aus-tecnico').innerHTML = tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
-    render(); 
-    sync();
+    render(); // <--- SE DIBUJA PRIMERO
+    setTimeout(initCloud, 500); // <--- CONECTA DESPUÉS
 </script>
 </body>
 </html>
