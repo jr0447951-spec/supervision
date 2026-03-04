@@ -3,205 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Supervisión v7 - Control Total</title>
+    <title>Supervisión v13 - Ausencias por Selección</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f1f5f9; --danger: #ef4444; --success: #10b981; }
+        :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f1f5f9; --danger: #ef4444; --success: #10b981; --warning: #f59e0b; }
         body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
 
         /* SIDEBAR */
-        .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
-        .sidebar h2 { font-size: 1.1rem; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
-        .group-item { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: grab; border: 1px solid transparent; }
-        .group-item:hover { border-color: var(--accent); }
-        .group-item strong { color: var(--accent); display: block; }
+        .sidebar { width: 340px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; border-right: 1px solid #334155; }
+        .sidebar.locked { opacity: 0.5; pointer-events: none; filter: grayscale(1); }
+        .group-item { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #334155; }
+        .group-item strong { color: #60a5fa; display: block; font-size: 0.85rem; }
         
-        .absent-section { margin-top: 20px; background: #2d1a1a; padding: 10px; border-radius: 8px; border: 1px solid #451a1a; }
-        .absent-section input { width: 100%; background: #1a1a1a; border: 1px solid #451a1a; color: white; padding: 5px; border-radius: 4px; font-size: 0.8rem; margin-top: 5px; }
+        /* SELECTOR AUSENCIAS */
+        .aus-box { margin-top: 30px; border-top: 1px solid #334155; padding-top: 20px; }
+        .aus-box select, .aus-box input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; background: #1e293b; border: 1px solid #334155; color: white; font-size: 0.8rem; }
 
         /* CALENDARIO */
         .main { flex-grow: 1; display: flex; flex-direction: column; }
-        .nav-bar { background: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
-        .calendar-container { flex-grow: 1; padding: 20px; overflow-y: auto; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        
-        .day { background: white; min-height: 160px; border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; position: relative; }
+        .nav-bar { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 15px; overflow-y: auto; flex-grow: 1; }
+        .day { background: white; min-height: 150px; border-radius: 10px; border: 1px solid #e2e8f0; padding: 8px; position: relative; cursor: pointer; }
         .day.weekend { background: #f8fafc; }
-        .day-num { font-weight: bold; color: #94a3b8; margin-bottom: 10px; display: block; }
-        
-        /* ETIQUETAS DE TURNO */
-        .role-label { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-bottom: 2px; display: block; }
-        .label-principal { color: var(--accent); }
-        .label-apoyo { color: #64748b; }
-        
-        .turno-card { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); position: relative; }
-        .turno-card.principal { border-left: 4px solid var(--accent); background: #eff6ff; }
-        .turno-card.apoyo { border-left: 4px solid #94a3b8; }
-        .names { font-size: 0.75rem; font-weight: 600; display: block; }
-        
-        .remove-btn { position: absolute; right: 5px; top: 5px; color: #cbd5e1; cursor: pointer; font-size: 0.7rem; }
-        .remove-btn:hover { color: var(--danger); }
 
-        .alert-ausencia { background: var(--danger); color: white; font-size: 0.65rem; padding: 4px; border-radius: 4px; margin-top: 5px; font-weight: bold; }
+        /* TARJETAS */
+        .turno-card { border-radius: 6px; padding: 8px; margin-bottom: 5px; border: 1px solid #e2e8f0; }
+        .principal { border-left: 5px solid var(--accent); background: #eff6ff; }
+        .apoyo { border-left: 5px solid #64748b; background: #f9fafb; }
+        .vacante { border: 2px dashed var(--danger) !important; background: #fef2f2 !important; color: var(--danger); font-weight: bold; font-size: 0.65rem; }
+        
+        .role-tag { font-size: 0.55rem; font-weight: 900; display: block; margin-bottom: 2px; }
+        .names { font-size: 0.72rem; font-weight: 700; color: #1e293b; }
+        .warning-label { font-size: 0.55rem; color: var(--warning); font-weight: 800; display: block; margin-top: 3px; }
 
-        .btn { padding: 8px 15px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; }
-        .btn-blue { background: var(--accent); color: white; }
+        /* BOTONES */
+        .btn-lock { padding: 8px 16px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; }
+        .unlocked { background: var(--success); color: white; }
+        .locked-btn { background: var(--danger); color: white; }
+        .btn-save { background: var(--accent); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<aside class="sidebar">
-    <h2><i class="fas fa-grip-vertical"></i> GRUPOS</h2>
+<aside class="sidebar" id="sidebar">
+    <h2><i class="fas fa-users"></i> GRUPOS BASE</h2>
     <div id="grupos-drag">
-        <div class="group-item" draggable="true" ondragstart="drag(event, 'G1', 'JUAN MEJIA / VALENTIN BOLAÑOS')">
-            <strong>GRUPO 1</strong> <span>JUAN / VALENTIN</span>
-        </div>
-        <div class="group-item" draggable="true" ondragstart="drag(event, 'G2', 'DOUGLAS VENTURA / JOSE PALMA')">
-            <strong>GRUPO 2</strong> <span>DOUGLAS / JOSE</span>
-        </div>
-        <div class="group-item" draggable="true" ondragstart="drag(event, 'G3', 'DANIEL MELENDEZ / MIGUEL OCHOA')">
-            <strong>GRUPO 3</strong> <span>DANIEL / MIGUEL</span>
-        </div>
-        <div class="group-item" draggable="true" ondragstart="drag(event, 'G4', 'EDGARDO SORIANO / LUIS PALACIOS')">
-            <strong>GRUPO 4</strong> <span>EDGARDO / LUIS</span>
-        </div>
+        <div class="group-item"><strong>G1:</strong> JUAN MEJIA / VALENTIN BOLAÑOS</div>
+        <div class="group-item"><strong>G2:</strong> DOUGLAS VENTURA / JOSE PALMA</div>
+        <div class="group-item"><strong>G3:</strong> DANIEL MELENDEZ / MIGUEL OCHOA</div>
+        <div class="group-item"><strong>G4:</strong> EDGARDO SORIANO / LUIS PALACIOS</div>
     </div>
 
-    <div class="absent-section">
-        <h3><i class="fas fa-user-slash"></i> AUSENCIAS</h3>
-        <label style="font-size: 0.7rem;">Día (Ej: 17):</label>
-        <input type="number" id="ausenteDia" placeholder="17">
-        <label style="font-size: 0.7rem;">Nombre:</label>
-        <input type="text" id="ausenteNombre" placeholder="JUAN">
-        <button class="btn btn-blue" style="width:100%; margin-top:10px; font-size:0.7rem;" onclick="addAusencia()">Registrar Ausencia</button>
-        <div id="listaAusencias" style="font-size: 0.7rem; margin-top:10px; color: #fca5a5;"></div>
+    <div class="aus-box">
+        <h3><i class="fas fa-user-slash"></i> REGISTRAR AUSENCIA</h3>
+        <label style="font-size:0.7rem; color:#94a3b8">Día del mes:</label>
+        <input type="number" id="ausDay" placeholder="Ej: 17">
+        
+        <label style="font-size:0.7rem; color:#94a3b8">Seleccionar Técnico:</label>
+        <select id="ausTech">
+            <option value="">-- Seleccionar --</option>
+            <option value="JUAN MEJIA">JUAN MEJIA</option>
+            <option value="VALENTIN BOLAÑOS">VALENTIN BOLAÑOS</option>
+            <option value="DOUGLAS VENTURA">DOUGLAS VENTURA</option>
+            <option value="JOSE PALMA">JOSE PALMA</option>
+            <option value="DANIEL MELENDEZ">DANIEL MELENDEZ</option>
+            <option value="MIGUEL OCHOA">MIGUEL OCHOA</option>
+            <option value="EDGARDO SORIANO">EDGARDO SORIANO</option>
+            <option value="LUIS PALACIOS">LUIS PALACIOS</option>
+        </select>
+        
+        <button onclick="addAusencia()" class="btn-save" style="width:100%">PROGRAMAR FALTA</button>
+        <div id="listaAus" style="font-size:0.7rem; margin-top:15px; color:#f87171;"></div>
     </div>
-
-    <button class="btn btn-blue" style="margin-top:auto" onclick="guardarTodo()">💾 GUARDAR CAMBIOS</button>
 </aside>
 
 <main class="main">
     <div class="nav-bar">
         <div>
-            <button class="btn" onclick="cambiarMes(-1)"><i class="fas fa-chevron-left"></i></button>
-            <span id="mesTitulo" style="font-weight:bold; font-size:1.2rem; margin: 0 15px;"></span>
-            <button class="btn" onclick="cambiarMes(1)"><i class="fas fa-chevron-right"></i></button>
+            <button onclick="changeMonth(-1)" class="btn-save"> < </button>
+            <span id="mesYear" style="font-weight:bold; margin: 0 15px; font-size: 1.2rem;"></span>
+            <button onclick="changeMonth(1)" class="btn-save"> > </button>
         </div>
-        <button class="btn" onclick="limpiarMes()" style="color:var(--danger)">Limpiar Mes</button>
+        <button id="lBtn" class="btn-lock unlocked" onclick="toggleLock()">
+            <i id="lIco" class="fas fa-lock-open"></i> <span id="lTxt">EDICIÓN ACTIVA</span>
+        </button>
+        <button class="btn-save" onclick="saveDB()">💾 GUARDAR</button>
     </div>
-
-    <div class="calendar-container">
-        <div class="grid" id="grid">
-            </div>
-    </div>
+    <div class="grid" id="grid"></div>
 </main>
 
 <script>
-    let fechaVisual = new Date(); // Para navegar entre meses
-    let db = JSON.parse(localStorage.getItem('supervision_v7')) || { turnos: {}, ausencias: [] };
+    let isLocked = false;
+    let currDate = new Date();
+    const gBase = {
+        1: ["JUAN MEJIA", "VALENTIN BOLAÑOS"],
+        2: ["DOUGLAS VENTURA", "JOSE PALMA"],
+        3: ["DANIEL MELENDEZ", "MIGUEL OCHOA"],
+        4: ["EDGARDO SORIANO", "LUIS PALACIOS"]
+    };
+
+    let db = JSON.parse(localStorage.getItem('supervision_v13')) || { manual: {}, ausencias: [] };
 
     function render() {
-        const grid = document.getElementById('grid');
-        grid.innerHTML = "";
-        const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-        diasSemana.forEach(d => grid.innerHTML += `<div style="text-align:center; font-weight:bold; color:#64748b; padding-bottom:10px;">${d}</div>`);
+        const grid = document.getElementById('grid'); grid.innerHTML = "";
+        const diasS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+        diasS.forEach(d => grid.innerHTML += `<div style="text-align:center; font-weight:bold; font-size:0.7rem; color:#64748b;">${d}</div>`);
 
-        const año = fechaVisual.getFullYear();
-        const mes = fechaVisual.getMonth();
-        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaVisual);
+        const y = currDate.getFullYear(), m = currDate.getMonth();
+        document.getElementById('mesYear').innerText = new Intl.DateTimeFormat('es-ES',{month:'long',year:'numeric'}).format(currDate).toUpperCase();
 
-        const diasMes = new Date(año, mes + 1, 0).getDate();
-        const primerDia = new Date(año, mes, 1).getDay();
-        const offset = (primerDia === 0) ? 6 : primerDia - 1;
+        const totalD = new Date(y, m+1, 0).getDate();
+        const offset = (new Date(y, m, 1).getDay() === 0) ? 6 : new Date(y, m, 1).getDay() - 1;
+        const refDate = new Date(2026, 2, 7);
 
-        for(let i=0; i<offset; i++) grid.innerHTML += `<div class="day" style="opacity:0.2; border:none;"></div>`;
+        for(let i=0; i<offset; i++) grid.innerHTML += `<div></div>`;
 
-        for(let d=1; d<=diasMes; d++) {
-            const id = `${año}-${mes+1}-${d}`;
-            const diaSemana = new Date(año, mes, d).getDay();
-            const esFinde = (diaSemana === 6 || diaSemana === 0);
-            
-            // Buscar ausencias
-            const ausente = db.ausencias.find(a => a.dia == d && a.mes == mes+1 && a.año == año);
+        for(let d=1; d<=totalD; d++) {
+            const f = new Date(y, m, d), id = `${y}-${m+1}-${d}`, dw = f.getDay();
+            let content = "";
 
-            let turnosHtml = "";
-            if(db.turnos[id]) {
-                db.turnos[id].forEach((t, idx) => {
-                    const tipo = (idx === 0) ? 'principal' : 'apoyo';
-                    turnosHtml += `
-                        <div class="turno-card ${tipo}">
-                            <i class="fas fa-times remove-btn" onclick="borrarTurno('${id}', ${idx})"></i>
-                            <span class="role-label label-${tipo}">${tipo === 'principal' ? 'PRINCIPAL' : 'APOYO'}</span>
-                            <span class="names">${t.nombres}</span>
-                        </div>`;
-                });
+            if(dw === 6 || dw === 0) {
+                const diff = Math.floor((f - refDate) / (1000*60*60*24));
+                const nSem = Math.floor(diff / 7);
+                let g1_idx = (Math.abs(nSem) % 2 === 0) ? (dw===6?1:2) : (dw===6?3:4);
+                let g2_idx = (Math.abs(nSem) % 2 === 0) ? (dw===6?2:1) : (dw===6?4:3);
+
+                // Obtener nombres base
+                let p1_names = [...gBase[g1_idx]];
+                let p2_names = [...gBase[g2_idx]];
+
+                // Filtrar ausentes
+                const ausentesHoy = db.ausencias.filter(a => a.d == d && a.m == m+1 && a.y == y).map(a => a.n);
+                
+                let htmlP1 = p1_names.map(n => ausentesHoy.includes(n) ? `<span style="color:red;text-decoration:line-through">${n}</span>` : n).join(" / ");
+                let htmlP2 = p2_names.map(n => ausentesHoy.includes(n) ? `<span style="color:red;text-decoration:line-through">${n}</span>` : n).join(" / ");
+
+                const p1_incompleto = p1_names.some(n => ausentesHoy.includes(n));
+                const p2_incompleto = p2_names.some(n => ausentesHoy.includes(n));
+
+                content = `
+                    <div class="turno-card principal ${p1_incompleto ? 'vacante' : ''}">
+                        <span class="role-tag">PRINCIPAL (G${g1_idx})</span>
+                        <span class="names">${htmlP1}</span>
+                    </div>
+                    <div class="turno-card apoyo ${p2_incompleto ? 'vacante' : ''}">
+                        <span class="role-tag">APOYO (G${g2_idx})</span>
+                        <span class="names">${htmlP2}</span>
+                        ${(p1_incompleto || p2_incompleto) ? '<span class="warning-label">⚠️ CUBRIR VACANTE</span>' : ''}
+                    </div>
+                `;
             }
 
-            grid.innerHTML += `
-                <div class="day ${esFinde ? 'weekend' : ''}" ondrop="drop(event, '${id}')" ondragover="allow(event)">
-                    <span class="day-num">${d}</span>
-                    <div id="content-${id}">${turnosHtml}</div>
-                    ${ausente ? `<div class="alert-ausencia"><i class="fas fa-exclamation-triangle"></i> ${ausente.nombre} AUSENTE</div>` : ''}
-                </div>`;
+            const cell = document.createElement('div');
+            cell.className = `day ${dw===6||dw===0?'weekend':''} ${isLocked?'locked':''}`;
+            cell.innerHTML = `<span style="font-weight:bold; font-size:0.8rem; color:#94a3b8">${d}</span>${content}`;
+            grid.appendChild(cell);
         }
-        renderAusenciasList();
-    }
-
-    // Drag & Drop
-    function drag(ev, grupo, nombres) {
-        ev.dataTransfer.setData("grupo", grupo);
-        ev.dataTransfer.setData("nombres", nombres);
-    }
-    function allow(ev) { ev.preventDefault(); }
-
-    function drop(ev, id) {
-        ev.preventDefault();
-        const grupo = ev.dataTransfer.getData("grupo");
-        const nombres = ev.dataTransfer.getData("nombres");
-
-        if(!db.turnos[id]) db.turnos[id] = [];
-        db.turnos[id].push({ grupo, nombres });
-        render();
-    }
-
-    function borrarTurno(id, idx) {
-        db.turnos[id].splice(idx, 1);
-        render();
+        renderAusList();
     }
 
     function addAusencia() {
-        const d = document.getElementById('ausenteDia').value;
-        const n = document.getElementById('ausenteNombre').value.toUpperCase();
-        if(!d || !n) return;
-        
-        db.ausencias.push({ dia: d, mes: fechaVisual.getMonth()+1, año: fechaVisual.getFullYear(), nombre: n });
-        render();
-    }
-
-    function renderAusenciasList() {
-        const div = document.getElementById('listaAusencias');
-        div.innerHTML = db.ausencias.map((a, i) => `<div>• ${a.dia}/${a.mes}: ${a.nombre} <i class="fas fa-trash" style="cursor:pointer" onclick="db.ausencias.splice(${i},1);render()"></i></div>`).join('');
-    }
-
-    function cambiarMes(delta) {
-        fechaVisual.setMonth(fechaVisual.getMonth() + delta);
-        render();
-    }
-
-    function guardarTodo() {
-        localStorage.setItem('supervision_v7', JSON.stringify(db));
-        alert("✅ Datos guardados.");
-    }
-
-    function limpiarMes() {
-        if(confirm("¿Borrar todos los turnos de este mes?")) {
-            const prefijo = `${fechaVisual.getFullYear()}-${fechaVisual.getMonth()+1}-`;
-            Object.keys(db.turnos).forEach(key => {
-                if(key.startsWith(prefijo)) delete db.turnos[key];
-            });
+        const d = document.getElementById('ausDay').value, n = document.getElementById('ausTech').value;
+        if(d && n) {
+            db.ausencias.push({ d, m: currDate.getMonth()+1, y: currDate.getFullYear(), n });
             render();
-        }
+            document.getElementById('ausDay').value = ""; document.getElementById('ausTech').value = "";
+        } else { alert("Selecciona día y técnico."); }
     }
+
+    function removeAus(index) { db.ausencias.splice(index, 1); render(); }
+
+    function renderAusList() {
+        const list = document.getElementById('listaAus');
+        list.innerHTML = db.ausencias.map((a, i) => 
+            `<div style="margin-bottom:5px;">• ${a.d}/${a.m}: ${a.n} <i class="fas fa-trash-alt" style="cursor:pointer;float:right" onclick="removeAus(${i})"></i></div>`
+        ).join('');
+    }
+
+    function toggleLock() {
+        isLocked = !isLocked;
+        document.getElementById('lBtn').className = isLocked ? "btn-lock locked-btn" : "btn-lock unlocked";
+        document.getElementById('lTxt').innerText = isLocked ? "SISTEMA BLOQUEADO" : "EDICIÓN ACTIVA";
+        document.getElementById('sidebar').classList.toggle('locked', isLocked);
+        render();
+    }
+
+    function changeMonth(v) { currDate.setMonth(currDate.getMonth()+v); render(); }
+    function saveDB() { localStorage.setItem('supervision_v13', JSON.stringify(db)); alert("✅ Configuración guardada."); }
 
     window.onload = render;
 </script>
