@@ -3,158 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS - ADMIN v28</title>
+    <title>SISTEMA TURNOS - ADMIN v29</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; --vacante: #fef3c7; }
-        body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
-        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; }
-        .main { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; }
-        .nav-bar { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 15px; overflow-y: auto; flex-grow: 1; }
-        .day { background: var(--card); border-radius: 8px; border: 1px solid #e2e8f0; padding: 10px; min-height: 140px; position: relative; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
+        .main { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .nav-bar { background: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 15px; overflow-y: auto; flex-grow: 1; align-content: start; }
+        .day { background: var(--card); border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; min-height: 150px; cursor: pointer; position: relative; }
         .day.weekend { background: #f1f5f9; }
-        .day.vacio { background: var(--vacante); }
-        .day-header { display: flex; justify-content: space-between; font-weight: bold; color: #64748b; margin-bottom: 5px; }
-        .turno-card { padding: 4px 8px; border-radius: 4px; margin-bottom: 4px; font-size: 0.75rem; border-left: 3px solid #94a3b8; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .day.vacio { background: var(--vacante); border-color: #fcd34d; }
+        .day-header { font-weight: bold; color: #64748b; margin-bottom: 8px; font-size: 0.9rem; }
+        .turno-card { padding: 6px; border-radius: 6px; margin-bottom: 4px; font-size: 0.7rem; border-left: 4px solid #94a3b8; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .principal { border-left-color: var(--accent); background: #eff6ff; }
-        .names { font-weight: bold; color: #1e293b; }
-        .vacante-aviso { color: #b45309; font-size: 0.7rem; font-weight: bold; margin-top: 5px; }
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 20px; border-radius: 12px; width: 350px; }
-        select { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; }
-        .btn { padding: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        .names { font-weight: bold; color: #1e293b; line-height: 1.2; display: block; }
+        .vacante-aviso { color: #b45309; font-size: 0.65rem; font-weight: bold; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 25px; border-radius: 16px; width: 380px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        select { width: 100%; padding: 10px; margin: 5px 0 12px 0; border-radius: 8px; border: 1px solid #cbd5e1; }
+        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; width: 100%; }
         .btn-blue { background: var(--accent); color: white; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h3>SISTEMA v28</h3>
-    <div style="background:#1e293b; padding:10px; border-radius:8px;">
-        <label style="font-size:0.7rem;">REGISTRAR AUSENCIA</label>
-        <select id="aus-tecnico"></select>
-        <input type="date" id="aus-inicio" style="width:90%; margin-top:5px;">
-        <input type="date" id="aus-fin" style="width:90%; margin-top:5px;">
-        <button class="btn btn-blue" onclick="registrarAusencia()">GUARDAR</button>
+    <h2 style="font-size: 1.2rem; margin-top: 0;"><i class="fas fa-calendar-check"></i> Turnos Admin</h2>
+    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+        <label style="font-size: 0.7rem; color: #60a5fa; font-weight: bold;">REGISTRAR AUSENCIA</label>
+        <select id="aus-tecnico" style="background: #1e293b; color: white; border: 1px solid #334155;"></select>
+        <input type="date" id="aus-inicio" style="width:92%; margin-bottom: 8px; padding: 8px; border-radius: 6px; border: none;">
+        <input type="date" id="aus-fin" style="width:92%; margin-bottom: 12px; padding: 8px; border-radius: 6px; border: none;">
+        <button class="btn btn-blue" onclick="registrarAusencia()" style="font-size: 0.8rem;">APLICAR</button>
     </div>
-    <div id="status" style="margin-top:auto; font-size:0.7rem; color:#64748b;">● Iniciando...</div>
+    <div id="status" style="margin-top: auto; font-size: 0.65rem; color: #94a3b8;">
+        <i class="fas fa-circle"></i> Estado: Iniciando...
+    </div>
 </aside>
 
 <main class="main">
     <div class="nav-bar">
-        <button onclick="cambiarMes(-1)" style="padding:5px 10px;"><i class="fas fa-chevron-left"></i></button>
-        <h2 id="mesTitulo" style="margin:0; font-size:1.2rem;"></h2>
-        <button onclick="cambiarMes(1)" style="padding:5px 10px;"><i class="fas fa-chevron-right"></i></button>
+        <button onclick="cambiarMes(-1)" class="btn" style="width: 45px; background: #f1f5f9;"><i class="fas fa-chevron-left"></i></button>
+        <h2 id="mesTitulo" style="margin: 0; font-size: 1.3rem; color: #0f172a;">CARGANDO...</h2>
+        <button onclick="cambiarMes(1)" class="btn" style="width: 45px; background: #f1f5f9;"><i class="fas fa-chevron-right"></i></button>
     </div>
     <div class="grid" id="grid"></div>
 </main>
 
 <div id="modal">
     <div class="modal-box">
-        <h3 id="mFechaStr">Editar Turno</h3>
+        <h3 id="mFechaStr" style="margin-top: 0;">Editar Turno</h3>
         <input type="hidden" id="mId">
-        <p style="font-size:0.7rem; margin:0;">PRINCIPAL</p>
+        <label style="font-size: 0.75rem; font-weight: bold; color: #64748b;">PRINCIPAL</label>
         <select id="selP1"></select><select id="selP2"></select>
-        <p style="font-size:0.7rem; margin:10px 0 0 0;">APOYO</p>
+        <label style="font-size: 0.75rem; font-weight: bold; color: #64748b; margin-top: 10px; display: block;">APOYO</label>
         <select id="selA1"></select><select id="selA2"></select>
-        <button class="btn btn-blue" onclick="guardarCambioManual()">GUARDAR</button>
-        <button class="btn" style="background:#ddd" onclick="cerrarModal()">CANCELAR</button>
+        <button class="btn btn-blue" onclick="guardarCambioManual()">GUARDAR CAMBIOS</button>
+        <button class="btn" style="background: none; color: #94a3b8; margin-top: 5px;" onclick="cerrarModal()">CANCELAR</button>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // DATOS MAESTROS
+    // 1. DATOS MAESTROS (No se tocan)
     const tecnicos = ["JUAN MEJIA", "VALENTIN BOLAÑOS", "DOUGLAS VENTURA", "JOSE PALMA", "DANIEL MELENDEZ", "MIGUEL OCHOA", "EDGARDO SORIANO", "LUIS PALACIOS"];
     const gFijos = { 1: [0,1], 2: [2,3], 3: [4,5], 4: [6,7] };
     let mesActual = new Date();
     let dbAusencias = [];
     let dbManual = [];
 
-    // 1. DIBUJAR CALENDARIO (ESTO DEBE FUNCIONAR SÍ O SÍ)
+    // 2. FUNCIÓN DE RENDERIZADO ULTRA-ROBUSTA
     function render() {
-        const grid = document.getElementById('grid');
-        if(!grid) return;
-        grid.innerHTML = "";
-        
-        const y = mesActual.getFullYear(), m = mesActual.getMonth();
-        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(mesActual).toUpperCase();
+        try {
+            const grid = document.getElementById('grid');
+            const titulo = document.getElementById('mesTitulo');
+            if(!grid || !titulo) return;
 
-        const total = new Date(y, m+1, 0).getDate();
-        const start = (new Date(y, m, 1).getDay() === 0) ? 6 : new Date(y, m, 1).getDay() - 1;
-
-        for(let i=0; i<start; i++) grid.innerHTML += `<div></div>`;
-
-        for(let d=1; d<=total; d++) {
-            const f = new Date(y, m, d);
-            const id = `${y}-${(m+1).toString().padStart(2,'0')}-${d.toString().padStart(2,'0')}`;
+            grid.innerHTML = "";
+            const y = mesActual.getFullYear();
+            const m = mesActual.getMonth();
             
-            // Lógica rotación
-            let p = null;
-            const ref = new Date(2026, 2, 7); 
-            const diff = Math.floor((f - ref) / (1000*60*60*24));
-            if (diff >= 0 && (f.getDay() === 0 || f.getDay() === 6)) {
-                const ciclo = Math.floor(diff / 7) % 4;
-                let gP, gA;
-                if(ciclo===0){ gP=1; gA=2; } else if(ciclo===1){ gP=3; gA=4; }
-                else if(ciclo===2){ gP=2; gA=1; } else if(ciclo===3){ gP=4; gA=3; }
-                p = { p: [tecnicos[gFijos[gP][0]], tecnicos[gFijos[gP][1]]], a: [tecnicos[gFijos[gA][0]], tecnicos[gFijos[gA][1]]] };
+            // Mostrar el mes (Esto garantiza que ya no verás "Cargando")
+            const nombresMeses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+            titulo.innerText = `${nombresMeses[m]} ${y}`;
+
+            const totalDias = new Date(y, m + 1, 0).getDate();
+            let startDay = new Date(y, m, 1).getDay(); // 0 es Domingo
+            startDay = (startDay === 0) ? 6 : startDay - 1; // Ajuste para que empiece en Lunes
+
+            // Espacios vacíos
+            for(let i=0; i < startDay; i++) {
+                const empty = document.createElement('div');
+                grid.appendChild(empty);
             }
 
-            // Sobrescritura Supabase
-            const man = dbManual.find(x => x.fecha === id);
-            if(man) p = { p: [man.p1, man.p2], a: [man.a1, man.a2] };
+            // Dibujar cada día
+            for(let d=1; d <= totalDias; d++) {
+                const fecha = new Date(y, m, d);
+                const fechaID = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                
+                let asignacion = null;
+                
+                // A. Rotación Base (Fines de semana)
+                const ref = new Date(2026, 2, 7); // 7 de Marzo 2026
+                const diffDays = Math.floor((fecha - ref) / (1000*60*60*24));
+                const diaSemana = fecha.getDay();
 
-            // Filtro Ausencias
-            if(p) {
-                const aus = dbAusencias.filter(a => id >= a.fecha_inicio && id <= a.fecha_fin).map(a => a.tecnico_nombre);
-                p.p = p.p.map(n => aus.includes(n) ? "---" : n);
-                p.a = p.a.map(n => aus.includes(n) ? "---" : n);
+                if (diffDays >= 0 && (diaSemana === 0 || diaSemana === 6)) {
+                    const numSemana = Math.floor(diffDays / 7);
+                    const ciclo = numSemana % 4;
+                    let p, a;
+                    if(ciclo===0){ p=1; a=2; } else if(ciclo===1){ p=3; a=4; }
+                    else if(ciclo===2){ p=2; a=1; } else if(ciclo===3){ p=4; a=3; }
+                    asignacion = { 
+                        p: [tecnicos[gFijos[p][0]], tecnicos[gFijos[p][1]]], 
+                        a: [tecnicos[gFijos[a][0]], tecnicos[gFijos[a][1]]] 
+                    };
+                }
+
+                // B. Sobrescritura Manual
+                const manual = dbManual.find(x => x.fecha === fechaID);
+                if(manual) asignacion = { p: [manual.p1, manual.p2], a: [manual.a1, manual.a2] };
+
+                // C. Filtro de Ausencias
+                if(asignacion) {
+                    const ausentes = dbAusencias.filter(aus => fechaID >= aus.fecha_inicio && fechaID <= aus.fecha_fin).map(aus => aus.tecnico_nombre);
+                    asignacion.p = asignacion.p.map(n => ausentes.includes(n) ? "---" : n);
+                    asignacion.a = asignacion.a.map(n => ausentes.includes(n) ? "---" : n);
+                }
+
+                const esVacante = asignacion && (asignacion.p.includes("---") || asignacion.a.includes("---"));
+                
+                const celda = document.createElement('div');
+                celda.className = `day ${diaSemana === 0 || diaSemana === 6 ? 'weekend' : ''} ${esVacante ? 'vacio' : ''}`;
+                
+                let contenidoHtml = `<div class="day-header">${d}</div>`;
+                if(asignacion) {
+                    contenidoHtml += `<div class="turno-card principal"><span class="names">${asignacion.p[0]}<br>${asignacion.p[1]}</span></div>`;
+                    if(asignacion.a[0] !== "---" || asignacion.a[1] !== "---") {
+                        contenidoHtml += `<div class="turno-card"><span class="names">${asignacion.a[0]}<br>${asignacion.a[1]}</span></div>`;
+                    }
+                }
+                if(esVacante) {
+                    contenidoHtml += `<div class="vacante-aviso"><i class="fas fa-exclamation-circle"></i> PUESTO LIBRE</div>`;
+                }
+
+                celda.innerHTML = contenidoHtml;
+                celda.onclick = () => abrirModal(fechaID, asignacion);
+                grid.appendChild(celda);
             }
-
-            const vacante = p && (p.p.includes("---") || p.a.includes("---"));
-            const cell = document.createElement('div');
-            cell.className = `day ${f.getDay()===0||f.getDay()===6?'weekend':''} ${vacante?'vacio':''}`;
-            cell.innerHTML = `
-                <div class="day-header">${d}</div>
-                ${p ? `
-                    <div class="turno-card principal"><span class="names">${p.p[0]}<br>${p.p[1]}</span></div>
-                    ${(p.a[0]!=="---" || p.a[1]!=="---") ? `<div class="turno-card"><span class="names">${p.a[0]}<br>${p.a[1]}</span></div>` : ''}
-                ` : ''}
-                ${vacante ? `<div class="vacante-aviso">PENDIENTE</div>` : ''}
-            `;
-            cell.onclick = () => abrirModal(id, p);
-            grid.appendChild(cell);
+        } catch (err) {
+            console.error("Error en render:", err);
+            document.getElementById('mesTitulo').innerText = "ERROR DE CARGA";
         }
     }
 
-    // 2. CONEXIÓN SUPABASE (EN SEGUNDO PLANO)
+    // 3. CONEXIÓN A SUPABASE
     const SUPABASE_URL = 'https://qscaisgcttsnoavgfctj.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_IA9XB7EVhEMk2k6MbA4A4Q_M6og7SfO';
-    let supabase = null;
+    let supabaseClient = null;
 
-    async function initCloud() {
+    async function cargarNube() {
         try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            const { data: aus } = await supabase.from('ausencias').select('*');
-            const { data: man } = await supabase.from('programacion_manual').select('*');
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            const { data: aus } = await supabaseClient.from('ausencias').select('*');
+            const { data: man } = await supabaseClient.from('programacion_manual').select('*');
             dbAusencias = aus || [];
             dbManual = man || [];
-            document.getElementById('status').innerHTML = "● Nube: OK";
+            document.getElementById('status').innerHTML = '<i class="fas fa-circle" style="color:#10b981"></i> Nube: Conectada';
             render();
         } catch (e) {
-            document.getElementById('status').innerHTML = "● Local Mode";
+            document.getElementById('status').innerHTML = '<i class="fas fa-circle" style="color:#f59e0b"></i> Estado: Local';
         }
     }
 
-    // FUNCIONES MODAL
+    // 4. FUNCIONES DE CONTROL
     function abrirModal(id, data) {
         document.getElementById('modal').style.display = 'flex';
         document.getElementById('mId').value = id;
+        document.getElementById('mFechaStr').innerText = "Turno: " + id;
         ['selP1', 'selP2', 'selA1', 'selA2'].forEach(s => {
             const sel = document.getElementById(s);
-            sel.innerHTML = `<option value="---">VACANTE</option>` + tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
+            sel.innerHTML = `<option value="---">--- VACANTE ---</option>` + tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
             if(data) {
                 if(s==='selP1') sel.value = data.p[0]; if(s==='selP2') sel.value = data.p[1];
                 if(s==='selA1') sel.value = data.a[0]; if(s==='selA2') sel.value = data.a[1];
@@ -164,26 +196,29 @@
 
     async function guardarCambioManual() {
         const id = document.getElementById('mId').value;
-        const body = { fecha: id, p1: selP1.value, p2: selP2.value, a1: selA1.value, a2: selA2.value };
-        if(supabase) await supabase.from('programacion_manual').upsert(body);
-        cerrarModal(); initCloud();
+        const record = { fecha: id, p1: selP1.value, p2: selP2.value, a1: selA1.value, a2: selA2.value };
+        if(supabaseClient) await supabaseClient.from('programacion_manual').upsert(record);
+        cerrarModal(); cargarNube();
     }
 
     async function registrarAusencia() {
         const t = document.getElementById('aus-tecnico').value;
         const i = document.getElementById('aus-inicio').value;
         const f = document.getElementById('aus-fin').value;
-        if(supabase && t && i && f) await supabase.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
-        initCloud();
+        if(supabaseClient && t && i && f) {
+            await supabaseClient.from('ausencias').insert([{ tecnico_nombre: t, fecha_inicio: i, fecha_fin: f }]);
+            cargarNube();
+            alert("Ausencia guardada correctamente");
+        }
     }
 
-    function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth()+v); render(); }
+    function cambiarMes(v) { mesActual.setMonth(mesActual.getMonth() + v); render(); }
     function cerrarModal() { document.getElementById('modal').style.display = 'none'; }
 
-    // ARRANQUE MANUAL
+    // ARRANQUE DEFINITIVO
     document.getElementById('aus-tecnico').innerHTML = tecnicos.map(t => `<option value="${t}">${t}</option>`).join('');
-    render(); // <--- SE DIBUJA PRIMERO
-    setTimeout(initCloud, 500); // <--- CONECTA DESPUÉS
+    render(); 
+    setTimeout(cargarNube, 300);
 </script>
 </body>
 </html>
