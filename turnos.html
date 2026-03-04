@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ADMIN TURNOS v22.0 - Full Sheets Sync</title>
+    <title>ADMIN TURNOS v22.1</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root { 
@@ -12,75 +12,58 @@
         }
         body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
 
-        /* SIDEBAR */
         .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; border-right: 1px solid #334155; overflow-y: auto; }
         .sidebar h4 { color: #94a3b8; margin-top: 20px; margin-bottom: 10px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* GRUPOS ARRASTRABLES */
-        .draggable-group { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: grab; transition: 0.2s; }
-        .draggable-group:hover { border-color: var(--accent); background: #26354d; }
+        .draggable-group { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: 8px; margin-bottom: 8px; cursor: grab; }
+        .draggable-group:hover { border-color: var(--accent); }
         .draggable-group.custom-group { border: 1px dashed #64748b; background: rgba(37, 99, 235, 0.1); }
         .group-tag { font-size: 0.6rem; font-weight: bold; color: var(--accent); margin-bottom: 4px; display: block; }
         .group-names { font-size: 0.75rem; color: #cbd5e1; }
 
-        /* CALENDARIO */
         .main { flex-grow: 1; display: flex; flex-direction: column; }
         .nav-bar { background: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
         
-        .days-header-row { 
-            display: grid; grid-template-columns: repeat(7, 1fr); 
-            background: #f8fafc; padding: 10px 15px; border-bottom: 1px solid #e2e8f0;
-            text-align: center; font-size: 0.7rem; font-weight: 800; color: #64748b;
-        }
+        .days-header-row { display: grid; grid-template-columns: repeat(7, 1fr); background: #f8fafc; padding: 10px 15px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 0.7rem; font-weight: 800; color: #64748b; }
 
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 15px; overflow-y: auto; flex-grow: 1; }
-        
-        .day { background: var(--card); border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px; min-height: 145px; position: relative; transition: 0.2s; }
+        .day { background: var(--card); border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px; min-height: 145px; position: relative; }
         .day.weekend { background: #f1f5f9; }
         .day.drag-over { border: 2px dashed var(--accent); background: #eff6ff; }
         .day.is-locked { border-top: 4px solid var(--locked); }
 
         .day-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.8rem; color: #64748b; margin-bottom: 5px; }
-        .cell-lock { cursor: pointer; font-size: 0.8rem; }
+        .cell-lock { cursor: pointer; }
         
         .group-container { display: flex; flex-direction: column; gap: 4px; }
         .turno-card { padding: 6px 8px; border-radius: 4px; font-size: 0.65rem; border-left: 3px solid #94a3b8; background: #f8fafc; position: relative; }
         .principal { border-left-color: var(--accent); background: #eff6ff; }
         .edit-group-btn { position: absolute; right: 5px; top: 5px; font-size: 0.7rem; color: var(--accent); cursor: pointer; opacity: 0.3; }
         .turno-card:hover .edit-group-btn { opacity: 1; }
-        
         .names { font-weight: 700; color: #1e293b; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* MODAL */
         #modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center; backdrop-filter: blur(2px); }
-        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 350px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        
-        .btn { padding: 10px 15px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; transition: 0.2s; }
+        .modal-box { background: white; padding: 25px; border-radius: 12px; width: 350px; }
+        .btn { padding: 10px 15px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; }
         .btn-blue { background: var(--accent); color: white; }
         select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; margin-top: 5px; }
-        
         .ausencia-tag { display: flex; justify-content: space-between; background: #334155; padding: 5px; border-radius: 4px; margin-bottom: 4px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h3><i class="fas fa-calendar-check"></i> ADMIN v22.0</h3>
-    
+    <h3><i class="fas fa-calendar-check"></i> ADMIN v22.1</h3>
     <h4><i class="fas fa-layer-group"></i> Arrastrar Grupos</h4>
     <div id="sidebar-groups"></div>
-
     <h4><i class="fas fa-user-slash"></i> Registrar Falta</h4>
     <div style="background: #1e293b; padding: 12px; border-radius: 8px;">
         <select id="aus-tecnico" style="width:100%;"></select>
-        <input type="date" id="aus-fecha" style="width:100%; margin: 8px 0; border: none; border-radius: 4px; padding: 5px;">
+        <input type="date" id="aus-fecha" style="width:100%; margin: 8px 0; border-radius: 4px; padding: 5px;">
         <button class="btn btn-blue" style="width:100%; font-size:0.7rem;" onclick="agregarAusencia()">AGREGAR</button>
     </div>
     <div id="ausencias-list" style="margin-top:10px; max-height: 150px; overflow-y:auto;"></div>
-
-    <button class="btn btn-blue" style="margin-top:auto; width:100%" onclick="saveAll()">
-        <i class="fas fa-cloud-upload-alt"></i> GUARDAR Y SINCRONIZAR
-    </button>
+    <button class="btn btn-blue" style="margin-top:auto; width:100%" onclick="saveAll()"><i class="fas fa-cloud-upload-alt"></i> GUARDAR Y ACTUALIZAR</button>
 </aside>
 
 <main class="main">
@@ -89,19 +72,16 @@
         <h2 id="mesTitulo" style="margin:0; font-size: 1.2rem;"></h2>
         <button class="btn" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
     </div>
-
     <div class="days-header-row">
         <div>LUNES</div><div>MARTES</div><div>MIÉRCOLES</div><div>JUEVES</div><div>VIERNES</div>
         <div style="color:var(--accent)">SÁBADO</div><div style="color:var(--accent)">DOMINGO</div>
     </div>
-
     <div class="grid" id="grid"></div>
 </main>
 
 <div id="modal">
     <div class="modal-box">
-        <input type="hidden" id="mId">
-        <input type="hidden" id="mGroupIdx">
+        <input type="hidden" id="mId"><input type="hidden" id="mGroupIdx">
         <h3 id="mTitle" style="margin:0">Editar</h3>
         <p id="mGroupName" style="font-weight:bold; color:var(--accent); font-size:0.8rem; margin-bottom:15px;"></p>
         <div style="margin-bottom:10px;"><label style="font-size:0.7rem;">TÉCNICO 1</label><select id="select-t1"></select></div>
@@ -115,50 +95,40 @@
 </div>
 
 <script>
-    const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzDv_dZhcRJ_quOpT0tDkg8bZLWXgojeKL79XbekmjNvz3ALNVTmRA9CX40XshYeH86/exec";
-    const DB_KEY = 'admin_v22_final';
-    
+    const SHEETS_API_URL = "https://script.google.com/macros/s/AKfycby2z6FHW7GIj5WCEIltflNUvYWfPKJlrsPxeIT5RbVTS5plaYfffIyc0hiPC_vp9tyH/exec";
+    const DB_KEY = 'admin_v22_1';
     let currentMonth = new Date();
-    let tecnicosIndiv = [];
-    let gBase = {}; 
+    let tecnicosIndiv = [], gBase = {}; 
     let db = JSON.parse(localStorage.getItem(DB_KEY)) || { manual: {}, locks: {}, ausencias: {} };
 
     async function cargarTecnicosCSV() {
         try {
-            const response = await fetch('tecnicos.csv');
-            const data = await response.text();
+            const resp = await fetch('tecnicos.csv');
+            const data = await resp.text();
             const filas = data.split(/\r?\n/).slice(1);
             tecnicosIndiv = []; gBase = {};
-            filas.forEach(fila => {
-                if (!fila.trim()) return;
-                const [nombre, grupo] = fila.split(';').map(s => s?.trim());
-                if(nombre) {
-                    tecnicosIndiv.push(nombre.toUpperCase());
-                    if (grupo) {
-                        if (!gBase[grupo]) gBase[grupo] = [];
-                        gBase[grupo].push(nombre.toUpperCase());
-                    }
+            filas.forEach(f => {
+                if (!f.trim()) return;
+                const [n, g] = f.split(';').map(s => s?.trim());
+                if(n) {
+                    const name = n.toUpperCase(); tecnicosIndiv.push(name);
+                    if(g) { if(!gBase[g]) gBase[g]=[]; gBase[g].push(name); }
                 }
             });
-            gBase["5"] = ["", ""]; // Grupo 5 especial vacío
+            gBase["5"] = ["", ""];
             tecnicosIndiv.sort();
-            renderSidebarGroups();
-            render();
-        } catch (e) { alert("Error cargando tecnicos.csv"); }
+            renderSidebarGroups(); render();
+        } catch (e) { alert("Error CSV"); }
     }
 
     function renderSidebarGroups() {
-        const container = document.getElementById('sidebar-groups');
-        container.innerHTML = "";
-        Object.keys(gBase).sort().forEach(gNum => {
-            const div = document.createElement('div');
-            const isG5 = gNum === "5";
-            div.className = `draggable-group ${isG5 ? 'custom-group' : ''}`;
-            div.draggable = true;
-            div.innerHTML = `<span class="group-tag">GRUPO ${gNum} ${isG5 ? '(VACANTE)' : ''}</span>
-                             <div class="group-names">${isG5 ? 'Manual' : gBase[gNum].join('<br>')}</div>`;
-            div.ondragstart = (e) => e.dataTransfer.setData("text/plain", JSON.stringify(isG5 ? ["",""] : gBase[gNum]));
-            container.appendChild(div);
+        const cont = document.getElementById('sidebar-groups'); cont.innerHTML = "";
+        Object.keys(gBase).sort().forEach(g => {
+            const isG5 = g==="5"; const div = document.createElement('div');
+            div.className = `draggable-group ${isG5?'custom-group':''}`; div.draggable = true;
+            div.innerHTML = `<span class="group-tag">GRUPO ${g} ${isG5?'(VACANTE)':''}</span><div class="group-names">${isG5?'Manual':gBase[g].join('<br>')}</div>`;
+            div.ondragstart = (e) => e.dataTransfer.setData("text/plain", JSON.stringify(isG5?["",""]:gBase[g]));
+            cont.appendChild(div);
         });
         document.getElementById('aus-tecnico').innerHTML = tecnicosIndiv.map(t => `<option value="${t}">${t}</option>`).join('');
     }
@@ -166,82 +136,68 @@
     function render() {
         const grid = document.getElementById('grid'); grid.innerHTML = "";
         const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
-        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(currentMonth).toUpperCase();
+        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(currentMonth).toUpperCase();
+        const total = new Date(y, m+1, 0).getDate();
+        const offset = (new Date(y, m, 1).getDay() === 0) ? 6 : new Date(y, m, 1).getDay() - 1;
 
-        const totalDays = new Date(y, m + 1, 0).getDate();
-        const startOffset = (new Date(y, m, 1).getDay() === 0) ? 6 : new Date(y, m, 1).getDay() - 1;
+        for(let i=0; i<offset; i++) grid.innerHTML += `<div></div>`;
 
-        for(let i=0; i<startOffset; i++) grid.innerHTML += `<div></div>`;
-
-        for(let d=1; d<=totalDays; d++) {
-            const id = `${y}-${m+1}-${d}`;
-            const dateObj = new Date(y, m, d);
-            const isLocked = db.locks[id] || false;
-            let grupos = db.manual[id] || getAutoTurno(dateObj) || [];
-
+        for(let d=1; d<=total; d++) {
+            const id = `${y}-${m+1}-${d}`, date = new Date(y,m,d), isLocked = db.locks[id] || false;
+            let grupos = db.manual[id] || getAutoTurno(date) || [];
             const cell = document.createElement('div');
-            cell.className = `day ${dateObj.getDay()===0||dateObj.getDay()===6?'weekend':''} ${isLocked?'is-locked':''}`;
-            
+            cell.className = `day ${date.getDay()===0||date.getDay()===6?'weekend':''} ${isLocked?'is-locked':''}`;
             cell.ondragover = (e) => { e.preventDefault(); cell.classList.add('drag-over'); };
             cell.ondragleave = () => cell.classList.remove('drag-over');
             cell.ondrop = (e) => {
                 e.preventDefault(); cell.classList.remove('drag-over');
-                if (!db.manual[id]) db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(dateObj) || []));
+                if(!db.manual[id]) db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date) || []));
                 db.manual[id].push(JSON.parse(e.dataTransfer.getData("text/plain")));
-                db.locks[id] = true; render();
+                db.locks[id]=true; render();
             };
-
-            let htmlGrupos = grupos.map((integrantes, idx) => {
-                const names = integrantes.map(t => t && estaAusente(t, id) ? `<span style="color:red">FALTA</span>` : (t || '--'));
+            let html = grupos.map((inst, idx) => {
+                const names = inst.map(t => t && estaAusente(t, id) ? `<span style="color:red">FALTA</span>` : (t || '--'));
                 return `<div class="turno-card ${idx===0?'principal':''}">
-                            <i class="fas fa-edit edit-group-btn" onclick="openGroupModal('${id}', ${idx}, '${idx===0?'PRINCIPAL':'APOYO'}', ${d})"></i>
-                            <span style="font-size:0.5rem; font-weight:bold; opacity:0.6">${idx===0?'PRINCIPAL':'APOYO'}</span>
-                            <div class="names">${names[0]}</div><div class="names">${names[1]}</div>
-                        </div>`;
+                    <i class="fas fa-edit edit-group-btn" onclick="openGroupModal('${id}',${idx},'${idx===0?'PRINCIPAL':'APOYO'}',${d})"></i>
+                    <span style="font-size:0.5rem; font-weight:bold; opacity:0.6">${idx===0?'PRINCIPAL':'APOYO'}</span>
+                    <div class="names">${names[0]}</div><div class="names">${names[1]}</div>
+                </div>`;
             }).join('');
-
-            cell.innerHTML = `<div class="day-header"><span>${d}</span><i class="fas ${isLocked?'fa-lock':'fa-lock-open'} cell-lock" onclick="toggleLock('${id}')"></i></div>
-                              <div class="group-container">${htmlGrupos}</div>`;
+            cell.innerHTML = `<div class="day-header"><span>${d}</span><i class="fas ${isLocked?'fa-lock':'fa-lock-open'} cell-lock" onclick="toggleLock('${id}')"></i></div><div class="group-container">${html}</div>`;
             grid.appendChild(cell);
         }
         renderAusenciasList();
     }
 
     function getAutoTurno(date) {
-        const ref = new Date(2026, 2, 7); 
-        const diff = Math.floor((date - ref) / 86400000);
-        const sem = Math.floor(diff / 7);
-        if ((date.getDay() !== 6 && date.getDay() !== 0) || sem < 0) return null;
-        const c = sem % 4;
-        const map = {0:["1","2"], 1:["3","4"], 2:["2","1"], 3:["4","3"]};
+        const ref = new Date(2026, 2, 7); const diff = Math.floor((date - ref) / 86400000);
+        const sem = Math.floor(diff / 7); if ((date.getDay()!==6 && date.getDay()!==0) || sem < 0) return null;
+        const c = sem % 4; const map = {0:["1","2"], 1:["3","4"], 2:["2","1"], 3:["4","3"]};
         return [ gBase[map[c][0]] || ["",""], gBase[map[c][1]] || ["",""] ];
     }
 
     async function saveAll() {
         localStorage.setItem(DB_KEY, JSON.stringify(db));
         const btn = document.querySelector('button[onclick="saveAll()"]');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ENVIANDO...';
-        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ACTUALIZANDO...';
         const y = currentMonth.getFullYear(), m = currentMonth.getMonth();
         const payload = { mesReferencia: `${new Intl.DateTimeFormat('es-ES',{month:'long'}).format(currentMonth).toUpperCase()} ${y}`, turnos: [] };
-        const diasNombres = ["DOMINGO","LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO"];
+        const dias = ["DOMINGO","LUNES","MARTES","MIÉRCOLES","JUEVES","VIERNES","SÁBADO"];
 
         for (let d=1; d<=new Date(y,m+1,0).getDate(); d++) {
-            const id = `${y}-${m+1}-${d}`;
-            const date = new Date(y,m,d);
+            const id = `${y}-${m+1}-${d}`, date = new Date(y,m,d);
             (db.manual[id] || getAutoTurno(date) || []).forEach((inst, idx) => {
                 if(inst[0] || inst[1]) payload.turnos.push({
-                    id:`${id}_${idx}`, fecha:`${d}/${m+1}/${y}`, diaSemana:diasNombres[date.getDay()],
-                    mes:payload.mesReferencia, tipo:idx===0?"PRINCIPAL":"APOYO", t1:inst[0], t2:inst[1]
+                    id:`${id}_${idx}`, fecha:`${d}/${m+1}/${y}`, diaSemana:dias[date.getDay()],
+                    mes:payload.mesReferencia, tipo:idx===0?"PRINCIPAL":"APOYO", t1:inst[0]||"", t2:inst[1]||""
                 });
             });
         }
-
         try {
             await fetch(SHEETS_API_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
-            alert("✅ Sincronizado con Google Sheets.");
+            alert("✅ Sincronización inteligente completada.");
         } catch (e) { alert("❌ Error de red."); }
-        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> GUARDAR Y SINCRONIZAR';
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> GUARDAR Y ACTUALIZAR';
     }
 
     function openGroupModal(id, idx, tipo, dia) {
@@ -250,28 +206,25 @@
         document.getElementById('mGroupName').innerText=`${tipo} - Día ${dia}`;
         const curr = (db.manual[id] || getAutoTurno(new Date(id.replace(/-/g,'/'))))[idx] || ["",""];
         const gen = (sel) => `<option value="">-- VACANTE --</option>` + tecnicosIndiv.map(t => `<option value="${t}" ${t===sel?'selected':''}>${t}</option>`).join('');
-        document.getElementById('select-t1').innerHTML = gen(curr[0]);
-        document.getElementById('select-t2').innerHTML = gen(curr[1]);
+        document.getElementById('select-t1').innerHTML = gen(curr[0]); document.getElementById('select-t2').innerHTML = gen(curr[1]);
     }
 
     function saveGroupChanges() {
         const id = document.getElementById('mId').value, idx = document.getElementById('mGroupIdx').value;
         if(!db.manual[id]) db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(new Date(id.replace(/-/g,'/'))) || []));
         db.manual[id][idx] = [document.getElementById('select-t1').value, document.getElementById('select-t2').value];
-        db.locks[id] = true; render(); closeModal();
+        db.locks[id]=true; render(); closeModal();
     }
 
     function deleteGroup() {
         const id = document.getElementById('mId').value, idx = document.getElementById('mGroupIdx').value;
-        db.manual[id].splice(idx, 1); db.locks[id] = true; render(); closeModal();
+        db.manual[id].splice(idx, 1); db.locks[id]=true; render(); closeModal();
     }
 
     function agregarAusencia() {
         const t = document.getElementById('aus-tecnico').value, fV = document.getElementById('aus-fecha').value;
         if(!fV) return; const f = fV.split('-'); const id = `${f[0]}-${parseInt(f[1])}-${parseInt(f[2])}`;
-        if(!db.ausencias[id]) db.ausencias[id] = [];
-        if(!db.ausencias[id].includes(t)) db.ausencias[id].push(t);
-        render();
+        if(!db.ausencias[id]) db.ausencias[id]=[]; if(!db.ausencias[id].includes(t)) db.ausencias[id].push(t); render();
     }
 
     function renderAusenciasList() {
