@@ -3,200 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Supervisión v6 - Editor de Imprevistos</title>
+    <title>Sistema de Supervisión v7 - Control Total</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; --g12: #dbeafe; --g34: #fef3c7; --danger: #ef4444; }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; color: #1e293b; }
-        
-        /* Lateral */
-        .sidebar { width: 300px; background: var(--primary); color: white; padding: 20px; display: flex; flex-direction: column; box-shadow: 4px 0 10px rgba(0,0,0,0.3); }
-        .group-card { background: #1e293b; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--accent); font-size: 0.8rem; }
-        .group-card strong { color: #60a5fa; display: block; margin-bottom: 5px; }
+        :root { --sidebar: #0f172a; --accent: #2563eb; --bg: #f1f5f9; --danger: #ef4444; --success: #10b981; }
+        body { font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
 
-        /* Calendario */
-        .main { flex-grow: 1; padding: 20px; overflow-y: auto; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-        .day { background: white; min-height: 160px; border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; position: relative; cursor: pointer; transition: 0.2s; }
-        .day:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .day-header { text-align: center; font-weight: bold; padding: 10px; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; }
+        /* SIDEBAR */
+        .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar h2 { font-size: 1.1rem; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
+        .group-item { background: #1e293b; padding: 12px; border-radius: 8px; margin-bottom: 10px; cursor: grab; border: 1px solid transparent; }
+        .group-item:hover { border-color: var(--accent); }
+        .group-item strong { color: var(--accent); display: block; }
         
-        /* Turnos */
-        .box-turno { margin-top: 5px; padding: 8px; border-radius: 6px; font-size: 0.75rem; border: 1px solid transparent; }
-        .box-g12 { background: var(--g12); color: #1e40af; border-color: #bfdbfe; }
-        .box-g34 { background: var(--g34); color: #92400e; border-color: #fde68a; }
-        .badge-1 { background: var(--accent); color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold; font-size: 0.6rem; }
-        .is-modified { border: 2px dashed var(--danger); }
+        .absent-section { margin-top: 20px; background: #2d1a1a; padding: 10px; border-radius: 8px; border: 1px solid #451a1a; }
+        .absent-section input { width: 100%; background: #1a1a1a; border: 1px solid #451a1a; color: white; padding: 5px; border-radius: 4px; font-size: 0.8rem; margin-top: 5px; }
 
-        /* Modal / Ventana de edición */
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .modal-content h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 5px; }
-        .form-group input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
-        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-ok { background: var(--accent); color: white; }
-        .btn-cancel { background: #e2e8f0; }
+        /* CALENDARIO */
+        .main { flex-grow: 1; display: flex; flex-direction: column; }
+        .nav-bar { background: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; }
+        .calendar-container { flex-grow: 1; padding: 20px; overflow-y: auto; }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+        
+        .day { background: white; min-height: 160px; border-radius: 12px; border: 1px solid #e2e8f0; padding: 10px; position: relative; }
+        .day.weekend { background: #f8fafc; }
+        .day-num { font-weight: bold; color: #94a3b8; margin-bottom: 10px; display: block; }
+        
+        /* ETIQUETAS DE TURNO */
+        .role-label { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; margin-bottom: 2px; display: block; }
+        .label-principal { color: var(--accent); }
+        .label-apoyo { color: #64748b; }
+        
+        .turno-card { background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px; margin-bottom: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); position: relative; }
+        .turno-card.principal { border-left: 4px solid var(--accent); background: #eff6ff; }
+        .turno-card.apoyo { border-left: 4px solid #94a3b8; }
+        .names { font-size: 0.75rem; font-weight: 600; display: block; }
+        
+        .remove-btn { position: absolute; right: 5px; top: 5px; color: #cbd5e1; cursor: pointer; font-size: 0.7rem; }
+        .remove-btn:hover { color: var(--danger); }
+
+        .alert-ausencia { background: var(--danger); color: white; font-size: 0.65rem; padding: 4px; border-radius: 4px; margin-top: 5px; font-weight: bold; }
+
+        .btn { padding: 8px 15px; border-radius: 6px; cursor: pointer; border: none; font-weight: bold; }
+        .btn-blue { background: var(--accent); color: white; }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
-    <h2><i class="fas fa-users-cog"></i> BASE</h2>
-    <div id="base-info">
-        <div class="group-card"><strong>GRUPO 1:</strong> JUAN MEJIA / VALENTIN BOLAÑOS</div>
-        <div class="group-card"><strong>GRUPO 2:</strong> DOUGLAS VENTURA / JOSE PALMA</div>
-        <div class="group-card"><strong>GRUPO 3:</strong> DANIEL MELENDEZ / MIGUEL OCHOA</div>
-        <div class="group-card"><strong>GRUPO 4:</strong> EDGARDO SORIANO / LUIS PALACIOS</div>
+    <h2><i class="fas fa-grip-vertical"></i> GRUPOS</h2>
+    <div id="grupos-drag">
+        <div class="group-item" draggable="true" ondragstart="drag(event, 'G1', 'JUAN MEJIA / VALENTIN BOLAÑOS')">
+            <strong>GRUPO 1</strong> <span>JUAN / VALENTIN</span>
+        </div>
+        <div class="group-item" draggable="true" ondragstart="drag(event, 'G2', 'DOUGLAS VENTURA / JOSE PALMA')">
+            <strong>GRUPO 2</strong> <span>DOUGLAS / JOSE</span>
+        </div>
+        <div class="group-item" draggable="true" ondragstart="drag(event, 'G3', 'DANIEL MELENDEZ / MIGUEL OCHOA')">
+            <strong>GRUPO 3</strong> <span>DANIEL / MIGUEL</span>
+        </div>
+        <div class="group-item" draggable="true" ondragstart="drag(event, 'G4', 'EDGARDO SORIANO / LUIS PALACIOS')">
+            <strong>GRUPO 4</strong> <span>EDGARDO / LUIS</span>
+        </div>
     </div>
-    <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 20px;">
-        <i class="fas fa-info-circle"></i> Haz clic en un día del calendario para modificar técnicos específicos o cubrir bajas.
+
+    <div class="absent-section">
+        <h3><i class="fas fa-user-slash"></i> AUSENCIAS</h3>
+        <label style="font-size: 0.7rem;">Día (Ej: 17):</label>
+        <input type="number" id="ausenteDia" placeholder="17">
+        <label style="font-size: 0.7rem;">Nombre:</label>
+        <input type="text" id="ausenteNombre" placeholder="JUAN">
+        <button class="btn btn-blue" style="width:100%; margin-top:10px; font-size:0.7rem;" onclick="addAusencia()">Registrar Ausencia</button>
+        <div id="listaAusencias" style="font-size: 0.7rem; margin-top:10px; color: #fca5a5;"></div>
     </div>
+
+    <button class="btn btn-blue" style="margin-top:auto" onclick="guardarTodo()">💾 GUARDAR CAMBIOS</button>
 </aside>
 
 <main class="main">
-    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-        <h1 style="margin:0">Control de Imprevistos</h1>
-        <h3 id="mesLabel"></h3>
+    <div class="nav-bar">
+        <div>
+            <button class="btn" onclick="cambiarMes(-1)"><i class="fas fa-chevron-left"></i></button>
+            <span id="mesTitulo" style="font-weight:bold; font-size:1.2rem; margin: 0 15px;"></span>
+            <button class="btn" onclick="cambiarMes(1)"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <button class="btn" onclick="limpiarMes()" style="color:var(--danger)">Limpiar Mes</button>
     </div>
-    <div class="grid" id="calendar">
-        <div class="day-header">Lun</div><div class="day-header">Mar</div><div class="day-header">Mie</div>
-        <div class="day-header">Jue</div><div class="day-header">Vie</div><div class="day-header">Sab</div>
-        <div class="day-header">Dom</div>
+
+    <div class="calendar-container">
+        <div class="grid" id="grid">
+            </div>
     </div>
 </main>
 
-<div id="modal">
-    <div class="modal-content">
-        <h3 id="modalFecha">Editar Día</h3>
-        <input type="hidden" id="editId">
-        
-        <div class="form-group">
-            <label>1° OPCIÓN (Técnicos):</label>
-            <input type="text" id="editP1" placeholder="Ej: JUAN MEJIA (Solo)">
-        </div>
-        
-        <div class="form-group">
-            <label>APOYO (Técnicos):</label>
-            <input type="text" id="editP2" placeholder="Ej: LUIS PALACIOS (Cubre baja)">
-        </div>
-
-        <div class="modal-btns">
-            <button class="btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
-            <button class="btn btn-ok" onclick="guardarCambio()">Aplicar Cambio</button>
-        </div>
-        <p style="font-size: 0.6rem; color: gray; margin-top: 10px;">* Escribir aquí sobreescribirá la programación automática de este día.</p>
-    </div>
-</div>
-
 <script>
-    // Memoria del sistema
-    let dbManual = JSON.parse(localStorage.getItem('turnos_imprevistos_v6')) || {};
-    const hoy = new Date();
-    const fechaBase = new Date(2026, 2, 7); // Sab 7 Marzo
-
-    const gruposBase = {
-        1: "JUAN MEJIA / VALENTIN BOLAÑOS",
-        2: "DOUGLAS VENTURA / JOSE PALMA",
-        3: "DANIEL MELENDEZ / MIGUEL OCHOA",
-        4: "EDGARDO SORIANO / LUIS PALACIOS"
-    };
+    let fechaVisual = new Date(); // Para navegar entre meses
+    let db = JSON.parse(localStorage.getItem('supervision_v7')) || { turnos: {}, ausencias: [] };
 
     function render() {
-        const grid = document.getElementById('calendar');
-        const headers = Array.from(grid.querySelectorAll('.day-header'));
+        const grid = document.getElementById('grid');
         grid.innerHTML = "";
-        headers.forEach(h => grid.appendChild(h));
+        const diasSemana = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        diasSemana.forEach(d => grid.innerHTML += `<div style="text-align:center; font-weight:bold; color:#64748b; padding-bottom:10px;">${d}</div>`);
 
-        const mes = hoy.getMonth();
-        const año = hoy.getFullYear();
-        document.getElementById('mesLabel').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(hoy);
+        const año = fechaVisual.getFullYear();
+        const mes = fechaVisual.getMonth();
+        document.getElementById('mesTitulo').innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaVisual);
 
-        const diasMes = new Date(año, mes+1, 0).getDate();
+        const diasMes = new Date(año, mes + 1, 0).getDate();
         const primerDia = new Date(año, mes, 1).getDay();
         const offset = (primerDia === 0) ? 6 : primerDia - 1;
 
-        for(let i=0; i<offset; i++) grid.innerHTML += `<div class="day" style="opacity:0.2; cursor:default"></div>`;
+        for(let i=0; i<offset; i++) grid.innerHTML += `<div class="day" style="opacity:0.2; border:none;"></div>`;
 
         for(let d=1; d<=diasMes; d++) {
-            const f = new Date(año, mes, d);
             const id = `${año}-${mes+1}-${d}`;
-            const diaSemana = f.getDay();
-            let contenido = "";
+            const diaSemana = new Date(año, mes, d).getDay();
+            const esFinde = (diaSemana === 6 || diaSemana === 0);
+            
+            // Buscar ausencias
+            const ausente = db.ausencias.find(a => a.dia == d && a.mes == mes+1 && a.año == año);
 
-            if(diaSemana === 6 || diaSemana === 0) {
-                const diffDays = Math.floor((f - fechaBase) / (1000*60*60*24));
-                const numSemana = Math.floor(diffDays / 7);
-                
-                let p1, p2, estilo, nombreP1, nombreP2;
-                
-                // Cálculo automático
-                if(Math.abs(numSemana) % 2 === 0) {
-                    estilo = "box-g12";
-                    p1 = (diaSemana === 6) ? 1 : 2;
-                    p2 = (diaSemana === 6) ? 2 : 1;
-                } else {
-                    estilo = "box-g34";
-                    p1 = (diaSemana === 6) ? 3 : 4;
-                    p2 = (diaSemana === 6) ? 4 : 3;
-                }
-
-                // ¿Hay cambios manuales para este día?
-                const manual = dbManual[id];
-                nombreP1 = manual ? manual.p1 : gruposBase[p1];
-                nombreP2 = manual ? manual.p2 : gruposBase[p2];
-
-                contenido = `
-                    <div class="box-turno ${estilo} ${manual ? 'is-modified' : ''}">
-                        <span class="badge-1">1° OPCIÓN</span><br>
-                        <strong>${nombreP1}</strong>
-                        <div style="margin-top:10px"></div>
-                        <span style="font-size:0.6rem; font-weight:bold; color:#64748b">APOYO</span><br>
-                        <strong>${nombreP2}</strong>
-                        ${manual ? '<div style="color:red; font-size:0.5rem; margin-top:5px">⚠️ MODIFICADO</div>' : ''}
-                    </div>`;
+            let turnosHtml = "";
+            if(db.turnos[id]) {
+                db.turnos[id].forEach((t, idx) => {
+                    const tipo = (idx === 0) ? 'principal' : 'apoyo';
+                    turnosHtml += `
+                        <div class="turno-card ${tipo}">
+                            <i class="fas fa-times remove-btn" onclick="borrarTurno('${id}', ${idx})"></i>
+                            <span class="role-label label-${tipo}">${tipo === 'principal' ? 'PRINCIPAL' : 'APOYO'}</span>
+                            <span class="names">${t.nombres}</span>
+                        </div>`;
+                });
             }
 
-            const cell = document.createElement('div');
-            cell.className = 'day';
-            cell.innerHTML = `<strong style="color:#94a3b8">${d}</strong>${contenido}`;
-            cell.onclick = () => (diaSemana===6||diaSemana===0) ? abrirModal(id, contenido) : null;
-            grid.appendChild(cell);
+            grid.innerHTML += `
+                <div class="day ${esFinde ? 'weekend' : ''}" ondrop="drop(event, '${id}')" ondragover="allow(event)">
+                    <span class="day-num">${d}</span>
+                    <div id="content-${id}">${turnosHtml}</div>
+                    ${ausente ? `<div class="alert-ausencia"><i class="fas fa-exclamation-triangle"></i> ${ausente.nombre} AUSENTE</div>` : ''}
+                </div>`;
         }
+        renderAusenciasList();
     }
 
-    function abrirModal(id, contenido) {
-        document.getElementById('modal').style.display = 'flex';
-        document.getElementById('editId').value = id;
-        document.getElementById('modalFecha').innerText = "Editar Turno: " + id;
-        
-        // Si ya hay algo manual, lo cargamos en los inputs
-        if(dbManual[id]) {
-            document.getElementById('editP1').value = dbManual[id].p1;
-            document.getElementById('editP2').value = dbManual[id].p2;
-        } else {
-            document.getElementById('editP1').value = "";
-            document.getElementById('editP2').value = "";
-        }
+    // Drag & Drop
+    function drag(ev, grupo, nombres) {
+        ev.dataTransfer.setData("grupo", grupo);
+        ev.dataTransfer.setData("nombres", nombres);
     }
+    function allow(ev) { ev.preventDefault(); }
 
-    function guardarCambio() {
-        const id = document.getElementById('editId').value;
-        const p1 = document.getElementById('editP1').value;
-        const p2 = document.getElementById('editP2').value;
+    function drop(ev, id) {
+        ev.preventDefault();
+        const grupo = ev.dataTransfer.getData("grupo");
+        const nombres = ev.dataTransfer.getData("nombres");
 
-        if(p1 || p2) {
-            dbManual[id] = { p1, p2 };
-        }
-        localStorage.setItem('turnos_imprevistos_v6', JSON.stringify(dbManual));
-        cerrarModal();
+        if(!db.turnos[id]) db.turnos[id] = [];
+        db.turnos[id].push({ grupo, nombres });
         render();
     }
 
-    function cerrarModal() {
-        document.getElementById('modal').style.display = 'none';
+    function borrarTurno(id, idx) {
+        db.turnos[id].splice(idx, 1);
+        render();
+    }
+
+    function addAusencia() {
+        const d = document.getElementById('ausenteDia').value;
+        const n = document.getElementById('ausenteNombre').value.toUpperCase();
+        if(!d || !n) return;
+        
+        db.ausencias.push({ dia: d, mes: fechaVisual.getMonth()+1, año: fechaVisual.getFullYear(), nombre: n });
+        render();
+    }
+
+    function renderAusenciasList() {
+        const div = document.getElementById('listaAusencias');
+        div.innerHTML = db.ausencias.map((a, i) => `<div>• ${a.dia}/${a.mes}: ${a.nombre} <i class="fas fa-trash" style="cursor:pointer" onclick="db.ausencias.splice(${i},1);render()"></i></div>`).join('');
+    }
+
+    function cambiarMes(delta) {
+        fechaVisual.setMonth(fechaVisual.getMonth() + delta);
+        render();
+    }
+
+    function guardarTodo() {
+        localStorage.setItem('supervision_v7', JSON.stringify(db));
+        alert("✅ Datos guardados.");
+    }
+
+    function limpiarMes() {
+        if(confirm("¿Borrar todos los turnos de este mes?")) {
+            const prefijo = `${fechaVisual.getFullYear()}-${fechaVisual.getMonth()+1}-`;
+            Object.keys(db.turnos).forEach(key => {
+                if(key.startsWith(prefijo)) delete db.turnos[key];
+            });
+            render();
+        }
     }
 
     window.onload = render;
