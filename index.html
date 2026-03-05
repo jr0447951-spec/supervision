@@ -3,91 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE TÉCNICO - CRECIMIENTO VERTICAL</title>
+    <title>SISTEMA DE REPORTE TÉCNICO PROFESIONAL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #001a33; color: white; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        :root { --primary: #004488; --accent: #00d4ff; --bg: #001a33; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         
-        /* Panel de configuración */
-        .config-card { background: #003366; width: 100%; max-width: 900px; padding: 20px; border-radius: 12px; border: 1px solid #0059b3; margin-bottom: 20px; box-sizing: border-box; }
-        .tech-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; background: #001a33; padding: 10px; border-radius: 8px; max-height: 150px; overflow-y: auto; margin: 10px 0; border: 1px solid #0059b3; }
-        .tech-item { font-size: 0.75rem; display: flex; align-items: center; gap: 5px; color: #b3e6ff; cursor: pointer; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 5px 0; border-radius: 6px; border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; }
-
-        /* AREA DE CAPTURA - ANCHO FIJO */
-        #capture-area {
-            background: #ffffff; color: #002244; padding: 35px; 
-            width: 1050px; /* Ancho total de la imagen */
-            box-sizing: border-box;
-        }
-
-        .report-header { border-bottom: 4px solid #004488; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        /* PANEL DE CONTROL */
+        .config-card { background: #003366; width: 100%; max-width: 1000px; padding: 25px; border-radius: 15px; border: 1px solid #0059b3; box-sizing: border-box; margin-bottom: 30px; }
+        .query-panel { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--accent); }
         
-        /* TABLA CON CRECIMIENTO VERTICAL FORZADO */
-        .excel-table { 
-            width: 100%; border-collapse: collapse; 
-            table-layout: fixed; /* Esto evita que el texto empuje las columnas hacia los lados */
-            border: 1px solid #004488;
-        }
-        .excel-table th { background: #004488; color: white; padding: 10px; font-size: 0.7rem; text-transform: uppercase; }
-        .excel-table td { 
-            border: 1px solid #b3d9ff; padding: 10px; font-size: 0.75rem; 
-            color: #002244; vertical-align: top;
-            /* Lógica de salto de línea */
-            word-wrap: break-word; 
-            overflow-wrap: break-word; 
-            white-space: normal; 
-        }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; font-size: 0.9rem; }
+        
+        .tech-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; background: #001a33; padding: 15px; border-radius: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #0059b3; margin: 10px 0; }
+        .tech-item { font-size: 0.8rem; display: flex; align-items: center; gap: 8px; color: #b3e6ff; cursor: pointer; }
 
-        /* Definición de anchos de columna para que no se muevan */
+        .search-container { position: relative; }
+        #suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: #003366; border: 2px solid var(--accent); z-index: 1000; display: none; border-radius: 0 0 10px 10px; max-height: 250px; overflow-y: auto; }
+        .sug-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #004488; }
+        .sug-item:hover { background: var(--accent); color: #001a33; font-weight: bold; }
+
+        /* AREA DE CAPTURA - DISEÑO EXCEL */
+        #capture-area { background: #ffffff; color: #002244; padding: 40px; width: 1100px; box-sizing: border-box; display: inline-block; }
+        .report-header { border-bottom: 4px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .report-header h1 { margin: 0; font-size: 1.6rem; color: var(--primary); text-transform: uppercase; }
+
+        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid var(--primary); }
+        .excel-table th { background: var(--primary); color: white; padding: 12px; font-size: 0.75rem; border: 1px solid #003366; }
+        .excel-table td { border: 1px solid #b3d9ff; padding: 0; font-size: 0.8rem; vertical-align: top; height: auto; }
+
+        /* ESTIRAMIENTO DE CUADRÍCULA (DIV EDITABLE) */
+        .cell-content { padding: 10px; width: 100%; box-sizing: border-box; word-wrap: break-word; overflow-wrap: break-word; min-height: 40px; outline: none; display: block; }
+        .cell-content:focus { background: #f0faff; }
+
+        /* ANCHOS DE COLUMNA */
         .col-sitio { width: 220px; }
         .col-torrero { width: 100px; }
         .col-tech { width: 180px; }
         .col-falla { width: 130px; }
-        .col-estado { width: 150px; }
-        .col-comentario { width: auto; } /* El comentario ocupa el resto */
+        .col-estado { width: 160px; }
+        .col-comentario { width: auto; }
 
-        /* Estilo para los editables */
-        .editable-cell { outline: none; min-height: 1.2em; }
-        .table-select { border: none; background: transparent; font-family: inherit; font-size: 0.75rem; font-weight: 700; color: #004488; width: 100%; cursor: pointer; }
-
-        .btn-remove { color: red; cursor: pointer; border: none; background: none; font-weight: bold; font-size: 1.1rem; }
-        .actions { display: flex; gap: 10px; margin-top: 20px; width: 100%; max-width: 900px; }
-        .btn-action { flex: 1; padding: 15px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; }
+        .table-select { border: none; background: transparent; font-family: inherit; font-size: 0.8rem; font-weight: 700; color: var(--primary); width: 100%; padding: 10px; cursor: pointer; outline: none; }
         
-        /* Buscador */
-        .search-container { position: relative; }
-        #suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: #003366; border: 1px solid #00d4ff; z-index: 100; display: none; border-radius: 0 0 8px 8px; }
-        .sug-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #004488; font-size: 0.8rem; }
-        .sug-item:hover { background: #00d4ff; color: #001a33; }
+        .btn-action { padding: 15px 25px; border-radius: 50px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+        .btn-add { background: linear-gradient(90deg, var(--accent), #0077ff); color: white; width: 100%; margin-top: 15px; font-size: 1rem; }
+        .no-capture { text-align: center; vertical-align: middle !important; }
+        .btn-remove { color: #ff3333; font-size: 1.5rem; background: none; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="config-card">
-        <h3>1. Encabezado</h3>
-        <div style="display:flex; gap:10px;">
-            <select id="sel-tipo" onchange="updateHeader()"><option>VISITAS REALIZADAS</option><option>PROGRAMACIÓN</option></select>
+        <div class="query-panel">
+            <h3 style="margin:0 0 10px 0; color:var(--accent);">🔍 CONSULTAR HISTORIAL</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px;">
+                <input type="date" id="busq-fecha">
+                <select id="busq-tipo">
+                    <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
+                    <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
+                </select>
+                <button onclick="consultarNube()" style="background:var(--accent); color:black; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer;">BUSCAR</button>
+            </div>
+        </div>
+
+        <h3>1. Configuración General</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <select id="sel-tipo" onchange="updateHeader()">
+                <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
+                <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
+            </select>
             <input type="date" id="sel-fecha" onchange="updateHeader()">
         </div>
-        
-        <h3>2. Agregar Sitio</h3>
+
+        <h3>2. Detalles del Sitio</h3>
         <div class="search-container">
-            <input type="text" id="site-search" placeholder="Buscar sitio por ID o Nombre...">
+            <input type="text" id="site-search" placeholder="Escribe SITEID o Nombre del Sitio..." autocomplete="off">
             <div id="suggestions"></div>
         </div>
 
-        <div id="form-site" style="display:none; margin-top:10px; border-top: 1px solid #0059b3; padding-top:10px;">
-            <p style="font-size: 0.8rem; color: #00d4ff;">Torrero: <span id="label-torrero" style="color:white; font-weight:bold;"></span></p>
+        <div id="form-site" style="display:none; margin-top:20px;">
+            <p>Torrero Actual: <strong id="label-torrero" style="color:var(--accent);"></strong></p>
+            <label>Seleccionar Técnicos:</label>
             <div id="tech-list" class="tech-selector"></div>
-            <div style="display:flex; gap:10px;">
-                <select id="sel-falla"><option>FDS</option><option>LTE FDS</option><option>PARCIAL</option><option>VISITA TÉCNICA</option></select>
-                <select id="sel-estado-fila"><option>OPERATIVO</option><option>ASIGNADO</option><option>EN RUTA</option><option>EN SITIO</option><option>PDR</option></select>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <select id="sel-falla">
+                    <option>FDS</option><option>LTE FDS</option><option>PARCIAL</option>
+                    <option>FALLA DE AC</option><option>VISITA TÉCNICA</option><option>INTERMITENCIA</option>
+                </select>
+                <select id="sel-estado-fila">
+                    <option value="OPERATIVO">OPERATIVO</option><option value="ASIGNADO">ASIGNADO</option>
+                    <option value="EN RUTA">EN RUTA</option><option value="EN SITIO">EN SITIO</option>
+                    <option value="PDR">PDR</option><option value="PENDIENTE">PENDIENTE</option>
+                </select>
             </div>
-            <textarea id="txt-comentario" placeholder="Escriba aquí los comentarios técnicos..."></textarea>
-            <button onclick="addRow()" style="background: #00d4ff; color: #001a33; border: none; padding: 12px; width: 100%; font-weight: bold; cursor: pointer; border-radius: 8px; margin-top: 10px;">AÑADIR A LA TABLA</button>
+            <textarea id="txt-comentario" rows="2" placeholder="Comentarios adicionales..."></textarea>
+            <button class="btn-action btn-add" onclick="addRow()">AÑADIR A LA TABLA</button>
         </div>
     </div>
 
@@ -95,9 +109,9 @@
         <div class="report-header">
             <div>
                 <h1 id="h-titulo">VISITAS REALIZADAS</h1>
-                <small style="color: #0077ff; font-weight: bold; text-transform: uppercase;">Zonas Paracentrales</small>
+                <small style="color: #0077ff; font-weight: bold; text-transform: uppercase;">Zonas Paracentrales - Gestión Técnica</small>
             </div>
-            <div id="h-fecha-display" style="font-weight: bold; font-size: 1.2rem; color: #004488;"></div>
+            <div id="h-fecha-display" style="font-weight: 800; font-size: 1.3rem; color: var(--primary); border-left: 4px solid var(--accent); padding-left: 15px;"></div>
         </div>
 
         <table class="excel-table">
@@ -109,19 +123,21 @@
                     <th class="col-falla">Falla</th>
                     <th class="col-estado">Estado</th>
                     <th class="col-comentario">Comentarios</th>
-                    <th class="no-capture" style="width: 30px;"></th>
+                    <th class="no-capture" style="width: 40px;"></th>
                 </tr>
             </thead>
             <tbody id="table-body"></tbody>
         </table>
     </div>
 
-    <div class="actions">
-        <button class="btn-action" style="background:white; color:#004488; border:1px solid #004488;" onclick="downloadImg()">💾 DESCARGAR PNG</button>
-        <button class="btn-action" style="background:#25d366; color:white;" onclick="sendWhatsapp()">📱 WHATSAPP</button>
+    <div style="display:flex; gap:15px; margin-top:30px; width:100%; max-width:1000px; padding-bottom:50px;">
+        <button class="btn-action" style="background:white; color:var(--primary); border:2px solid var(--primary); flex:1;" onclick="downloadImg()">💾 DESCARGAR PNG</button>
+        <button class="btn-action" style="background:#25d366; color:white; flex:1;" onclick="sendWhatsapp()">📱 WHATSAPP</button>
+        <button class="btn-action" style="background:#f39c12; color:white; flex:1;" onclick="enviarAlHistorial()">☁️ GUARDAR HISTORIAL</button>
     </div>
 
     <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi04YsTUdOZnObRzT7-oETBJUovK1qMW1x5hUftlsOzwV-In-7-kmC-JTd2u2BafEp_g/exec"; 
         const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
         let dbSitios = [], siteSelected = null;
 
@@ -139,10 +155,10 @@
                 }
             });
 
-            // Técnicos estáticos para el ejemplo
-            const techs = ["Técnico A", "Técnico B", "Técnico C", "Técnico D"];
+            // Técnicos (puedes cambiar a CSV si prefieres)
+            const tecnicos = ["Técnico 1", "Técnico 2", "Técnico 3", "Técnico 4"];
             const list = document.getElementById('tech-list');
-            techs.forEach(t => {
+            tecnicos.forEach(t => {
                 const l = document.createElement('label');
                 l.className = 'tech-item';
                 l.innerHTML = `<input type="checkbox" value="${t}"> ${t}`;
@@ -161,8 +177,7 @@
             const sug = document.getElementById('suggestions');
             sug.innerHTML = '';
             if(v.length < 2) { sug.style.display = 'none'; return; }
-
-            const matches = dbSitios.filter(s => s.full.toLowerCase().includes(v)).slice(0,5);
+            const matches = dbSitios.filter(s => s.full.toLowerCase().includes(v)).slice(0,6);
             if(matches.length > 0) {
                 sug.style.display = 'block';
                 matches.forEach(m => {
@@ -190,34 +205,34 @@
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td contenteditable="true" class="editable-cell" style="font-weight:bold; color:#004488;">${siteSelected.full.toUpperCase()}</td>
-                <td style="color:#666;">${siteSelected.torrero}</td>
-                <td contenteditable="true" class="editable-cell">${techs || 'SIN ASIGNAR'}</td>
-                <td>${falla}</td>
+                <td><div contenteditable="true" class="cell-content" style="font-weight:bold; color:var(--primary);">${siteSelected.full.toUpperCase()}</div></td>
+                <td><div class="cell-content" style="color:#666;">${siteSelected.torrero}</div></td>
+                <td><div contenteditable="true" class="cell-content">${techs || 'SIN ASIGNAR'}</div></td>
+                <td><div class="cell-content">${falla}</div></td>
                 <td>
                     <select class="table-select">
-                        <option ${estado === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
-                        <option ${estado === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
-                        <option ${estado === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
-                        <option ${estado === 'EN SITIO' ? 'selected' : ''}>📍 EN SITIO</option>
-                        <option ${estado === 'PDR' ? 'selected' : ''}>⏸️ PDR</option>
+                        <option ${estado==='OPERATIVO'?'selected':''}>✅ OPERATIVO</option>
+                        <option ${estado==='ASIGNADO'?'selected':''}>🔹 ASIGNADO</option>
+                        <option ${estado==='EN RUTA'?'selected':''}>🚗 EN RUTA</option>
+                        <option ${estado==='EN SITIO'?'selected':''}>📍 EN SITIO</option>
+                        <option ${estado==='PDR'?'selected':''}>⏸️ PDR</option>
+                        <option ${estado==='PENDIENTE'?'selected':''}>⏳ PENDIENTE</option>
                     </select>
                 </td>
-                <td contenteditable="true" class="editable-cell">${comment}</td>
+                <td><div contenteditable="true" class="cell-content">${comment}</div></td>
                 <td class="no-capture"><button class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
             `;
             document.getElementById('table-body').appendChild(tr);
-            
-            // Limpieza
             document.getElementById('form-site').style.display = 'none';
             document.getElementById('site-search').value = '';
             document.getElementById('txt-comentario').value = '';
+            document.querySelectorAll('#tech-list input').forEach(i => i.checked = false);
         }
 
         function downloadImg() {
             const nc = document.querySelectorAll('.no-capture');
             nc.forEach(el => el.style.display = 'none');
-            html2canvas(document.getElementById('capture-area'), { scale: 3 }).then(canvas => {
+            html2canvas(document.getElementById('capture-area'), { scale: 3, backgroundColor: "#ffffff" }).then(canvas => {
                 const a = document.createElement('a');
                 a.download = `Reporte_${Date.now()}.png`;
                 a.href = canvas.toDataURL();
@@ -226,9 +241,53 @@
             });
         }
 
-        function sendWhatsapp() {
-            window.open(`https://wa.me/?text=${encodeURIComponent("Adjunto reporte técnico.")}`, '_blank');
+        async function enviarAlHistorial() {
+            const filas = document.querySelectorAll("#table-body tr");
+            if(filas.length === 0) return alert("Tabla vacía");
+            const btn = document.querySelector('button[onclick="enviarAlHistorial()"]');
+            btn.innerText = "⏳ GUARDANDO..."; btn.disabled = true;
+
+            const reporte = {
+                fecha: document.getElementById('sel-fecha').value,
+                tipo: document.getElementById('sel-tipo').value,
+                rows: Array.from(filas).map(tr => ({
+                    sitio: tr.cells[0].innerText,
+                    torrero: tr.cells[1].innerText,
+                    asignado: tr.cells[2].innerText,
+                    falla: tr.cells[3].innerText,
+                    estado: tr.querySelector('select').value,
+                    comentarios: tr.cells[5].innerText
+                }))
+            };
+
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(reporte) });
+                alert("✅ Datos guardados en la nube.");
+            } catch (e) { alert("Error al conectar."); }
+            finally { btn.innerText = "☁️ GUARDAR HISTORIAL"; btn.disabled = false; }
         }
+
+        async function consultarNube() {
+            const f = document.getElementById('busq-fecha').value;
+            const t = document.getElementById('busq-tipo').value;
+            if(!f) return alert("Elige fecha");
+            try {
+                const r = await fetch(`${SCRIPT_URL}?fecha=${f}&tipo=${t}`);
+                const data = await r.json();
+                if(data.length === 0) return alert("No se encontraron registros");
+                document.getElementById('table-body').innerHTML = '';
+                data.forEach(item => {
+                    siteSelected = { full: item.sitio, torrero: item.torrero };
+                    addRow();
+                    const lastRow = document.querySelector("#table-body tr:last-child");
+                    lastRow.cells[2].querySelector('div').innerText = item.asignado;
+                    lastRow.querySelector('select').value = item.estado;
+                    lastRow.cells[5].querySelector('div').innerText = item.comentarios;
+                });
+            } catch (e) { alert("Error en búsqueda"); }
+        }
+
+        function sendWhatsapp() { window.open(`https://wa.me/?text=${encodeURIComponent("Adjunto reporte de gestión técnica.")}`, '_blank'); }
     </script>
 </body>
 </html>
