@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -30,6 +30,16 @@
             width: 100%; padding: 12px; margin: 5px 0 10px 0; border-radius: 8px;
             border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; font-size: 0.9rem;
         }
+
+        /* Estilos específicos para los elementos DENTRO de la tabla */
+        .table-input, .table-select, .table-textarea {
+            width: 100%; border: none; background: transparent; 
+            font-family: inherit; font-size: 0.75rem; color: #003366; 
+            padding: 2px; box-sizing: border-box; outline: none;
+        }
+        .table-input { font-weight: 600; color: #444; }
+        .table-select { font-weight: 700; cursor: pointer; -webkit-appearance: none; }
+        .table-textarea { resize: none; overflow: hidden; line-height: 1.2; }
 
         .tech-selector {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -85,10 +95,9 @@
         }
         
         .excel-table tbody tr:nth-child(even) { background: #f0f7ff; }
-        .status-cell { display: flex; align-items: center; gap: 6px; font-weight: 700; }
         .btn-remove { color: #ff3333; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 1.2rem; }
 
-        .actions { display: flex; gap: 10px; margin-top: 20px; width: 100%; max-width: 800px; }
+        .actions { display: flex; gap: 10px; margin-top: 20px; width: 100%; max-width: 800px; padding-bottom: 50px;}
         .btn-action { 
             flex: 1; padding: 15px; border-radius: 50px; border: none; 
             font-weight: 700; cursor: pointer; display: flex; align-items: center; 
@@ -170,17 +179,16 @@
                     </select>
                 </div>
                 <div>
-                    <label style="font-size: 0.7rem; color: #b3e6ff;">Estado:</label>
+                    <label style="font-size: 0.7rem; color: #b3e6ff;">Estado Inicial:</label>
                     <select id="sel-estado-fila">
                         <option value="OPERATIVO">OPERATIVO</option>
                         <option value="ASIGNADO">ASIGNADO</option>
-                        <option value="ASIGNADO / SIN AFECTACION">ASIGNADO / SIN AFECTACION</option>
                         <option value="EN RUTA">EN RUTA</option>
                         <option value="EN SITIO">EN SITIO</option>
                         <option value="PDR">PDR</option>
                         <option value="AFECTADO">AFECTADO</option>
                         <option value="LPU">LPU</option>
-                        <option value="PENDIENTE">PENDIENTE CELECT</option>
+                        <option value="PENDIENTE">PENDIENTE</option>
                     </select>
                 </div>
             </div>
@@ -202,11 +210,11 @@
         <table class="excel-table">
             <thead>
                 <tr>
-                    <th style="width:22%">Sitio / Nodo</th>
+                    <th style="width:20%">Sitio / Nodo</th>
                     <th style="width:12%">Torrero</th>
                     <th style="width:18%">Asignado</th>
                     <th style="width:14%">Tipo de Falla</th>
-                    <th style="width:14%">Estado</th>
+                    <th style="width:16%">Estado</th>
                     <th style="width:16%">Comentarios</th>
                     <th class="no-capture" style="width:40px"></th>
                 </tr>
@@ -222,9 +230,7 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN: PEGA AQUÍ TU URL DE GOOGLE APPS SCRIPT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi04YsTUdOZnObRzT7-oETBJUovK1qMW1x5hUftlsOzwV-In-7-kmC-JTd2u2BafEp_g/exec"; 
-        
         const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
         const TECNICOS_CSV = 'tecnicos.csv';
         let dbSitios = [];
@@ -312,6 +318,7 @@
             }
         });
 
+        // GENERAR FILA INTERACTIVA
         function addRow() {
             if(!siteSelected) return;
             const selectedTechs = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value).join(' / ');
@@ -320,20 +327,41 @@
             const comment = document.getElementById('txt-comentario').value;
             const body = document.getElementById('table-body');
             
-            const emojis = { "OPERATIVO":"✅", "EN RUTA":"🚗", "EN SITIO":"📍", "PDR":"⏸️", "AFECTADO":"❌", "LPU":"❌" };
-            const emoji = emojis[estadoTexto] || "🔹";
-
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td style="font-weight:700; color: #004488;">${siteSelected.full.toUpperCase()}</td>
                 <td style="color: #0059b3;">${siteSelected.torrero || 'N/A'}</td>
-                <td style="font-weight:600; color: #444;">${selectedTechs || 'SIN ASIGNAR'}</td>
+                
+                <td>
+                    <input type="text" class="table-input" value="${selectedTechs || 'SIN ASIGNAR'}">
+                </td>
+
                 <td style="font-weight:600; color: #0077ff;">${falla}</td>
-                <td><div class="status-cell"><span>${emoji}</span><span>${estadoTexto}</span></div></td>
-                <td style="color: #002244;">${comment}</td>
-                <td class="no-capture" style="text-align:center;"><button class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
+
+                <td>
+                    <select class="table-select">
+                        <option value="OPERATIVO" ${estadoTexto === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
+                        <option value="ASIGNADO" ${estadoTexto === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
+                        <option value="EN RUTA" ${estadoTexto === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
+                        <option value="EN SITIO" ${estadoTexto === 'EN SITIO' ? 'selected' : ''}>📍 EN SITIO</option>
+                        <option value="PDR" ${estadoTexto === 'PDR' ? 'selected' : ''}>⏸️ PDR</option>
+                        <option value="AFECTADO" ${estadoTexto === 'AFECTADO' ? 'selected' : ''}>❌ AFECTADO</option>
+                        <option value="LPU" ${estadoTexto === 'LPU' ? 'selected' : ''}>❌ LPU</option>
+                        <option value="PENDIENTE" ${estadoTexto === 'PENDIENTE' ? 'selected' : ''}>⏳ PENDIENTE</option>
+                    </select>
+                </td>
+
+                <td>
+                    <textarea class="table-textarea" rows="2">${comment}</textarea>
+                </td>
+
+                <td class="no-capture" style="text-align:center;">
+                    <button class="btn-remove" onclick="this.closest('tr').remove()">×</button>
+                </td>
             `;
             body.appendChild(tr);
+            
+            // Limpieza
             document.getElementById('form-site').style.display = 'none';
             document.getElementById('site-search').value = '';
             document.getElementById('txt-comentario').value = '';
@@ -341,13 +369,11 @@
             siteSelected = null;
         }
 
-        // --- FUNCIONES DE NUBE (GUARDAR Y CONSULTAR) ---
-
         async function enviarAlHistorial() {
             const filas = document.querySelectorAll("#table-body tr");
             if (filas.length === 0) return alert("⚠️ La tabla está vacía.");
 
-            const btn = event.currentTarget;
+            const btn = document.querySelector(".btn-cloud");
             btn.innerText = "⏳ GUARDANDO...";
             btn.disabled = true;
 
@@ -362,10 +388,10 @@
                 dataReporte.rows.push({
                     sitio: c[0].innerText,
                     torrero: c[1].innerText,
-                    asignado: c[2].innerText,
+                    asignado: tr.querySelector('.table-input').value,
                     falla: c[3].innerText,
-                    estado: c[4].innerText.replace(/[^\w\s]/gi, '').trim(), // Limpia emoji para el Excel
-                    comentarios: c[5].innerText
+                    estado: tr.querySelector('.table-select').value,
+                    comentarios: tr.querySelector('.table-textarea').value
                 });
             });
 
@@ -376,7 +402,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dataReporte)
                 });
-                alert("✅ Historial actualizado en Google Sheets.");
+                alert("✅ Datos enviados. Verifica tu Google Sheets.");
             } catch (error) {
                 alert("❌ Error al guardar.");
             } finally {
@@ -385,12 +411,35 @@
             }
         }
 
+        function downloadImg() {
+            const nc = document.querySelectorAll('.no-capture');
+            nc.forEach(el => el.style.visibility = 'hidden');
+            
+            html2canvas(document.getElementById('capture-area'), { 
+                scale: 3,
+                backgroundColor: "#ffffff",
+                logging: false
+            }).then(canvas => {
+                const a = document.createElement('a');
+                a.download = `Reporte_${Date.now()}.png`;
+                a.href = canvas.toDataURL("image/png");
+                a.click();
+                nc.forEach(el => el.style.visibility = 'visible');
+            });
+        }
+
+        function sendWhatsapp() {
+            const msg = encodeURIComponent("Adjunto reporte de campo técnico.");
+            window.open(`https://wa.me/?text=${msg}`, '_blank');
+        }
+
+        // Consultar nube también genera filas interactivas
         async function consultarNube() {
             const fecha = document.getElementById('busq-fecha').value;
             const tipo = document.getElementById('busq-tipo').value;
             if (!fecha) return alert("Selecciona una fecha.");
 
-            const btn = event.currentTarget;
+            const btn = document.querySelector('button[onclick="consultarNube()"]');
             btn.innerText = "⏳...";
             btn.disabled = true;
 
@@ -399,60 +448,39 @@
                 const data = await resp.json();
 
                 if (data.length === 0) {
-                    alert("No hay registros para esta selección.");
+                    alert("No hay registros.");
                 } else {
                     document.getElementById('table-body').innerHTML = '';
-                    document.getElementById('sel-fecha').value = fecha;
-                    document.getElementById('sel-tipo').value = tipo;
-                    updateHeader();
-
                     data.forEach(item => {
+                        siteSelected = { full: item.sitio, torrero: item.torrero };
+                        // Reutilizamos la lógica de addRow manualmente para cargar datos
                         const body = document.getElementById('table-body');
                         const tr = document.createElement('tr');
-                        const emojis = { "OPERATIVO":"✅", "EN RUTA":"🚗", "EN SITIO":"📍", "PDR":"⏸️", "AFECTADO":"❌", "LPU":"❌" };
-                        const emoji = emojis[item.estado] || "🔹";
-
                         tr.innerHTML = `
                             <td style="font-weight:700; color: #004488;">${item.sitio}</td>
                             <td style="color: #0059b3;">${item.torrero}</td>
-                            <td style="font-weight:600; color: #444;">${item.asignado}</td>
+                            <td><input type="text" class="table-input" value="${item.asignado}"></td>
                             <td style="font-weight:600; color: #0077ff;">${item.falla}</td>
-                            <td><div class="status-cell"><span>${emoji}</span><span>${item.estado}</span></div></td>
-                            <td style="color: #002244;">${item.comentarios}</td>
+                            <td>
+                                <select class="table-select">
+                                    <option value="OPERATIVO" ${item.estado === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
+                                    <option value="ASIGNADO" ${item.estado === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
+                                    <option value="EN RUTA" ${item.estado === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
+                                    <option value="EN SITIO" ${item.estado === 'EN SITIO' ? 'selected' : ''}>📍 EN SITIO</option>
+                                    <option value="PDR" ${item.estado === 'PDR' ? 'selected' : ''}>⏸️ PDR</option>
+                                    <option value="AFECTADO" ${item.estado === 'AFECTADO' ? 'selected' : ''}>❌ AFECTADO</option>
+                                    <option value="LPU" ${item.estado === 'LPU' ? 'selected' : ''}>❌ LPU</option>
+                                    <option value="PENDIENTE" ${item.estado === 'PENDIENTE' ? 'selected' : ''}>⏳ PENDIENTE</option>
+                                </select>
+                            </td>
+                            <td><textarea class="table-textarea" rows="2">${item.comentarios}</textarea></td>
                             <td class="no-capture" style="text-align:center;"><button class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
                         `;
                         body.appendChild(tr);
                     });
-                    alert("✅ Registros cargados con éxito.");
                 }
-            } catch (error) {
-                alert("Error al consultar.");
-            } finally {
-                btn.innerText = "BUSCAR";
-                btn.disabled = false;
-            }
-        }
-
-        // --- FUNCIONES ORIGINALES ---
-
-        function downloadImg() {
-            const nc = document.querySelectorAll('.no-capture');
-            nc.forEach(el => el.style.display = 'none');
-            html2canvas(document.getElementById('capture-area'), { 
-                scale: 3,
-                backgroundColor: "#ffffff"
-            }).then(canvas => {
-                const a = document.createElement('a');
-                a.download = `Reporte_${Date.now()}.png`;
-                a.href = canvas.toDataURL("image/png");
-                a.click();
-                nc.forEach(el => el.style.display = 'table-cell');
-            });
-        }
-
-        function sendWhatsapp() {
-            const msg = encodeURIComponent("Adjunto reporte de campo técnico.");
-            window.open(`https://wa.me/?text=${msg}`, '_blank');
+            } catch (e) { alert("Error al consultar."); }
+            finally { btn.innerText = "BUSCAR"; btn.disabled = false; siteSelected = null; }
         }
     </script>
 </body>
