@@ -13,107 +13,126 @@
         --accent: #60a5fa;
         --bg: #f1f5f9;
         --border: #e2e8f0; 
-        --radius: 16px; 
+        --radius: 12px; 
         --danger: #ef4444;
         --white: #ffffff;
     }
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
-    body { margin: 0; background: var(--bg); color: #0f172a; line-height: 1.6; }
+    body { margin: 0; background: var(--bg); color: #0f172a; line-height: 1.4; }
 
     /* Header Modernizado */
     header {
-        background: var(--sidebar); color: white; padding: 20px;
+        background: var(--sidebar); color: white; padding: 15px 20px;
         display: flex; justify-content: space-between; align-items: center;
         position: sticky; top: 0; z-index: 100;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    .month-label { font-weight: 800; font-size: 1.3rem; text-transform: capitalize; }
-    .sync-tag { font-size: 0.7rem; font-weight: 600; background: #10b981; color: white; padding: 5px 12px; border-radius: 50px; }
+    .month-label { font-weight: 800; font-size: 1.1rem; text-transform: capitalize; }
+    .sync-tag { font-size: 0.65rem; font-weight: 600; background: #10b981; color: white; padding: 4px 10px; border-radius: 50px; }
 
     /* Contenedor */
-    .container { padding: 15px; max-width: 1400px; margin: 0 auto; }
-    .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
-    .day-name { text-align: center; font-size: 0.75rem; font-weight: 800; color: #64748b; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .container { padding: 10px; max-width: 1400px; margin: 0 auto; }
+    
+    /* Forzado de Cuadrícula (Grid) */
+    .days-grid { 
+        display: grid; 
+        grid-template-columns: repeat(7, 1fr); /* 7 columnas escritorio */
+        gap: 8px; 
+    }
 
-    /* Tarjeta de Día Rediseñada */
+    .day-name { text-align: center; font-size: 0.65rem; font-weight: 800; color: #64748b; padding-bottom: 5px; text-transform: uppercase; }
+
+    /* Tarjeta de Día Compacta */
     .day-card {
         background: var(--white); 
         border: 1px solid var(--border); 
         border-radius: var(--radius);
-        min-height: 160px; 
-        padding: 12px; 
+        min-height: 110px; 
+        padding: 8px; 
         display: flex; 
         flex-direction: column; 
-        gap: 8px;
+        gap: 4px;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        transition: transform 0.2s, box-shadow 0.2s;
     }
-    .day-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-    .day-card.weekend { background: #f8fafc; }
+    .day-card.weekend { background: #f8fafc; border-color: #cbd5e1; }
     .day-card.today { border: 2px solid var(--primary); background: #eff6ff; }
     
     .day-num { 
         font-weight: 800; 
-        font-size: 1.1rem; 
+        font-size: 0.9rem; 
         color: #1e293b; 
         display: flex; 
         justify-content: space-between;
         align-items: center;
     }
-    .today-badge { font-size: 0.6rem; background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; }
+    .today-badge { font-size: 0.5rem; background: var(--primary); color: white; padding: 1px 5px; border-radius: 4px; }
 
-    /* Turnos Estilo "Pill" */
+    /* Turnos Compactos */
     .turno {
-        padding: 10px; 
-        border-radius: 10px; 
-        font-size: 0.75rem;
+        padding: 5px; 
+        border-radius: 6px; 
+        font-size: 0.65rem;
         background: #f8fafc;
         border: 1px solid #e2e8f0;
+        overflow: hidden;
     }
     .turno.principal { 
         background: white; 
         border: 1px solid #dbeafe; 
-        border-left: 4px solid var(--primary); 
+        border-left: 3px solid var(--primary); 
     }
-    .turno-label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: block; }
-    .turno.principal .turno-label { color: var(--primary); }
-    .name { font-weight: 700; color: #334155; font-size: 0.85rem; display: block; }
+    .turno-label { font-size: 0.5rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; display: block; }
+    .name { font-weight: 700; color: #334155; font-size: 0.7rem; display: block; white-space: nowrap; text-overflow: ellipsis; }
 
     /* Bajas */
     .baja-tag {
-        margin-top: auto; padding: 6px; background: #fef2f2; border: 1px solid #fee2e2;
-        border-radius: 8px; color: var(--danger); font-size: 0.65rem; font-weight: 700;
-        display: flex; align-items: center; gap: 4px;
+        margin-top: auto; padding: 2px; background: #fef2f2; border: 1px solid #fee2e2;
+        border-radius: 4px; color: var(--danger); font-size: 0.55rem; font-weight: 700;
+        text-align: center;
     }
 
-    /* Botón HOME */
+    /* Botón HOME Flotante */
     .home-fab {
-        position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px;
+        position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px;
         background: var(--sidebar); color: white; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center; font-size: 24px;
-        text-decoration: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-        z-index: 9999; border: 3px solid white; transition: 0.3s;
+        display: flex; align-items: center; justify-content: center; font-size: 22px;
+        text-decoration: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 9999; border: 2px solid white; transition: 0.2s;
     }
-    .home-fab:hover { transform: scale(1.1); background: #000; }
+    .home-fab:active { transform: scale(0.9); }
 
-    /* Vista Móvil: Un solo día por fila para máxima legibilidad */
+    /* AJUSTE MÓVIL: Mantiene cuadrícula, no se pone en vertical */
     @media (max-width: 768px) {
-        .days-grid { grid-template-columns: 1fr; }
+        .days-grid { 
+            grid-template-columns: repeat(4, 1fr); /* 4 columnas en móvil */
+            gap: 5px;
+        }
         .day-name { display: none; }
-        .day-card { min-height: auto; padding: 15px; }
+        .day-card { min-height: 100px; padding: 6px; }
+        .month-label { font-size: 0.9rem; }
     }
+
+    @media (max-width: 400px) {
+        .days-grid { grid-template-columns: repeat(3, 1fr); } /* 3 columnas si la pantalla es muy pequeña */
+    }
+
+    #loader {
+        position: fixed; inset: 0; background: white; z-index: 1000;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+    }
+    .spinner { width: 30px; height: 30px; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div id="loader">
     <div class="spinner"></div>
-    <p style="margin-top:15px; font-weight:600; color:var(--sidebar)">Cargando cuadrante oficial...</p>
 </div>
 
 <header>
     <div class="month-label" id="month-display">---</div>
-    <div class="sync-tag"><i class="fas fa-history"></i> Sincronizado</div>
+    <div class="sync-tag">Sincronizado</div>
 </header>
 
 <div class="container">
@@ -122,13 +141,12 @@
         <div class="day-name">Jue</div><div class="day-name">Vie</div><div class="day-name">Sáb</div>
         <div class="day-name">Dom</div>
     </div>
-    <div class="grid" id="grid"></div>
+    <div class="days-grid" id="grid"></div>
 </div>
 
 <a href="https://jr0447951-spec.github.io/app-accesos/index.html" class="home-fab">🏠</a>
 
 <script>
-    // TU URL DE GOOGLE APPS SCRIPT
     const API_URL = "https://script.google.com/macros/s/AKfycbztx9xQlFp2A90RhdWR2tWeRYHemKUyvDr38YnD5JnDC9hDxiWM94g6eXlKY8so9ZBD/exec";
     const START_REF = new Date(2026, 2, 7);
     
@@ -140,7 +158,6 @@
 
     async function init() {
         try {
-            // 1. Cargar Técnicos y Grupos desde el CSV
             const r = await fetch('tecnicos.csv');
             const d = await r.text();
             const lines = d.split(/\r?\n/).slice(1);
@@ -152,24 +169,21 @@
                 }
             });
 
-            // 2. Cargar Datos de la Nube (Google Sheets)
             const response = await fetch(API_URL);
             state.db = await response.json();
 
             render();
             document.getElementById('loader').style.display = 'none';
         } catch (e) {
-            console.error("Error cargando datos:", e);
-            alert("Error al conectar con la base de datos. Verifique su conexión.");
+            console.error(e);
+            alert("Error de conexión");
         }
     }
 
     function getAutoTurno(date) {
         if (date.getDay() !== 6 && date.getDay() !== 0) return [];
         const diff = Math.floor((date - START_REF) / 86400000);
-        const week = Math.floor(diff / 7);
-        if (week < 0) return [];
-        const cycle = week % 4;
+        const cycle = (Math.floor(diff / 7)) % 4;
         const map = { 0:["1","2"], 1:["3","4"], 2:["2","1"], 3:["4","3"] };
         return [ [...(state.gBase[map[cycle][0]] || [])], [...(state.gBase[map[cycle][1]] || [])] ];
     }
@@ -199,23 +213,21 @@
             cell.className = `day-card ${[0,6].includes(date.getDay()) ? 'weekend' : ''} ${isToday ? 'today' : ''}`;
 
             let turnosHtml = turnos.map((group, idx) => {
-                const p1 = absences.includes(group[0]) ? '<span style="color:#ef4444;text-decoration:line-through">BAJA</span>' : (group[0] || 'VACANTE');
-                const p2 = absences.includes(group[1]) ? '<span style="color:#ef4444;text-decoration:line-through">BAJA</span>' : (group[1] || 'VACANTE');
+                const p1 = absences.includes(group[0]) ? '❌' : (group[0] || '---');
+                const p2 = absences.includes(group[1]) ? '❌' : (group[1] || '---');
                 
                 return `
                 <div class="turno ${idx === 0 ? 'principal' : ''}">
-                    <span class="turno-label">${idx === 0 ? '🟢 Principal' : '⚪ Apoyo'}</span>
                     <span class="name">${p1}</span>
                     <span class="name">${p2}</span>
                 </div>`;
             }).join('');
 
-            let bajasHtml = absences.length ? `<div class="baja-tag"><i class="fas fa-exclamation-circle"></i> BAJA: ${absences.join(', ')}</div>` : "";
+            let bajasHtml = absences.length ? `<div class="baja-tag">BAJA: ${absences.length}</div>` : "";
 
             cell.innerHTML = `
                 <div class="day-num">
-                    ${d} 
-                    ${isToday ? '<span class="today-badge">HOY</span>' : ''}
+                    ${d} ${isToday ? '<span class="today-badge">HOY</span>' : ''}
                 </div>
                 ${turnosHtml}
                 ${bajasHtml}
