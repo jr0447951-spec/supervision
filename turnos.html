@@ -3,102 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA CONTROL TURNOS v24.1</title>
+    <title>SISTEMA PROFESIONAL DE TURNOS v24.0 - FULL STACK</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc;
-            --border: #e2e8f0; --danger: #ef4444; --radius: 10px;
+            --border: #e2e8f0; --danger: #ef4444; --success: #10b981;
+            --warning: #f59e0b; --radius: 12px;
         }
+
+        /* Reset y Scrollbar */
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
         body { margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
 
-        /* Interfaz */
-        .sidebar { width: 300px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #334155; overflow-y: auto; transition: 0.3s; }
-        .sidebar.hidden { margin-left: -300px; }
+        /* Sidebar - Panel de Control */
+        .sidebar { 
+            width: 320px; background: var(--sidebar); color: white; padding: 20px; 
+            display: flex; flex-direction: column; gap: 18px; border-right: 1px solid #334155; 
+            overflow-y: auto; transition: all 0.3s ease; z-index: 100;
+        }
+        .sidebar.hidden { margin-left: -320px; }
         
-        .section-title { font-size: 0.65rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; }
-        .draggable-group { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: var(--radius); cursor: grab; margin-bottom: 5px; }
-        .group-tag { font-size: 0.6rem; color: var(--primary); font-weight: 800; }
+        .section-title { 
+            font-size: 0.7rem; font-weight: 800; color: #64748b; 
+            text-transform: uppercase; letter-spacing: 1.2px; border-bottom: 1px solid #334155; padding-bottom: 5px;
+        }
 
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; }
-        .top-nav { height: 60px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .draggable-group { 
+            background: #1e293b; border: 1px solid #334155; padding: 12px; 
+            border-radius: var(--radius); cursor: grab; transition: 0.2s; 
+        }
+        .draggable-group:hover { border-color: var(--primary); background: #24334d; transform: translateY(-2px); }
+        .group-tag { font-size: 0.6rem; color: var(--primary); font-weight: 800; display: block; margin-bottom: 4px; }
+        .group-names { font-size: 0.75rem; color: #cbd5e1; line-height: 1.4; }
+
+        /* Contenido Principal */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        .top-nav { 
+            height: 70px; background: white; border-bottom: 1px solid var(--border); 
+            display: flex; align-items: center; justify-content: space-between; padding: 0 25px; 
+        }
+        .month-label { font-weight: 800; font-size: 1.2rem; color: var(--sidebar); text-transform: uppercase; }
 
         /* Calendario */
-        .calendar-container { flex-grow: 1; overflow-y: auto; padding: 15px; background: white; }
-        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
-        .days-row { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 800; color: #94a3b8; margin-bottom: 10px; }
+        .calendar-container { flex-grow: 1; overflow-y: auto; padding: 25px; background: white; }
+        .days-row { 
+            display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 15px; 
+            text-align: center; font-size: 0.8rem; font-weight: 800; color: #94a3b8; 
+        }
+        .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 15px; }
         
-        .day { border: 1px solid var(--border); border-radius: var(--radius); min-height: 150px; padding: 8px; display: flex; flex-direction: column; gap: 5px; position: relative; }
+        .day { 
+            background: white; border: 1px solid var(--border); border-radius: var(--radius); 
+            min-height: 180px; padding: 12px; position: relative; transition: 0.2s; 
+            display: flex; flex-direction: column; gap: 8px;
+        }
         .day.weekend { background: #f8fafc; }
-        .day-header { display: flex; justify-content: space-between; font-weight: 800; font-size: 0.8rem; color: #64748b; }
+        .day.locked { border-top: 5px solid var(--danger); }
+        .day.drag-over { border: 2px dashed var(--primary); background: #eff6ff; }
 
-        /* Tarjetas de Turno */
-        .turno-card { border-radius: 6px; padding: 6px; font-size: 0.65rem; border-left: 3px solid #cbd5e1; background: #f1f5f9; position: relative; }
-        .turno-card.principal { border-left-color: var(--primary); background: #eff6ff; }
-        .names { font-weight: 700; color: #1e293b; display: block; }
-        .edit-btn { position: absolute; right: 4px; top: 4px; font-size: 0.6rem; color: var(--primary); cursor: pointer; display: var(--ui-display, block); }
+        .day-header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            font-weight: 800; font-size: 1rem; color: #1e293b; 
+        }
 
-        /* Cuadro de Bajas Automático */
-        .baja-box { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; padding: 5px; margin-top: auto; }
-        .baja-text { color: #e11d48; font-size: 0.6rem; font-weight: 800; display: block; }
-        .baja-name { color: #881337; font-size: 0.65rem; font-weight: 700; }
-
-        /* Botones */
-        .btn { padding: 8px 12px; border-radius: 6px; border: none; font-size: 0.75rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-        .btn-blue { background: var(--primary); color: white; }
-        .btn-outline { background: white; border: 1px solid var(--border); }
+        /* Tarjetas de Turnos */
+        .turno-card { 
+            border-radius: 8px; padding: 8px 10px; font-size: 0.75rem; 
+            border-left: 5px solid #94a3b8; background: #f1f5f9; position: relative; 
+        }
+        .turno-card.principal { border-left-color: var(--primary); background: #ebf2ff; }
+        .tipo-tag { font-size: 0.6rem; font-weight: 800; color: #64748b; display: block; margin-bottom: 4px; }
+        .turno-card.principal .tipo-tag { color: var(--primary); }
         
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; width: 320px; padding: 20px; border-radius: 12px; }
+        .names { font-weight: 700; color: #1e293b; display: block; }
+        .vacante { color: #94a3b8; font-style: italic; font-weight: 400; }
+        
+        .edit-btn { 
+            position: absolute; right: 8px; top: 8px; font-size: 0.7rem; 
+            color: var(--primary); cursor: pointer; opacity: 0; transition: 0.2s; 
+        }
+        .day:hover .edit-btn { opacity: 0.5; }
+        .edit-btn:hover { opacity: 1 !important; transform: scale(1.1); }
 
-        /* Estilo para impresión/tecnicos */
-        @media print { .sidebar, .top-nav, .edit-btn { display: none !important; } }
+        /* SECCIÓN DE BAJAS DENTRO DEL DÍA */
+        .bajas-container {
+            margin-top: auto; padding-top: 8px; border-top: 1px dashed #fecdd3;
+        }
+        .baja-item {
+            background: #fff1f2; border: 1px solid #fecdd3; color: #e11d48;
+            padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; font-weight: 700;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;
+        }
+        .baja-label { font-size: 0.55rem; text-transform: uppercase; font-weight: 800; color: #fb7185; }
+
+        /* Botones y UI */
+        .btn { 
+            padding: 10px 16px; border-radius: 8px; border: none; font-size: 0.8rem; 
+            font-weight: 700; cursor: pointer; display: flex; align-items: center; 
+            justify-content: center; gap: 8px; transition: 0.2s; 
+        }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-blue:hover { background: #1d4ed8; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-outline { background: white; border: 1px solid var(--border); color: #475569; }
+        .btn-outline:hover { background: #f1f5f9; }
+
+        /* Estadísticas */
+        .stat-box { 
+            background: #1e293b; padding: 12px; border-radius: 10px; 
+            font-size: 0.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; 
+        }
+        .stat-item { display: flex; justify-content: space-between; border-bottom: 1px solid #334155; padding: 3px 0; }
+        .stat-item b { color: var(--success); }
+
+        /* Modal */
+        #modal { 
+            display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); 
+            backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; 
+        }
+        .modal-box { 
+            background: white; width: 400px; padding: 30px; border-radius: 16px; 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
+        }
+
+        /* Vista Técnicos (Modo Lectura) */
+        body.view-mode .sidebar, 
+        body.view-mode .edit-btn, 
+        body.view-mode .fa-lock, 
+        body.view-mode .fa-lock-open { display: none !important; }
+        body.view-mode .top-nav { background: var(--sidebar); }
+        body.view-mode .month-label { color: white; }
     </style>
 </head>
 <body>
 
-<aside class="sidebar" id="sidebar">
-    <h2><i class="fas fa-shield-alt"></i> PANEL ADMIN</h2>
+<aside class="sidebar" id="mainSidebar">
+    <h2><i class="fas fa-calendar-check"></i> PANEL ADMIN</h2>
     
-    <div class="section-title">Bajas Médicas</div>
-    <div style="background:#1e293b; padding:10px; border-radius:8px;">
-        <select id="aus-tecnico" style="width:100%; padding:6px; margin-bottom:5px; border-radius:4px;"></select>
-        <input type="date" id="aus-fecha" style="width:100%; padding:6px; border-radius:4px;">
-        <button class="btn btn-blue" style="width:100%; margin-top:8px; font-size:0.65rem;" onclick="addAbsence()">REGISTRAR BAJA</button>
+    <div class="section-title">Personal de Baja</div>
+    <div style="background:#1e293b; padding:15px; border-radius:12px; display:flex; flex-direction:column; gap:10px;">
+        <div>
+            <label style="font-size:0.6rem; color:#94a3b8; font-weight:800">TÉCNICO</label>
+            <select id="aus-tecnico" style="width:100%; padding:8px; border-radius:6px; background:#0f172a; color:white; border:1px solid #334155;"></select>
+        </div>
+        <div>
+            <label style="font-size:0.6rem; color:#94a3b8; font-weight:800">FECHA</label>
+            <input type="date" id="aus-fecha" style="width:100%; padding:8px; border-radius:6px; background:#0f172a; color:white; border:1px solid #334155;">
+        </div>
+        <button class="btn btn-blue" onclick="addAbsence()">REGISTRAR BAJA MÉDICA</button>
     </div>
 
-    <div class="section-title">Grupos (Drag)</div>
-    <div id="sidebar-groups"></div>
-
-    <div class="section-title">Sincronización</div>
-    <button class="btn btn-blue" style="width:100%; background:#10b981;" onclick="syncWithSheets()">
-        <i class="fas fa-sync"></i> NUBE GOOGLE
-    </button>
+    <div class="section-title">Arrastrar Grupos</div>
+    <div id="sidebar-groups" style="display:flex; flex-direction:column; gap:8px;"></div>
     
-    <button class="btn btn-outline" style="margin-top:auto" onclick="toggleView()">
-        <i class="fas fa-eye"></i> VISTA TÉCNICOS
-    </button>
+    <div class="section-title">Estadísticas Mensuales</div>
+    <div class="stat-box" id="stats-panel"></div>
+
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px;">
+        <button class="btn btn-success" onclick="syncSheets()"><i class="fas fa-cloud-upload-alt"></i> SINCRONIZAR NUBE</button>
+        <button class="btn btn-outline" onclick="toggleViewMode()"><i class="fas fa-users"></i> VISTA TÉCNICOS</button>
+    </div>
 </aside>
 
 <main class="main-content">
     <header class="top-nav">
-        <div style="display:flex; gap:10px; align-items:center;">
+        <div style="display:flex; align-items:center; gap:15px;">
             <button class="btn btn-outline" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
             <div class="month-label" id="month-display"></div>
             <button class="btn btn-outline" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
         </div>
         <div style="display:flex; gap:10px;">
-            <button class="btn btn-outline" onclick="capture()"><i class="fas fa-camera"></i> CAPTURAR 4K</button>
+            <button class="btn btn-outline" onclick="capture()"><i class="fas fa-camera"></i> CAPTURAR PNG 4K</button>
         </div>
     </header>
 
     <div class="calendar-container" id="capture-area">
         <div class="days-row">
             <span>LUNES</span><span>MARTES</span><span>MIÉRCOLES</span><span>JUEVES</span><span>VIERNES</span>
-            <span>SÁBADO</span><span>DOMINGO</span>
+            <span style="color:var(--primary)">SÁBADO</span><span style="color:var(--primary)">DOMINGO</span>
         </div>
         <div class="grid" id="grid"></div>
     </div>
@@ -106,19 +195,33 @@
 
 <div id="modal">
     <div class="modal-box">
-        <h3>Editar Turno</h3>
+        <h3 id="m-title" style="margin:0 0 20px 0; color:var(--sidebar)">Ajustar Personal</h3>
         <input type="hidden" id="m-id"><input type="hidden" id="m-idx">
-        <select id="sel-t1" style="width:100%; padding:8px; margin-bottom:10px;"></select>
-        <select id="sel-t2" style="width:100%; padding:8px; margin-bottom:15px;"></select>
-        <button class="btn btn-blue" style="width:100%" onclick="confirmEdit()">GUARDAR</button>
-        <button class="btn btn-outline" style="width:100%; margin-top:8px" onclick="closeModal()">CANCELAR</button>
+        
+        <div style="margin-bottom:15px">
+            <label style="font-size:0.7rem; font-weight:800; color:#64748b">TÉCNICO LÍDER</label>
+            <select id="sel-t1" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border)"></select>
+        </div>
+        
+        <div style="margin-bottom:25px">
+            <label style="font-size:0.7rem; font-weight:800; color:#64748b">TÉCNICO APOYO</label>
+            <select id="sel-t2" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border)"></select>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:10px">
+            <button class="btn btn-blue" onclick="confirmEdit()">GUARDAR CAMBIOS</button>
+            <button class="btn" style="background:#fee2e2; color:var(--danger)" onclick="deleteGroup()">ELIMINAR ESTE GRUPO</button>
+            <button class="btn btn-outline" onclick="closeModal()">CANCELAR</button>
+        </div>
     </div>
 </div>
 
 <script>
-    const DB_KEY = "SISTEMA_V24_1";
-    const SHEETS_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; // <--- Pegar aquí el enlace
-    const START_REF = new Date(2026, 2, 7);
+    // CONFIGURACIÓN CLAVE
+    const DB_KEY = "SISTEMA_V24_MASTER";
+    const START_REF = new Date(2026, 2, 7); // Referencia ciclo
+    const GOOGLE_SCRIPT_URL = "URL_DE_TU_SCRIPT_AQUI"; // Para Google Sheets
+
     let currentView = new Date();
     let state = {
         tecnicos: [],
@@ -132,9 +235,32 @@
         renderCalendar();
     }
 
-    // Lógica de Bajas y Filtrado
-    function isTechnicianOnLeave(name, dateId) {
-        return state.db.absences[dateId]?.includes(name);
+    async function loadCSV() {
+        try {
+            const r = await fetch('tecnicos.csv');
+            const d = await r.text();
+            const lines = d.split(/\r?\n/).slice(1);
+            state.tecnicos = []; state.gBase = {};
+            lines.forEach(l => {
+                if(!l.trim()) return;
+                const [n, g] = l.split(/[;,]/).map(s => s.trim().toUpperCase());
+                if(n) {
+                    state.tecnicos.push(n);
+                    if(g) { if(!state.gBase[g]) state.gBase[g]=[]; state.gBase[g].push(n); }
+                }
+            });
+            state.tecnicos.sort();
+        } catch (e) { console.error("Error cargando tecnicos.csv"); }
+    }
+
+    function getAutoTurno(date) {
+        if (date.getDay() !== 6 && date.getDay() !== 0) return [];
+        const diff = Math.floor((date - START_REF) / 86400000);
+        const week = Math.floor(diff / 7);
+        if (week < 0) return [];
+        const cycle = week % 4;
+        const map = { 0:["1","2"], 1:["3","4"], 2:["2","1"], 3:["4","3"] };
+        return [ [...(state.gBase[map[cycle][0]] || [])], [...(state.gBase[map[cycle][1]] || [])] ];
     }
 
     function renderCalendar() {
@@ -144,132 +270,189 @@
 
         const offset = (new Date(y, m, 1).getDay() || 7) - 1;
         const total = new Date(y, m + 1, 0).getDate();
+        const counts = {}; state.tecnicos.forEach(t => counts[t] = 0);
 
-        for(let i=0; i<offset; i++) grid.innerHTML += `<div style="border:none"></div>`;
+        for(let i=0; i<offset; i++) grid.innerHTML += `<div></div>`;
 
         for(let d=1; d<=total; d++) {
             const dateId = `${y}-${m+1}-${d}`;
             const date = new Date(y, m, d);
+            
+            // Cargar turnos (Manual o Auto)
             let turnos = state.db.locks[dateId] ? (state.db.manual[dateId] || []) : getAutoTurno(date);
+            let dayAbsences = state.db.absences[dateId] || [];
 
             const cell = document.createElement('div');
-            cell.className = `day ${[0,6].includes(date.getDay())?'weekend':''}`;
-            cell.ondrop = e => handleDrop(e, dateId);
-            cell.ondragover = e => e.preventDefault();
+            cell.className = `day ${[0,6].includes(date.getDay())?'weekend':''} ${state.db.locks[dateId]?'locked':''}`;
+            cell.ondragover = e => { e.preventDefault(); cell.classList.add('drag-over'); };
+            cell.ondragleave = () => cell.classList.remove('drag-over');
+            cell.ondrop = e => handleDrop(e, dateId, date);
 
-            // Renderizar turnos filtrando los que están de baja
-            let htmlTurnos = turnos.map((group, idx) => {
-                const t1 = isTechnicianOnLeave(group[0], dateId) ? "" : group[0];
-                const t2 = isTechnicianOnLeave(group[1], dateId) ? "" : group[1];
+            // Renderizado de Turnos con Lógica de Baja
+            let turnosHtml = turnos.map((group, idx) => {
+                const isPrincipal = (idx === 0);
                 
+                // Procesar cada técnico del grupo
+                const procesarTecnico = (name) => {
+                    if(!name) return `<span class="vacante">VACANTE</span>`;
+                    if(dayAbsences.includes(name)) return `<span style="color:var(--danger); font-size:0.6rem;">[EN BAJA]</span>`;
+                    counts[name]++;
+                    return name;
+                };
+
                 return `
-                <div class="turno-card ${idx===0?'principal':''}">
+                <div class="turno-card ${isPrincipal?'principal':''}">
                     <i class="fas fa-edit edit-btn" onclick="openEditor('${dateId}',${idx})"></i>
-                    <span class="names">${t1 || '<span style="color:#94a3b8; font-weight:400">VACANTE</span>'}</span>
-                    <span class="names">${t2 || '<span style="color:#94a3b8; font-weight:400">VACANTE</span>'}</span>
+                    <span class="tipo-tag">${isPrincipal?'LÍDER PRINCIPAL':'APOYO ADICIONAL'}</span>
+                    <span class="names">${procesarTecnico(group[0])}</span>
+                    <span class="names">${procesarTecnico(group[1])}</span>
                 </div>`;
             }).join('');
 
-            // Cuadro de bajas automático abajo
-            let htmlBajas = "";
-            if(state.db.absences[dateId]?.length > 0) {
-                htmlBajas = `<div class="baja-box">
-                    <span class="baja-text">BAJA <i class="fas fa-times" style="float:right; cursor:pointer" onclick="clearAbsence('${dateId}')"></i></span>
-                    ${state.db.absences[dateId].map(n => `<span class="baja-name">${n}</span>`).join('')}
+            // Renderizado de Bajas Automático abajo
+            let bajasHtml = "";
+            if(dayAbsences.length > 0) {
+                bajasHtml = `
+                <div class="bajas-container">
+                    <span class="baja-label">Personal de Baja</span>
+                    ${dayAbsences.map(name => `
+                        <div class="baja-item">
+                            <span>${name}</span>
+                            <i class="fas fa-times" style="cursor:pointer" onclick="removeAbsence('${dateId}', '${name}')"></i>
+                        </div>
+                    `).join('')}
                 </div>`;
             }
 
             cell.innerHTML = `
-                <div class="day-header"><span>${d}</span>
-                <i class="fas ${state.db.locks[dateId]?'fa-lock':'fa-lock-open'}" style="opacity:0.2;cursor:pointer" onclick="toggleLock('${dateId}')"></i></div>
-                ${htmlTurnos} ${htmlBajas}`;
+                <div class="day-header">
+                    <span>${d}</span>
+                    <i class="fas ${state.db.locks[dateId]?'fa-lock':'fa-lock-open'}" 
+                       style="cursor:pointer; opacity:0.3" onclick="toggleLock('${dateId}')"></i>
+                </div>
+                ${turnosHtml}
+                ${bajasHtml}
+            `;
             grid.appendChild(cell);
         }
+        renderStats(counts);
     }
 
-    // Funciones de Google Sheets (Preparadas)
-    async function syncWithSheets() {
-        if(SHEETS_URL === "TU_URL_DE_APPS_SCRIPT_AQUI") {
-            alert("Por favor, configura la URL de Apps Script en el código.");
-            return;
+    // --- LÓGICA DE BAJAS ---
+    function addAbsence() {
+        const t = document.getElementById('aus-tecnico').value;
+        const f = document.getElementById('aus-fecha').value;
+        if(!t || !f) return alert("Seleccione técnico y fecha");
+        
+        const dateParts = f.split('-');
+        const id = `${dateParts[0]}-${parseInt(dateParts[1])}-${parseInt(dateParts[2])}`;
+        
+        if(!state.db.absences[id]) state.db.absences[id] = [];
+        if(!state.db.absences[id].includes(t)) {
+            state.db.absences[id].push(t);
+            save(); renderCalendar();
+        }
+    }
+
+    function removeAbsence(id, name) {
+        state.db.absences[id] = state.db.absences[id].filter(n => n !== name);
+        if(state.db.absences[id].length === 0) delete state.db.absences[id];
+        save(); renderCalendar();
+    }
+
+    // --- LÓGICA GOOGLE SHEETS ---
+    async function syncSheets() {
+        if(GOOGLE_SCRIPT_URL.includes("URL_DE_TU_SCRIPT")) {
+            return alert("Primero debes configurar tu URL de Google Apps Script.");
         }
         try {
-            const response = await fetch(SHEETS_URL, {
+            const res = await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 body: JSON.stringify(state.db)
             });
-            alert("Sincronización completada con éxito.");
-        } catch (e) { alert("Error al conectar con Google Sheets."); }
+            alert("¡Sincronizado con Google Sheets con éxito!");
+        } catch (e) { alert("Error de conexión"); }
     }
 
-    // Funciones de Vista
-    function toggleView() {
-        const sb = document.getElementById('sidebar');
-        sb.classList.toggle('hidden');
-        document.documentElement.style.setProperty('--ui-display', sb.classList.contains('hidden') ? 'none' : 'block');
+    // --- UTILIDADES ---
+    function toggleViewMode() {
+        document.body.classList.toggle('view-mode');
+    }
+
+    function handleDrop(e, id, date) {
+        e.preventDefault();
+        const group = JSON.parse(e.dataTransfer.getData("text/group"));
+        if(!state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date)));
+        state.db.manual[id].push(group);
+        state.db.locks[id] = true;
+        save(); renderCalendar();
+    }
+
+    function openEditor(id, idx) {
+        const dateObj = new Date(id.replace(/-/g, '/'));
+        const turnos = state.db.locks[id] ? state.db.manual[id] : getAutoTurno(dateObj);
+        const curr = turnos[idx];
+        document.getElementById('m-id').value = id;
+        document.getElementById('m-idx').value = idx;
+        document.getElementById('sel-t1').value = curr[0] || "";
+        document.getElementById('sel-t2').value = curr[1] || "";
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function confirmEdit() {
+        const id = document.getElementById('m-id').value, idx = document.getElementById('m-idx').value;
+        if(!state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(new Date(id.replace(/-/g,'/')))));
+        state.db.manual[id][idx] = [document.getElementById('sel-t1').value, document.getElementById('sel-t2').value];
+        state.db.locks[id] = true;
+        save(); closeModal(); renderCalendar();
+    }
+
+    function deleteGroup() {
+        const id = document.getElementById('m-id').value, idx = document.getElementById('m-idx').value;
+        state.db.manual[id].splice(idx, 1);
+        state.db.locks[id] = true;
+        save(); closeModal(); renderCalendar();
+    }
+
+    function toggleLock(id) {
+        if(!state.db.locks[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(new Date(id.replace(/-/g,'/')))));
+        state.db.locks[id] = !state.db.locks[id];
+        save(); renderCalendar();
+    }
+
+    function renderSidebar() {
+        const cont = document.getElementById('sidebar-groups'); cont.innerHTML = "";
+        Object.keys(state.gBase).sort().forEach(g => {
+            const div = document.createElement('div');
+            div.className = "draggable-group"; div.draggable = true;
+            div.innerHTML = `<span class="group-tag">GRUPO ${g}</span><div class="group-names">${state.gBase[g].join(' & ')}</div>`;
+            div.ondragstart = e => e.dataTransfer.setData("text/group", JSON.stringify(state.gBase[g]));
+            cont.appendChild(div);
+        });
+        const opts = `<option value="">-- VACANTE --</option>` + state.tecnicos.map(t=>`<option value="${t}">${t}</option>`).join('');
+        document.getElementById('aus-tecnico').innerHTML = document.getElementById('sel-t1').innerHTML = document.getElementById('sel-t2').innerHTML = opts;
+    }
+
+    function renderStats(counts) {
+        document.getElementById('stats-panel').innerHTML = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([n,c]) => `
+            <div class="stat-item"><span>${n.split(' ')[0]}</span><b>${c}</b></div>
+        `).join('');
     }
 
     function capture() {
         const area = document.getElementById('capture-area');
-        html2canvas(area, {scale: 3, useCORS: true}).then(canvas => {
+        html2canvas(area, { scale: 3, useCORS: true, backgroundColor: "#ffffff" }).then(canvas => {
             const link = document.createElement('a');
-            link.download = `CUADRANTE_${currentView.getMonth()+1}.png`;
-            link.href = canvas.toDataURL();
+            link.download = `CUADRANTE_${currentView.getMonth()+1}_${currentView.getFullYear()}.png`;
+            link.href = canvas.toDataURL('image/png', 1.0);
             link.click();
         });
     }
 
-    // Lógica interna (mantenida de v23.7)
-    async function loadCSV() {
-        try {
-            const r = await fetch('tecnicos.csv');
-            const d = await r.text();
-            const lines = d.split(/\r?\n/).slice(1);
-            lines.forEach(l => {
-                const [n, g] = l.split(/[;,]/).map(s => s.trim().toUpperCase());
-                if(n) {
-                    state.tecnicos.push(n);
-                    if(g) { if(!state.gBase[g]) state.gBase[g]=[]; state.gBase[g].push(n); }
-                }
-            });
-        } catch (e) { console.warn("Usando datos locales, CSV no detectado."); }
-    }
-
-    function getAutoTurno(date) {
-        if (date.getDay() !== 6 && date.getDay() !== 0) return [];
-        const diff = Math.floor((date - START_REF) / 86400000);
-        const cycle = Math.floor(diff / 7) % 4;
-        const map = { 0:["1","2"], 1:["3","4"], 2:["2","1"], 3:["4","3"] };
-        return [ [...(state.gBase[map[cycle][0]] || [])], [...(state.gBase[map[cycle][1]] || [])] ];
-    }
-
-    function addAbsence() {
-        const t = document.getElementById('aus-tecnico').value, f = document.getElementById('aus-fecha').value;
-        if(!t || !f) return;
-        const id = `${f.split('-')[0]}-${parseInt(f.split('-')[1])}-${parseInt(f.split('-')[2])}`;
-        if(!state.db.absences[id]) state.db.absences[id] = [];
-        if(!state.db.absences[id].includes(t)) state.db.absences[id].push(t);
-        save(); renderCalendar();
-    }
-
-    function clearAbsence(id) { delete state.db.absences[id]; save(); renderCalendar(); }
     function save() { localStorage.setItem(DB_KEY, JSON.stringify(state.db)); }
     function changeMonth(v) { currentView.setMonth(currentView.getMonth() + v); renderCalendar(); }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
-    function toggleLock(id) { state.db.locks[id] = !state.db.locks[id]; save(); renderCalendar(); }
-
-    function renderSidebar() {
-        const cont = document.getElementById('sidebar-groups');
-        Object.keys(state.gBase).forEach(g => {
-            const div = document.createElement('div');
-            div.className = "draggable-group"; div.draggable = true;
-            div.innerHTML = `<span class="group-tag">GRUPO ${g}</span><div style="font-size:0.7rem">${state.gBase[g].join('<br>')}</div>`;
-            div.ondragstart = e => e.dataTransfer.setData("text/group", JSON.stringify(state.gBase[g]));
-            cont.appendChild(div);
-        });
-        const opts = state.tecnicos.map(t=>`<option value="${t}">${t}</option>`).join('');
-        document.getElementById('aus-tecnico').innerHTML = document.getElementById('sel-t1').innerHTML = document.getElementById('sel-t2').innerHTML = `<option value="">VACANTE</option>` + opts;
-    }
 
     window.onload = init;
 </script>
