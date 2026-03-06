@@ -3,191 +3,345 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TÉCNICO V3 - ESTABLE</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - V5 STABLE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #004488; --accent: #00d4ff; --bg: #001a33; --panel: #003366; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e6f2ff; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        body {
+            font-family: 'Inter', sans-serif; background: #001a33; color: #e6f2ff;
+            margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
+        }
+
+        .config-card {
+            background: #003366; width: 100%; max-width: 800px;
+            padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 20px; border: 1px solid #0059b3; box-sizing: border-box;
+        }
+
+        .query-panel {
+            background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; 
+            margin-bottom: 20px; border: 1px solid #00d4ff33;
+        }
+
+        h3 { margin: 15px 0 5px 0; color: #00d4ff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        input, select, textarea {
+            width: 100%; padding: 12px; margin: 5px 0 10px 0; border-radius: 8px;
+            border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; font-size: 0.9rem;
+        }
+
+        /* --- CORRECCIÓN DE CUADROS DE TEXTO EN TABLA --- */
+        .table-input, .table-textarea {
+            width: 100%; 
+            border: none; 
+            background: transparent; 
+            font-family: 'Inter', sans-serif; 
+            font-size: 0.75rem; 
+            color: #003366; 
+            padding: 5px; 
+            box-sizing: border-box; 
+            outline: none;
+            display: block;
+            overflow: hidden; /* Evita scrolls internos que arruinan el PNG */
+            resize: none; 
+            line-height: 1.4;
+            white-space: pre-wrap; /* Mantiene saltos de línea */
+            word-wrap: break-word;
+        }
         
-        /* PANEL DE CONTROL */
-        .config-card { background: var(--panel); width: 100%; max-width: 900px; padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin-bottom: 20px; border: 1px solid #0059b3; box-sizing: border-box; }
-        .section-title { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; margin: 15px 0 10px 0; font-weight: 700; border-bottom: 1px solid #004d99; padding-bottom: 5px; }
+        .table-input { font-weight: 700; color: #004488; }
+        .table-textarea { font-weight: 400; min-height: 40px; }
+
+        .table-select {
+            width: 100%; border: none; background: #f8fbff; 
+            font-family: inherit; font-size: 0.75rem; color: #003366; 
+            padding: 5px; box-sizing: border-box; outline: none;
+            font-weight: 800; cursor: pointer; -webkit-appearance: none;
+            border-radius: 4px;
+        }
+
+        /* --- DISEÑO DE SELECTORES --- */
+        .tech-selector {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px; background: #001a33; padding: 12px; border-radius: 8px;
+            border: 1px solid #0059b3; max-height: 160px; overflow-y: auto; margin: 5px 0 15px 0;
+        }
+        .tech-item { display: flex; align-items: center; font-size: 0.75rem; gap: 8px; cursor: pointer; color: #b3e6ff; }
+        .tech-item input { width: auto; margin: 0; cursor: pointer; transform: scale(1.1); }
+
+        .date-quick-btns { display: flex; gap: 8px; margin-bottom: 10px; }
+        .btn-date { 
+            flex: 1; padding: 10px; font-size: 0.75rem; border-radius: 6px; border: 1px solid #00d4ff;
+            background: rgba(0, 212, 255, 0.1); color: #00d4ff; cursor: pointer; font-weight: 600;
+        }
+        .btn-date:hover { background: #00d4ff; color: #003366; }
+
+        .search-container { position: relative; }
+        #suggestions {
+            position: absolute; top: 100%; left: 0; width: 100%;
+            background: #003366; border: 2px solid #00d4ff; border-radius: 0 0 8px 8px;
+            max-height: 200px; overflow-y: auto; z-index: 100; display: none;
+        }
+        .sug-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #004080; color: #b3e6ff; }
+        .sug-item:hover { background: #00d4ff; color: #003366; font-weight: bold; }
+
+        button.btn-add {
+            background: linear-gradient(90deg, #00d4ff, #0077ff); color: white; border: none; padding: 15px;
+            width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px;
+        }
+
+        /* --- ÁREA DE CAPTURA (REPORTE FINAL) --- */
+        #capture-area {
+            background: #ffffff; color: #002244; padding: 40px; border-radius: 2px;
+            width: 1150px; box-sizing: border-box;
+        }
+
+        .report-header { 
+            border-bottom: 5px solid #004488; padding-bottom: 15px; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+
+        .report-header h1 { margin: 0; font-size: 1.6rem; color: #004488; font-weight: 900; text-transform: uppercase; }
+
+        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #002244; }
+        .excel-table th { 
+            background: #004488; color: #ffffff; padding: 12px; 
+            font-size: 0.75rem; text-align: left; border: 1px solid #002244;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .excel-table td { 
+            border: 1px solid #b3d9ff; padding: 0; /* Padding 0 para que el textarea llene la celda */
+            font-size: 0.8rem; color: #003366; vertical-align: top;
+        }
         
-        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0 10px 0; border-radius: 8px; border: 1px solid #0059b3; background: #001a33; color: white; box-sizing: border-box; font-size: 0.9rem; }
+        .static-cell { padding: 10px; font-weight: 600; display: block; word-wrap: break-word; }
         
-        /* BOTONES FECHA */
-        .date-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
-        .btn-date { padding: 10px; background: rgba(0, 212, 255, 0.1); border: 1px solid var(--accent); color: var(--accent); border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.75rem; }
+        .excel-table tbody tr:nth-child(even) { background: #f9fcff; }
+        .btn-remove { color: #ff3333; font-weight: bold; cursor: pointer; border: none; background: none; font-size: 1.4rem; padding: 5px; }
 
-        /* BUSCADOR ORIGINAL */
-        .search-box { position: relative; }
-        #suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: #004488; border: 2px solid var(--accent); border-radius: 0 0 10px 10px; max-height: 250px; overflow-y: auto; z-index: 1000; display: none; }
-        .sug-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #0059b3; color: white; font-size: 0.85rem; }
-        .sug-item:hover { background: var(--accent); color: #001a33; font-weight: 700; }
-
-        /* SELECTOR TÉCNICOS */
-        .tech-selector { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; background: #001a33; padding: 12px; border-radius: 8px; max-height: 150px; overflow-y: auto; border: 1px solid #0059b3; }
-        .tech-label { display: flex; align-items: center; font-size: 0.75rem; gap: 6px; cursor: pointer; }
-
-        /* TABLA DE REPORTE (ESTILO EXCEL) */
-        #capture-area { background: white; padding: 30px; width: 1100px; box-sizing: border-box; color: #002244; }
-        .report-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--primary); padding-bottom: 10px; margin-bottom: 15px; }
-        .report-header h1 { margin: 0; font-size: 1.5rem; text-transform: uppercase; font-weight: 900; color: var(--primary); }
-        
-        .excel-table { width: 100%; border-collapse: collapse; border: 1px solid #ccc; table-layout: fixed; }
-        .excel-table th { background: var(--primary); color: white; padding: 10px; font-size: 0.7rem; text-transform: uppercase; border: 1px solid #003366; }
-        .excel-table td { border: 1px solid #b3d9ff; padding: 4px; font-size: 0.75rem; vertical-align: top; }
-
-        /* EDICIÓN EN TABLA */
-        .table-input { width: 100%; border: none; background: transparent; font-family: inherit; font-size: 0.75rem; resize: none; overflow: hidden; padding: 4px; box-sizing: border-box; color: inherit; outline: none; display: block; }
-        .table-input:focus { background: #e6f7ff; border-radius: 4px; }
-        .table-select { width: 100%; border: none; background: transparent; font-weight: 700; color: var(--primary); cursor: pointer; font-size: 0.75rem; outline: none; }
-
-        .action-bar { display: flex; gap: 10px; width: 100%; max-width: 900px; margin-top: 20px; }
-        .btn { flex: 1; padding: 15px; border-radius: 50px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        /* Botones de acción */
+        .actions { display: flex; gap: 12px; margin-top: 25px; width: 100%; max-width: 850px; padding-bottom: 60px;}
+        .btn-action { 
+            flex: 1; padding: 18px; border-radius: 50px; border: none; 
+            font-weight: 800; cursor: pointer; display: flex; align-items: center; 
+            justify-content: center; gap: 10px; transition: 0.3s; font-size: 0.95rem;
+        }
+        .btn-download { background: #ffffff; color: #004488; border: 2px solid #004488; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn-whatsapp { background: #25d366; color: white; }
+        .btn-cloud { background: #f39c12; color: white; }
     </style>
 </head>
 <body>
 
     <div class="config-card">
-        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #00d4ff44;">
-            <div class="section-title" style="margin-top:0;">🔍 Consultar Historial</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px;">
-                <input type="date" id="busq-fecha">
-                <select id="busq-tipo">
-                    <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
-                    <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
-                </select>
-                <button onclick="consultarNube()" style="background:var(--accent); color:#001a33; border:none; padding:0 20px; border-radius:8px; font-weight:700; cursor:pointer;">BUSCAR</button>
+        <div class="query-panel">
+            <h3 style="margin-top:0; display:flex; align-items:center; gap:8px;">
+                <span>🔍</span> CONSULTAR HISTORIAL
+            </h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
+                <div>
+                    <label style="font-size: 0.7rem; color: #b3e6ff;">Fecha a buscar:</label>
+                    <input type="date" id="busq-fecha" style="margin-bottom:0;">
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; color: #b3e6ff;">Tipo de Reporte:</label>
+                    <select id="busq-tipo" style="margin-bottom:0;">
+                        <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
+                        <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
+                    </select>
+                </div>
+                <button onclick="consultarNube()" style="background: #00d4ff; color: #001a33; border: none; padding: 0 25px; border-radius: 8px; font-weight: 800; cursor: pointer; height: 45px;">
+                    BUSCAR
+                </button>
             </div>
         </div>
 
-        <div class="section-title">1. Configuración General</div>
-        <select id="sel-tipo" onchange="actualizarTextos()">
+        <hr style="border: 0; border-top: 1px solid #0059b3; margin: 20px 0;">
+
+        <h3>1. Configuración de Informe</h3>
+        <select id="sel-tipo" onchange="updateHeader()">
             <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
             <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
         </select>
-        
-        <div class="date-grid">
-            <button class="btn-date" onclick="cambiarFecha(0)">HOY</button>
-            <button class="btn-date" onclick="cambiarFecha(1)">MAÑANA</button>
-            <button class="btn-date" onclick="cambiarFecha(2)">PASADO MAÑANA</button>
-        </div>
-        <input type="date" id="sel-fecha" onchange="actualizarTextos()">
 
-        <div class="section-title">2. Buscador de Sitios</div>
-        <div class="search-box">
-            <input type="text" id="site-search" placeholder="Escribe SITEID o Nombre..." autocomplete="off">
+        <div class="date-quick-btns">
+            <button class="btn-date" onclick="setQuickDate(0)">HOY</button>
+            <button class="btn-date" onclick="setQuickDate(1)">MAÑANA</button>
+            <button class="btn-date" onclick="setQuickDate(2)">PASADO MAÑANA</button>
+        </div>
+        <input type="date" id="sel-fecha" onchange="updateHeader()">
+
+        <h3>2. Detalles y Asignación</h3>
+        <div class="search-container">
+            <input type="text" id="site-search" placeholder="Escribe SITEID o Nombre del sitio..." autocomplete="off">
             <div id="suggestions"></div>
         </div>
 
-        <div id="panel-edicion" style="display:none; margin-top:15px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
-            <div style="font-size:0.8rem; margin-bottom:10px;">Torrero: <span id="info-torrero" style="color:var(--accent); font-weight:700;"></span></div>
-            <div class="tech-selector" id="lista-tecnicos"></div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top:10px;">
-                <select id="falla-input">
-                    <option value="FDS">FDS</option><option value="LTE FDS">LTE FDS</option><option value="PARCIAL">PARCIAL</option>
-                    <option value="FALLA DE AC">FALLA DE AC</option><option value="VISITA TÉCNICA">VISITA TÉCNICA</option>
-                </select>
-                <select id="estado-input">
-                    <option value="OPERATIVO">✅ OPERATIVO</option><option value="ASIGNADO">🔹 ASIGNADO</option>
-                    <option value="EN RUTA">🚗 EN RUTA</option><option value="EN SITIO">📍 EN SITIO</option>
-                    <option value="PDR">⏸️ PDR</option>
-                </select>
+        <div id="form-site" style="display:none; margin-top:10px; padding:20px; border:1px solid #00d4ff55; border-radius:12px; background: rgba(0, 212, 255, 0.05);">
+            <p style="font-size: 0.85rem; color:#00d4ff; margin: 0 0 12px 0;">📍 SITIO: <span id="label-site-name" style="color:white; font-weight:800;"></span> | Torrero: <span id="label-torrero" style="color:white; font-weight:800;"></span></p>
+            
+            <label style="font-size: 0.75rem; color: #b3e6ff; font-weight:700;">TÉCNICOS ASIGNADOS:</label>
+            <div id="tech-list" class="tech-selector"></div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label style="font-size: 0.7rem; color: #b3e6ff;">Falla:</label>
+                    <select id="sel-falla">
+                        <option value="FDS">FDS</option>
+                        <option value="LTE FDS">LTE FDS</option>
+                        <option value="3G FDS">3G FDS</option>
+                        <option value="2G FDS">2G FDS</option>
+                        <option value="PARCIAL">PARCIAL</option>
+                        <option value="FALLA DE AC">FALLA DE AC</option>
+                        <option value="CORTE PROGRAMADO">CORTE PROGRAMADO</option>
+                        <option value="ALARMAS EXTERNAS">ALARMAS EXTERNAS</option>
+                        <option value="REVISIÓN DE MOTOGENERADOR">REVISIÓN DE MOTO.</option>
+                        <option value="VISITA TÉCNICA">VISITA TÉCNICA</option>
+                        <option value="INTERMITENCIA">INTERMITENCIA</option>
+                        <option value="ALTA TEMPERATURA">ALTA TEMPERATURA</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.7rem; color: #b3e6ff;">Estado Inicial:</label>
+                    <select id="sel-estado-fila">
+                        <option value="OPERATIVO">OPERATIVO</option>
+                        <option value="ASIGNADO">ASIGNADO</option>
+                        <option value="EN RUTA">EN RUTA</option>
+                        <option value="EN SITIO">EN SITIO</option>
+                        <option value="PDR">PDR</option>
+                        <option value="AFECTADO">AFECTADO</option>
+                        <option value="LPU">LPU</option>
+                        <option value="PENDIENTE">PENDIENTE</option>
+                    </select>
+                </div>
             </div>
-            <textarea id="comentario-input" placeholder="Comentario inicial..." rows="2"></textarea>
-            <button onclick="agregarFila()" style="background: var(--accent); color: #001a33; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: 700; cursor: pointer;">AÑADIR A LA TABLA</button>
+
+            <textarea id="txt-comentario" rows="2" placeholder="Escriba aquí los comentarios técnicos del sitio..."></textarea>
+            <button class="btn-add" onclick="addRow()">AÑADIR A LA TABLA</button>
         </div>
     </div>
 
     <div id="capture-area">
         <div class="report-header">
             <div>
-                <h1 id="tit-principal">VISITAS REALIZADAS</h1>
-                <div style="font-size: 0.65rem; color: #0066cc; font-weight: 800;">EQUIPO TÉCNICO ZONA PARACENTRAL</div>
+                <h1 id="h-titulo">VISITAS REALIZADAS</h1>
+                <span style="font-size:0.75rem; color:#004488; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Equipo técnico de zonas paracentrales</span>
             </div>
-            <div id="fecha-display" style="font-size: 1.2rem; font-weight: 800; color: var(--primary);"></div>
+            <div id="h-fecha-display" style="font-weight:900; color: #004488; font-size: 1.4rem; border-left: 5px solid #00d4ff; padding-left: 15px;"></div>
         </div>
 
         <table class="excel-table">
             <thead>
                 <tr>
-                    <th style="width: 22%;">SITIO / NODO</th>
-                    <th style="width: 10%;">TORRERO</th>
-                    <th style="width: 18%;">ASIGNADO (EDIT)</th>
-                    <th style="width: 12%;">FALLA</th>
-                    <th style="width: 15%;">ESTADO (SELECT)</th>
-                    <th style="width: auto;">COMENTARIOS (EDIT)</th>
-                    <th class="no-capture" style="width: 40px;"></th>
+                    <th style="width:22%">Sitio / Nodo</th>
+                    <th style="width:11%">Torrero</th>
+                    <th style="width:18%">Asignado</th>
+                    <th style="width:13%">Tipo de Falla</th>
+                    <th style="width:16%">Estado</th>
+                    <th style="width:20%">Comentarios</th>
+                    <th class="no-capture" style="width:40px"></th>
                 </tr>
             </thead>
-            <tbody id="tabla-cuerpo"></tbody>
+            <tbody id="table-body"></tbody>
         </table>
     </div>
 
-    <div class="action-bar">
-        <button class="btn" style="background:#fff; color:var(--primary); border:2px solid var(--primary);" onclick="exportarPNG()">💾 PNG</button>
-        <button class="btn" style="background:#25d366; color:white;" onclick="window.open('https://wa.me/', '_blank')">📱 WA</button>
-        <button class="btn" style="background:#f39c12; color:white;" onclick="guardarNube()">☁️ GUARDAR</button>
+    <div class="actions">
+        <button class="btn-action btn-download" onclick="downloadImg()">💾 DESCARGAR PNG HD</button>
+        <button class="btn-action btn-whatsapp" onclick="sendWhatsapp()">📱 ENVIAR WHATSAPP</button>
+        <button class="btn-action btn-cloud" onclick="enviarAlHistorial()">☁️ GUARDAR HISTORIAL</button>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi04YsTUdOZnObRzT7-oETBJUovK1qMW1x5hUftlsOzwV-In-7-kmC-JTd2u2BafEp_g/exec";
-        const SITIOS_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv";
-        const TECNICOS_CSV = "tecnicos.csv";
-
-        let baseSitios = [], sitioActivo = null;
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi04YsTUdOZnObRzT7-oETBJUovK1qMW1x5hUftlsOzwV-In-7-kmC-JTd2u2BafEp_g/exec"; 
+        const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+        const TECNICOS_CSV = 'tecnicos.csv';
+        let dbSitios = [];
+        let siteSelected = null;
 
         window.onload = () => {
-            cambiarFecha(0);
-            Papa.parse(SITIOS_CSV, { download: true, header: true, complete: (r) => {
-                baseSitios = r.data.map(x => ({ id: String(x.SITEID||"").trim(), nombre: String(x['NOMBRE DE SITIO']||"").trim(), torrero: x.Propietario||"N/A", full: `${x.SITEID} - ${x['NOMBRE DE SITIO']}` }));
-            }});
-            Papa.parse(TECNICOS_CSV, { download: true, header: true, complete: (r) => {
-                const c = document.getElementById('lista-tecnicos');
-                r.data.forEach(t => { if(t.Nombre) c.innerHTML += `<label class="tech-label"><input type="checkbox" value="${t.Nombre}"> ${t.Nombre}</label>`; });
-            }});
+            const today = new Date();
+            document.getElementById('sel-fecha').value = today.toISOString().split('T')[0];
+            updateHeader();
+
+            Papa.parse(SITIOS_CSV, {
+                download: true, header: true,
+                complete: (r) => { 
+                    dbSitios = r.data.map(row => ({ 
+                        id: String(row.SITEID || "").toLowerCase().trim(),
+                        name: String(row['NOMBRE DE SITIO'] || "").toLowerCase().trim(),
+                        full: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, 
+                        torrero: row.Propietario 
+                    })).filter(x => x.full.length > 5); 
+                }
+            });
+
+            Papa.parse(TECNICOS_CSV, {
+                download: true, header: true,
+                complete: (r) => {
+                    const list = document.getElementById('tech-list');
+                    r.data.forEach(t => {
+                        if(t.Nombre) {
+                            const label = document.createElement('label');
+                            label.className = 'tech-item';
+                            label.innerHTML = `<input type="checkbox" value="${t.Nombre}"> ${t.Nombre}`;
+                            list.appendChild(label);
+                        }
+                    });
+                }
+            });
         };
 
-        function cambiarFecha(n) {
-            let d = new Date(); d.setDate(d.getDate() + n);
-            document.getElementById('sel-fecha').value = d.toISOString().split('T')[0];
-            actualizarTextos();
+        // --- FUNCIÓN DE AUTO-AJUSTE DE TEXTO ---
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = el.scrollHeight + 'px';
         }
 
-        function actualizarTextos() {
-            const f = document.getElementById('sel-fecha').value.split('-');
-            document.getElementById('fecha-display').innerText = f.length===3 ? `${f[2]}/${f[1]}/${f[0]}` : "";
-            document.getElementById('tit-principal').innerText = document.getElementById('sel-tipo').value;
+        function setQuickDate(daysToAdd) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysToAdd);
+            document.getElementById('sel-fecha').value = date.toISOString().split('T')[0];
+            updateHeader();
         }
 
-        function autoExpand(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+        function updateHeader() {
+            const dateInput = document.getElementById('sel-fecha').value;
+            if (dateInput) {
+                const p = dateInput.split('-');
+                document.getElementById('h-fecha-display').innerText = `${p[2]}/${p[1]}/${p[0]}`;
+            }
+            document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
+        }
 
-        // BUSCADOR ORIGINAL (SCORE)
         document.getElementById('site-search').addEventListener('input', (e) => {
-            const v = e.target.value.toLowerCase();
+            const v = e.target.value.toLowerCase().trim();
             const sug = document.getElementById('suggestions');
             sug.innerHTML = '';
             if(v.length < 2) { sug.style.display = 'none'; return; }
-            const matches = baseSitios.map(s => {
-                let sc = 0;
-                if(s.id.toLowerCase() === v) sc = 100;
-                else if(s.id.toLowerCase().startsWith(v)) sc = 80;
-                else if(s.nombre.toLowerCase().startsWith(v)) sc = 60;
-                else if(s.full.toLowerCase().includes(v)) sc = 20;
-                return { ...s, sc };
-            }).filter(s => s.sc > 0).sort((a,b) => b.sc - a.sc).slice(0, 7);
+
+            const matches = dbSitios.map(s => {
+                let score = 0;
+                if(s.id === v) score = 100;
+                else if(s.id.startsWith(v)) score = 80;
+                else if(s.name.startsWith(v)) score = 60;
+                else if(s.full.toLowerCase().includes(v)) score = 20;
+                return { ...s, score };
+            }).filter(s => s.score > 0).sort((a,b) => b.score - a.score).slice(0,6);
+
             if(matches.length > 0) {
                 sug.style.display = 'block';
                 matches.forEach(m => {
-                    const d = document.createElement('div'); d.className = 'sug-item'; d.innerText = m.full.toUpperCase();
-                    d.onclick = () => { 
-                        sitioActivo = m; 
+                    const d = document.createElement('div');
+                    d.className = 'sug-item';
+                    d.innerText = m.full.toUpperCase();
+                    d.onclick = () => {
+                        siteSelected = m;
                         document.getElementById('site-search').value = m.full.toUpperCase();
-                        document.getElementById('info-torrero').innerText = m.torrero;
-                        document.getElementById('panel-edicion').style.display = 'block';
+                        document.getElementById('label-site-name').innerText = m.full.toUpperCase();
+                        document.getElementById('label-torrero').innerText = m.torrero || 'N/A';
+                        document.getElementById('form-site').style.display = 'block';
                         sug.style.display = 'none';
                     };
                     sug.appendChild(d);
@@ -195,72 +349,173 @@
             }
         });
 
-        function agregarFila(nube = null) {
-            const t = document.getElementById('tabla-cuerpo');
+        // GENERAR FILA INTERACTIVA CON TEXTAREAS ESTABLES
+        function addRow() {
+            if(!siteSelected) return;
+            const selectedTechs = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value).join(' / ');
+            const falla = document.getElementById('sel-falla').value;
+            const estadoTexto = document.getElementById('sel-estado-fila').value;
+            const comment = document.getElementById('txt-comentario').value;
+            const body = document.getElementById('table-body');
+            
             const tr = document.createElement('tr');
-            const s = nube ? nube.sitio : sitioActivo.full.toUpperCase();
-            const tor = nube ? nube.torrero : sitioActivo.torrero;
-            const tec = nube ? nube.asignado : Array.from(document.querySelectorAll('#lista-tecnicos input:checked')).map(i => i.value).join(' / ');
-            const fal = nube ? nube.falla : document.getElementById('falla-input').value;
-            const est = nube ? nube.estado : document.getElementById('estado-input').value;
-            const com = nube ? nube.comentarios : document.getElementById('comentario-input').value;
-
             tr.innerHTML = `
-                <td style="font-weight:800; color:var(--primary); padding:8px;">${s}</td>
-                <td style="padding:8px;">${tor}</td>
-                <td><textarea class="table-input" oninput="autoExpand(this)" style="font-weight:600;">${tec}</textarea></td>
-                <td style="font-weight:700; color:#0055aa; padding:8px;">${fal}</td>
+                <td><span class="static-cell" style="color: #004488; font-weight:800;">${siteSelected.full.toUpperCase()}</span></td>
+                <td><span class="static-cell">${siteSelected.torrero || 'N/A'}</span></td>
+                
                 <td>
-                    <select class="table-select">
-                        <option value="OPERATIVO" ${est.includes('OPERATIVO')?'selected':''}>✅ OPERATIVO</option>
-                        <option value="ASIGNADO" ${est.includes('ASIGNADO')?'selected':''}>🔹 ASIGNADO</option>
-                        <option value="EN RUTA" ${est.includes('EN RUTA')?'selected':''}>🚗 EN RUTA</option>
-                        <option value="EN SITIO" ${est.includes('EN SITIO')?'selected':''}>📍 EN SITIO</option>
-                        <option value="PDR" ${est.includes('PDR')?'selected':''}>⏸️ PDR</option>
-                    </select>
+                    <textarea class="table-input" oninput="autoResize(this)">${selectedTechs || 'SIN ASIGNAR'}</textarea>
                 </td>
-                <td><textarea class="table-input" oninput="autoExpand(this)">${com}</textarea></td>
-                <td class="no-capture" style="text-align:center;"><button onclick="this.closest('tr').remove()" style="border:none; background:none; color:red; font-weight:bold; cursor:pointer;">×</button></td>
+
+                <td><span class="static-cell" style="font-weight:700; color: #0077ff;">${falla}</span></td>
+
+                <td>
+                    <div style="padding:5px;">
+                        <select class="table-select">
+                            <option value="OPERATIVO" ${estadoTexto === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
+                            <option value="ASIGNADO" ${estadoTexto === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
+                            <option value="EN RUTA" ${estadoTexto === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
+                            <option value="EN SITIO" ${estadoTexto === 'EN SITIO' ? 'selected' : ''}>📍 EN SITIO</option>
+                            <option value="PDR" ${estadoTexto === 'PDR' ? 'selected' : ''}>⏸️ PDR</option>
+                            <option value="AFECTADO" ${estadoTexto === 'AFECTADO' ? 'selected' : ''}>❌ AFECTADO</option>
+                            <option value="LPU" ${estadoTexto === 'LPU' ? 'selected' : ''}>❌ LPU</option>
+                            <option value="PENDIENTE" ${estadoTexto === 'PENDIENTE' ? 'selected' : ''}>⏳ PENDIENTE</option>
+                        </select>
+                    </div>
+                </td>
+
+                <td>
+                    <textarea class="table-textarea" oninput="autoResize(this)">${comment}</textarea>
+                </td>
+
+                <td class="no-capture" style="text-align:center; vertical-align: middle;">
+                    <button class="btn-remove" onclick="this.closest('tr').remove()">×</button>
+                </td>
             `;
-            t.appendChild(tr);
-            tr.querySelectorAll('textarea').forEach(tx => autoExpand(tx));
-            if(!nube) { document.getElementById('panel-edicion').style.display = 'none'; document.getElementById('site-search').value = ''; document.querySelectorAll('#lista-tecnicos input').forEach(c => c.checked = false); }
+            body.appendChild(tr);
+            
+            // Ajustar altura inicial de los textareas
+            tr.querySelectorAll('textarea').forEach(tx => autoResize(tx));
+            
+            // Limpieza
+            document.getElementById('form-site').style.display = 'none';
+            document.getElementById('site-search').value = '';
+            document.getElementById('txt-comentario').value = '';
+            document.querySelectorAll('#tech-list input').forEach(i => i.checked = false);
+            siteSelected = null;
+        }
+
+        async function enviarAlHistorial() {
+            const filas = document.querySelectorAll("#table-body tr");
+            if (filas.length === 0) return alert("⚠️ La tabla está vacía.");
+
+            const btn = document.querySelector(".btn-cloud");
+            btn.innerText = "⏳ GUARDANDO...";
+            btn.disabled = true;
+
+            const dataReporte = {
+                fecha: document.getElementById('sel-fecha').value,
+                tipo: document.getElementById('sel-tipo').value,
+                rows: []
+            };
+
+            filas.forEach(tr => {
+                dataReporte.rows.push({
+                    sitio: tr.cells[0].innerText,
+                    torrero: tr.cells[1].innerText,
+                    asignado: tr.querySelector('.table-input').value,
+                    falla: tr.cells[3].innerText,
+                    estado: tr.querySelector('.table-select').value,
+                    comentarios: tr.querySelector('.table-textarea').value
+                });
+            });
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dataReporte)
+                });
+                alert("✅ Datos enviados. Verifica tu Google Sheets.");
+            } catch (error) {
+                alert("❌ Error al guardar.");
+            } finally {
+                btn.innerText = "☁️ GUARDAR HISTORIAL";
+                btn.disabled = false;
+            }
+        }
+
+        function downloadImg() {
+            const nc = document.querySelectorAll('.no-capture');
+            nc.forEach(el => el.style.display = 'none');
+            
+            html2canvas(document.getElementById('capture-area'), { 
+                scale: 3,
+                backgroundColor: "#ffffff",
+                useCORS: true
+            }).then(canvas => {
+                const a = document.createElement('a');
+                a.download = `Reporte_${Date.now()}.png`;
+                a.href = canvas.toDataURL("image/png");
+                a.click();
+                nc.forEach(el => el.style.display = 'table-cell');
+            });
+        }
+
+        function sendWhatsapp() {
+            const msg = encodeURIComponent("Adjunto reporte de campo técnico.");
+            window.open(`https://wa.me/?text=${msg}`, '_blank');
         }
 
         async function consultarNube() {
-            const f = document.getElementById('busq-fecha').value, t = document.getElementById('busq-tipo').value;
-            if(!f) return alert("Fecha requerida");
-            try {
-                const res = await fetch(`${SCRIPT_URL}?fecha=${f}&tipo=${t}`);
-                const data = await res.json();
-                document.getElementById('tabla-cuerpo').innerHTML = '';
-                if(data.length > 0) data.forEach(item => agregarFila(item));
-                else alert("Sin registros");
-            } catch(e) { alert("Error de red"); }
-        }
+            const fecha = document.getElementById('busq-fecha').value;
+            const tipo = document.getElementById('busq-tipo').value;
+            if (!fecha) return alert("Selecciona una fecha.");
 
-        async function guardarNube() {
-            const filas = document.querySelectorAll("#tabla-cuerpo tr");
-            if(filas.length === 0) return alert("Tabla vacía");
-            const payload = {
-                fecha: document.getElementById('sel-fecha').value,
-                tipo: document.getElementById('sel-tipo').value,
-                rows: Array.from(filas).map(tr => ({
-                    sitio: tr.cells[0].innerText, torrero: tr.cells[1].innerText,
-                    asignado: tr.cells[2].querySelector('textarea').value, falla: tr.cells[3].innerText,
-                    estado: tr.cells[4].querySelector('select').value, comentarios: tr.cells[5].querySelector('textarea').value
-                }))
-            };
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                alert("Guardado OK");
-            } catch(e) { alert("Error al guardar"); }
-        }
+            const btn = document.querySelector('button[onclick="consultarNube()"]');
+            btn.innerText = "⏳...";
+            btn.disabled = true;
 
-        function exportarPNG() {
-            html2canvas(document.getElementById('capture-area'), { scale: 3 }).then(c => {
-                const a = document.createElement('a'); a.download = `Reporte_${Date.now()}.png`; a.href = c.toDataURL(); a.click();
-            });
+            try {
+                const resp = await fetch(`${SCRIPT_URL}?fecha=${fecha}&tipo=${tipo}`);
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    alert("No hay registros.");
+                } else {
+                    document.getElementById('table-body').innerHTML = '';
+                    data.forEach(item => {
+                        const body = document.getElementById('table-body');
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><span class="static-cell" style="font-weight:700; color: #004488;">${item.sitio}</span></td>
+                            <td><span class="static-cell">${item.torrero}</span></td>
+                            <td><textarea class="table-input" oninput="autoResize(this)">${item.asignado}</textarea></td>
+                            <td><span class="static-cell" style="font-weight:700; color: #0077ff;">${item.falla}</span></td>
+                            <td>
+                                <div style="padding:5px;">
+                                    <select class="table-select">
+                                        <option value="OPERATIVO" ${item.estado === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
+                                        <option value="ASIGNADO" ${item.estado === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
+                                        <option value="EN RUTA" ${item.estado === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
+                                        <option value="EN SITIO" ${item.estado === 'EN SITIO' ? 'selected' : ''}>📍 EN SITIO</option>
+                                        <option value="PDR" ${item.estado === 'PDR' ? 'selected' : ''}>⏸️ PDR</option>
+                                        <option value="AFECTADO" ${item.estado === 'AFECTADO' ? 'selected' : ''}>❌ AFECTADO</option>
+                                        <option value="LPU" ${item.estado === 'LPU' ? 'selected' : ''}>❌ LPU</option>
+                                        <option value="PENDIENTE" ${item.estado === 'PENDIENTE' ? 'selected' : ''}>⏳ PENDIENTE</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td><textarea class="table-textarea" oninput="autoResize(this)">${item.comentarios}</textarea></td>
+                            <td class="no-capture" style="text-align:center; vertical-align: middle;"><button class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
+                        `;
+                        body.appendChild(tr);
+                        tr.querySelectorAll('textarea').forEach(tx => autoResize(tx));
+                    });
+                }
+            } catch (e) { alert("Error al consultar."); }
+            finally { btn.innerText = "BUSCAR"; btn.disabled = false; }
         }
     </script>
 </body>
