@@ -57,6 +57,17 @@
             margin: 0;
         }
 
+        /* NUEVO: Contenedor multiselección dentro de la tabla */
+        .table-multi-tech {
+            background: #f0f7ff; border: 1px solid #cce6ff; border-radius: 6px;
+            padding: 5px; max-height: 100px; overflow-y: auto;
+        }
+        .table-tech-option {
+            display: flex; align-items: center; gap: 5px; font-size: 0.7rem;
+            color: #003366; font-weight: 600; cursor: pointer; padding: 2px 0;
+        }
+        .table-tech-option input { width: auto; margin: 0; transform: scale(0.9); }
+
         /* Texto que reemplaza al selector en el PNG */
         .export-text { 
             display: none; font-weight: 700; color: #004488; 
@@ -64,7 +75,7 @@
             white-space: pre-wrap;
         }
 
-        /* SELECTOR DE TÉCNICOS (GRID) */
+        /* SELECTOR DE TÉCNICOS (GRID) EN EL FORMULARIO */
         .tech-selector {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 10px; background: #001a33; padding: 15px; border-radius: 10px;
@@ -132,8 +143,9 @@
         
         .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366; }
         
-        /* Lógica para ocultar selects en la imagen */
+        /* Lógica para ocultar elementos en la imagen */
         #capture-area.is-exporting .table-select, 
+        #capture-area.is-exporting .table-multi-tech,
         #capture-area.is-exporting .no-capture { 
             display: none !important; 
         }
@@ -292,7 +304,6 @@
             document.getElementById('sel-fecha').value = today.toISOString().split('T')[0];
             updateHeader();
 
-            // Carga de sitios
             Papa.parse(SITIOS_CSV, {
                 download: true, header: true,
                 complete: (r) => { 
@@ -305,7 +316,6 @@
                 }
             });
 
-            // Carga de técnicos
             Papa.parse(TECNICOS_CSV, {
                 download: true, header: true,
                 complete: (r) => {
@@ -342,7 +352,6 @@
             document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
         }
 
-        // Búsqueda avanzada
         document.getElementById('site-search').addEventListener('input', (e) => {
             const v = e.target.value.toLowerCase().trim();
             const sug = document.getElementById('suggestions');
@@ -377,12 +386,11 @@
             }
         });
 
-        // GENERACIÓN DE FILA CON SELECTORES DINÁMICOS
+        // GENERACIÓN DE FILA CON MULTI-SELECTOR DE TÉCNICOS
         function addRow() {
             if(!siteSelected) return;
-            const checkedBoxes = Array.from(document.querySelectorAll('#tech-list input:checked'));
-            const mainTech = checkedBoxes.length > 0 ? checkedBoxes[0].value : 'SIN ASIGNAR';
-            const allSelectedText = checkedBoxes.map(i => i.value).join(' / ') || 'SIN ASIGNAR';
+            const checkedBoxesInForm = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value);
+            const allSelectedText = checkedBoxesInForm.join(' / ') || 'SIN ASIGNAR';
             
             const falla = document.getElementById('sel-falla').value;
             const estadoSelect = document.getElementById('sel-estado-fila');
@@ -393,12 +401,14 @@
             const body = document.getElementById('table-body');
             const tr = document.createElement('tr');
 
-            // Crear opciones para el selector de técnicos en la tabla
-            let techOptions = `<option value="${allSelectedText}">${allSelectedText}</option>`;
+            // Crear el grid de técnicos internos para la fila
+            let techChecksHtml = '';
             listaNombresTecnicos.forEach(nombre => {
-                if(!allSelectedText.includes(nombre)) {
-                    techOptions += `<option value="${nombre}">${nombre}</option>`;
-                }
+                const isChecked = checkedBoxesInForm.includes(nombre) ? 'checked' : '';
+                techChecksHtml += `
+                    <label class="table-tech-option">
+                        <input type="checkbox" value="${nombre}" ${isChecked}> ${nombre}
+                    </label>`;
             });
 
             tr.innerHTML = `
@@ -407,9 +417,7 @@
                 
                 <td>
                     <div style="padding:5px;">
-                        <select class="table-select" onchange="this.nextElementSibling.innerText=this.value">
-                            ${techOptions}
-                        </select>
+                        <div class="table-multi-tech">${techChecksHtml}</div>
                         <div class="export-text">${allSelectedText}</div>
                     </div>
                 </td>
@@ -445,7 +453,6 @@
             body.appendChild(tr);
             tr.querySelectorAll('textarea').forEach(tx => autoResize(tx));
             
-            // RESET FORM
             document.getElementById('form-site').style.display = 'none';
             document.getElementById('site-search').value = '';
             document.getElementById('txt-comentario').value = '';
@@ -453,29 +460,23 @@
             siteSelected = null;
         }
 
-        // DESCARGA DE IMAGEN HD
         async function downloadImg() {
             const area = document.getElementById('capture-area');
             
-            // 1. Sincronizar todos los textos de exportación antes de capturar
             document.querySelectorAll('#table-body tr').forEach(tr => {
-                // Sincronizar técnico
-                const selTech = tr.querySelector('td:nth-child(3) .table-select');
-                tr.querySelector('td:nth-child(3) .export-text').innerText = selTech.value;
+                // Sincronizar técnicos seleccionados en los checkboxes de la tabla
+                const selectedTechs = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
+                tr.querySelector('td:nth-child(3) .export-text').innerText = selectedTechs;
                 
-                // Sincronizar estado
                 const selEst = tr.querySelector('td:nth-child(5) .table-select');
                 tr.querySelector('td:nth-child(5) .export-text').innerText = selEst.options[selEst.selectedIndex].text;
                 
-                // Sincronizar comentarios
                 const txtComm = tr.querySelector('td:nth-child(6) .table-textarea');
                 tr.querySelector('td:nth-child(6) .export-text').innerText = txtComm.value;
             });
 
-            // 2. Aplicar clase de exportación
             area.classList.add('is-exporting');
             
-            // 3. Generar Canvas
             try {
                 const canvas = await html2canvas(area, { 
                     scale: 3,
@@ -499,13 +500,11 @@
             window.open(`https://wa.me/?text=${encodeURIComponent("Adjunto envío de reporte técnico diario.")}`, '_blank');
         }
 
-        // COMUNICACIÓN CON GOOGLE SHEETS
         async function enviarAlHistorial() {
             const filas = document.querySelectorAll("#table-body tr");
             if (filas.length === 0) return alert("⚠️ Agregue datos a la tabla primero.");
 
             const btn = document.querySelector(".btn-cloud");
-            const originalText = btn.innerText;
             btn.innerText = "⏳ GUARDANDO...";
             btn.disabled = true;
 
@@ -516,10 +515,11 @@
             };
 
             filas.forEach(tr => {
+                const asignados = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
                 dataReporte.rows.push({
                     sitio: tr.cells[0].innerText,
                     torrero: tr.cells[1].innerText,
-                    asignado: tr.querySelector('td:nth-child(3) .table-select').value,
+                    asignado: asignados,
                     falla: tr.cells[3].innerText,
                     estado: tr.querySelector('td:nth-child(5) .table-select').value,
                     comentarios: tr.querySelector('td:nth-child(6) .table-textarea').value
@@ -530,14 +530,13 @@
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dataReporte)
                 });
                 alert("✅ Datos guardados correctamente en el historial.");
             } catch (error) {
                 alert("❌ Error de conexión al guardar.");
             } finally {
-                btn.innerText = originalText;
+                btn.innerText = "☁️ GUARDAR HISTORIAL";
                 btn.disabled = false;
             }
         }
@@ -559,26 +558,29 @@
                     alert("No se encontraron registros para esta fecha.");
                 } else {
                     document.getElementById('table-body').innerHTML = '';
-                    // Actualizar cabecera con la fecha consultada
                     document.getElementById('sel-fecha').value = fecha;
                     document.getElementById('sel-tipo').value = tipo;
                     updateHeader();
 
                     data.forEach(item => {
-                        // Lógica manual de inserción para registros del historial
                         const body = document.getElementById('table-body');
                         const tr = document.createElement('tr');
                         
-                        // Opciones de técnico para historial (el asignado primero)
-                        let techOpts = `<option value="${item.asignado}">${item.asignado}</option>`;
-                        listaNombresTecnicos.forEach(n => { if(n !== item.asignado) techOpts += `<option value="${n}">${n}</option>`; });
+                        let techChecksHtml = '';
+                        listaNombresTecnicos.forEach(nombre => {
+                            const isChecked = item.asignado.includes(nombre) ? 'checked' : '';
+                            techChecksHtml += `
+                                <label class="table-tech-option">
+                                    <input type="checkbox" value="${nombre}" ${isChecked}> ${nombre}
+                                </label>`;
+                        });
 
                         tr.innerHTML = `
                             <td><span class="static-cell" style="font-weight:700; color: #004488;">${item.sitio}</span></td>
                             <td><span class="static-cell">${item.torrero}</span></td>
                             <td>
                                 <div style="padding:5px;">
-                                    <select class="table-select" onchange="this.nextElementSibling.innerText=this.value">${techOpts}</select>
+                                    <div class="table-multi-tech">${techChecksHtml}</div>
                                     <div class="export-text">${item.asignado}</div>
                                 </div>
                             </td>
