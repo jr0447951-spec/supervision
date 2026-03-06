@@ -379,15 +379,81 @@
     function toggleViewMode() {
         document.body.classList.toggle('view-mode');
     }
+// ... funciones anteriores (init, loadCSV, etc.) ...
 
-    function handleDrop(e, id, date) {
-        e.preventDefault();
-        const group = JSON.parse(e.dataTransfer.getData("text/group"));
-        if(!state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date)));
-        state.db.manual[id].push(group);
-        state.db.locks[id] = true;
-        save(); renderCalendar();
+// --- PEGA AQUÍ LA NUEVA FUNCIÓN ---
+function validarDuplicados(nuevoGrupo, turnosExistentes) {
+    const integrantesNuevos = nuevoGrupo.filter(n => n !== "");
+    if (integrantesNuevos.length === 0) return true; // Grupo 5 vacío siempre pasa
+
+    const integrantesExistentes = turnosExistentes.flat().filter(n => n !== "");
+
+    for (let nombre of integrantesNuevos) {
+        if (integrantesExistentes.includes(nombre)) {
+            alert(`⚠️ BLOQUEO: El técnico ${nombre} ya tiene un turno asignado este día.`);
+            return false;
+        }
     }
+
+    const grupoYaExiste = turnosExistentes.some(g => {
+        const gLimpio = g.filter(n => n !== "").sort();
+        const nLimpio = nuevoGrupo.filter(n => n !== "").sort();
+        return JSON.stringify(gLimpio) === JSON.stringify(nLimpio);
+    });
+
+    if (grupoYaExiste) {
+        alert("⚠️ BLOQUEO: Este grupo exacto ya está asignado a este día.");
+        return false;
+    }
+    return true;
+}
+
+// --- DESPUÉS SIGUE TU FUNCIÓN HANDLEDROP ACTUALIZADA ---
+function handleDrop(e, id, date) {
+    e.preventDefault();
+    const group = JSON.parse(e.dataTransfer.getData("text/group"));
+    
+    if(!state.db.manual[id]) {
+        state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date)));
+    }
+    
+    // Llamada a la validación
+    if (!validarDuplicados(group, state.db.manual[id])) {
+        const cell = document.querySelector(`[ondrop*="${id}"]`);
+        if(cell) cell.classList.remove('drag-over');
+        return; 
+    }
+
+    state.db.manual[id].push(group);
+    state.db.locks[id] = true;
+    save(); 
+    renderCalendar();
+}
+
+// ... resto del código ...
+   function handleDrop(e, id, date) {
+    e.preventDefault();
+    const group = JSON.parse(e.dataTransfer.getData("text/group"));
+    
+    // Si no hay datos manuales para este día, cargamos los automáticos para comparar
+    if(!state.db.manual[id]) {
+        state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date)));
+    }
+    
+    const turnosActuales = state.db.manual[id];
+
+    // EJECUTAR VALIDACIÓN
+    if (!validarDuplicados(group, turnosActuales)) {
+        const cell = document.querySelector(`[ondrop*="${id}"]`);
+        if(cell) cell.classList.remove('drag-over');
+        return; 
+    }
+
+    state.db.manual[id].push(group);
+    state.db.locks[id] = true;
+    save(); 
+    renderCalendar();
+}
 
     function openEditor(id, idx) {
         const dateObj = new Date(id.replace(/-/g, '/'));
@@ -401,12 +467,28 @@
     }
 
     function confirmEdit() {
-        const id = document.getElementById('m-id').value, idx = document.getElementById('m-idx').value;
-        if(!state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(new Date(id.replace(/-/g,'/')))));
-        state.db.manual[id][idx] = [document.getElementById('sel-t1').value, document.getElementById('sel-t2').value];
-        state.db.locks[id] = true;
-        save(); closeModal(); renderCalendar();
+    const id = document.getElementById('m-id').value;
+    const idx = parseInt(document.getElementById('m-idx').value);
+    const t1 = document.getElementById('sel-t1').value;
+    const t2 = document.getElementById('sel-t2').value;
+    const nuevoGrupo = [t1, t2];
+
+    if(!state.db.manual[id]) {
+        state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(new Date(id.replace(/-/g,'/')))));
     }
+
+    // Comparamos contra los OTROS turnos del día (excluyendo el que estamos editando)
+    const otrosTurnos = state.db.manual[id].filter((_, i) => i !== idx);
+
+    // EJECUTAR VALIDACIÓN
+    if (!validarDuplicados(nuevoGrupo, otrosTurnos)) return;
+
+    state.db.manual[id][idx] = nuevoGrupo;
+    state.db.locks[id] = true;
+    save(); 
+    closeModal(); 
+    renderCalendar();
+}
 
     function deleteGroup() {
         const id = document.getElementById('m-id').value, idx = document.getElementById('m-idx').value;
