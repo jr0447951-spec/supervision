@@ -421,17 +421,47 @@
         save(); renderCalendar();
     }
 
-    function renderSidebar() {
-        const cont = document.getElementById('sidebar-groups'); cont.innerHTML = "";
+ function renderSidebar() {
+        const cont = document.getElementById('sidebar-groups'); 
+        cont.innerHTML = "";
+
+        // 1. Renderizar grupos cargados desde el CSV (Grupo 1, 2, 3, 4)
         Object.keys(state.gBase).sort().forEach(g => {
             const div = document.createElement('div');
-            div.className = "draggable-group"; div.draggable = true;
+            div.className = "draggable-group"; 
+            div.draggable = true;
             div.innerHTML = `<span class="group-tag">GRUPO ${g}</span><div class="group-names">${state.gBase[g].join(' & ')}</div>`;
             div.ondragstart = e => e.dataTransfer.setData("text/group", JSON.stringify(state.gBase[g]));
             cont.appendChild(div);
         });
+
+        // 2. AGREGAR EL GRUPO 5 (VACANTE) COMO ELEMENTO FIJO
+        const divVacante = document.createElement('div');
+        divVacante.className = "draggable-group"; 
+        divVacante.style.border = "2px dashed #475569"; // Estilo visual de "hueco"
+        divVacante.style.background = "#0f172a";
+        divVacante.draggable = true;
+        
+        // El Grupo 5 envía un array con dos strings vacíos
+        const grupo5 = ["", ""]; 
+        
+        divVacante.innerHTML = `
+            <span class="group-tag" style="color:#94a3b8">GRUPO 5</span>
+            <div class="group-names" style="color:#64748b; font-style:italic;">
+                <i class="fas fa-plus-circle"></i> Arrastrar Vacante
+            </div>`;
+            
+        divVacante.ondragstart = e => {
+            e.dataTransfer.setData("text/group", JSON.stringify(grupo5));
+        };
+        
+        cont.appendChild(divVacante);
+
+        // Actualizar los selectores de los modales para incluir la opción vacía
         const opts = `<option value="">-- VACANTE --</option>` + state.tecnicos.map(t=>`<option value="${t}">${t}</option>`).join('');
-        document.getElementById('aus-tecnico').innerHTML = document.getElementById('sel-t1').innerHTML = document.getElementById('sel-t2').innerHTML = opts;
+        document.getElementById('aus-tecnico').innerHTML = 
+        document.getElementById('sel-t1').innerHTML = 
+        document.getElementById('sel-t2').innerHTML = opts;
     }
 
     function renderStats(counts) {
