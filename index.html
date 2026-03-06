@@ -50,14 +50,12 @@
             line-height: 1.4; word-wrap: break-word;
         }
         
-        /* El selector en modo edición */
         .table-select {
             font-weight: 700; cursor: pointer; background: #f0f7ff;
             border-radius: 6px; border: 1px solid #cce6ff; -webkit-appearance: none;
             margin: 0;
         }
 
-        /* NUEVO: Contenedor multiselección dentro de la tabla */
         .table-multi-tech {
             background: #f0f7ff; border: 1px solid #cce6ff; border-radius: 6px;
             padding: 5px; max-height: 100px; overflow-y: auto;
@@ -70,12 +68,11 @@
 
         /* Texto que reemplaza al selector en el PNG */
         .export-text { 
-            display: none; font-weight: 700; color: #004488; 
+            display: none; color: #004488; 
             padding: 10px; font-size: 0.8rem; line-height: 1.4;
-            white-space: pre-wrap;
+            white-space: pre-wrap; word-break: break-word;
         }
 
-        /* SELECTOR DE TÉCNICOS (GRID) EN EL FORMULARIO */
         .tech-selector {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 10px; background: #001a33; padding: 15px; border-radius: 10px;
@@ -88,7 +85,6 @@
         .tech-item:hover { background: rgba(0, 212, 255, 0.1); }
         .tech-item input { width: auto; margin: 0; cursor: pointer; transform: scale(1.2); }
 
-        /* BOTONES DE FECHA RÁPIDA */
         .date-quick-btns { display: flex; gap: 10px; margin-bottom: 12px; }
         .btn-date { 
             flex: 1; padding: 12px; font-size: 0.8rem; border-radius: 8px; border: 1px solid #00d4ff;
@@ -97,7 +93,6 @@
         }
         .btn-date:hover { background: #00d4ff; color: #001a33; }
 
-        /* SUGERENCIAS DE BÚSQUEDA */
         .search-container { position: relative; }
         #suggestions {
             position: absolute; top: 100%; left: 0; width: 100%;
@@ -117,7 +112,7 @@
             font-size: 1rem; letter-spacing: 1px;
         }
 
-        /* --- ÁREA DE CAPTURA (DISEÑO DEL REPORTE FINAL) --- */
+        /* --- ÁREA DE CAPTURA --- */
         #capture-area {
             background: #ffffff; color: #002244; padding: 45px; border-radius: 2px;
             width: 1180px; box-sizing: border-box;
@@ -143,8 +138,9 @@
         
         .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366; }
         
-        /* Lógica para ocultar elementos en la imagen */
+        /* CORRECCIÓN: Lógica para ocultar textarea y mostrar texto plano sin duplicar */
         #capture-area.is-exporting .table-select, 
+        #capture-area.is-exporting .table-textarea,
         #capture-area.is-exporting .table-multi-tech,
         #capture-area.is-exporting .no-capture { 
             display: none !important; 
@@ -153,7 +149,6 @@
             display: block !important; 
         }
 
-        /* BOTONES DE ACCIÓN INFERIORES */
         .actions { display: flex; gap: 15px; margin-top: 30px; width: 100%; max-width: 850px; padding-bottom: 70px;}
         .btn-action { 
             flex: 1; padding: 20px; border-radius: 50px; border: none; 
@@ -386,7 +381,6 @@
             }
         });
 
-        // GENERACIÓN DE FILA CON MULTI-SELECTOR DE TÉCNICOS
         function addRow() {
             if(!siteSelected) return;
             const checkedBoxesInForm = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value);
@@ -401,29 +395,22 @@
             const body = document.getElementById('table-body');
             const tr = document.createElement('tr');
 
-            // Crear el grid de técnicos internos para la fila
             let techChecksHtml = '';
             listaNombresTecnicos.forEach(nombre => {
                 const isChecked = checkedBoxesInForm.includes(nombre) ? 'checked' : '';
-                techChecksHtml += `
-                    <label class="table-tech-option">
-                        <input type="checkbox" value="${nombre}" ${isChecked}> ${nombre}
-                    </label>`;
+                techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked}> ${nombre}</label>`;
             });
 
             tr.innerHTML = `
                 <td><span class="static-cell" style="color: #004488; font-weight:800;">${siteSelected.full.toUpperCase()}</span></td>
                 <td><span class="static-cell">${siteSelected.torrero || 'N/A'}</span></td>
-                
                 <td>
                     <div style="padding:5px;">
                         <div class="table-multi-tech">${techChecksHtml}</div>
                         <div class="export-text">${allSelectedText}</div>
                     </div>
                 </td>
-
                 <td><span class="static-cell" style="font-weight:700; color: #0077ff;">${falla}</span></td>
-
                 <td>
                     <div style="padding:5px;">
                         <select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text">
@@ -439,12 +426,12 @@
                         <div class="export-text">${estadoActualText}</div>
                     </div>
                 </td>
-
                 <td>
-                    <textarea class="table-textarea" oninput="autoResize(this)">${comment}</textarea>
-                    <div class="export-text">${comment}</div>
+                    <div style="padding:5px;">
+                        <textarea class="table-textarea" oninput="autoResize(this)">${comment}</textarea>
+                        <div class="export-text">${comment}</div>
+                    </div>
                 </td>
-
                 <td class="no-capture" style="text-align:center; vertical-align: middle; padding: 10px;">
                     <button style="color:#ff3333; font-weight:bold; border:none; background:none; cursor:pointer; font-size:1.5rem;" onclick="this.closest('tr').remove()">×</button>
                 </td>
@@ -463,8 +450,8 @@
         async function downloadImg() {
             const area = document.getElementById('capture-area');
             
+            // Sincronización final antes de la captura
             document.querySelectorAll('#table-body tr').forEach(tr => {
-                // Sincronizar técnicos seleccionados en los checkboxes de la tabla
                 const selectedTechs = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
                 tr.querySelector('td:nth-child(3) .export-text').innerText = selectedTechs;
                 
@@ -569,10 +556,7 @@
                         let techChecksHtml = '';
                         listaNombresTecnicos.forEach(nombre => {
                             const isChecked = item.asignado.includes(nombre) ? 'checked' : '';
-                            techChecksHtml += `
-                                <label class="table-tech-option">
-                                    <input type="checkbox" value="${nombre}" ${isChecked}> ${nombre}
-                                </label>`;
+                            techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked}> ${nombre}</label>`;
                         });
 
                         tr.innerHTML = `
@@ -601,8 +585,10 @@
                                 </div>
                             </td>
                             <td>
-                                <textarea class="table-textarea" oninput="autoResize(this)">${item.comentarios}</textarea>
-                                <div class="export-text">${item.comentarios}</div>
+                                <div style="padding:5px;">
+                                    <textarea class="table-textarea" oninput="autoResize(this)">${item.comentarios}</textarea>
+                                    <div class="export-text">${item.comentarios}</div>
+                                </div>
                             </td>
                             <td class="no-capture" style="text-align:center;"><button style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:1.5rem;" onclick="this.closest('tr').remove()">×</button></td>
                         `;
