@@ -280,34 +280,57 @@
         renderCalendar();
     }
 
+    // --- NUEVO MOTOR DE CARGA DE DATOS ---
     async function loadTecnicos() {
-        // Simulación de carga CSV (Sustituir por fetch real si es necesario)
-        const csvData = `Nombre;Grupo
-JUAN PEREZ;1
-CARLOS RUIZ;1
-ANA LOPEZ;2
-MARIA GARCIA;2
-PEDRO MARIN;3
-LUIS SOTO;3
-ELENA CANO;4
-JOSE RAMON;4
-VACANTE A;5
-VACANTE B;5`;
-        
-        const lines = csvData.split('\n').slice(1);
-        state.tecnicos = [];
-        state.gruposBase = {};
+        try {
+            // Buscamos el archivo en la raíz del servidor/carpeta
+            const response = await fetch('tecnicos.csv');
+            if (!response.ok) throw new Error("No se encontró tecnicos.csv");
+            
+            const data = await response.text();
+            
+            // Procesamiento inteligente de filas
+            const lines = data.split(/\r?\n/);
+            state.tecnicos = [];
+            state.gruposBase = {};
 
-        lines.forEach(line => {
-            const [nombre, grupo] = line.split(';').map(s => s.trim());
-            if(!nombre) return;
-            state.tecnicos.push(nombre);
-            if(!state.gruposBase[grupo]) state.gruposBase[grupo] = [];
-            state.gruposBase[grupo].push(nombre);
-        });
-        state.tecnicos.sort();
+            // Saltamos la cabecera (index 0)
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue; // Ignorar líneas vacías
+
+                // Soportamos separadores comunes: punto y coma o coma
+                const separator = lines[i].includes(';') ? ';' : ',';
+                const [nombre, grupo] = lines[i].split(separator).map(s => s.trim().toUpperCase());
+
+                if (nombre) {
+                    state.tecnicos.push(nombre);
+                    
+                    // Si el técnico tiene un grupo asignado, lo agrupamos
+                    if (grupo) {
+                        if (!state.gruposBase[grupo]) state.gruposBase[grupo] = [];
+                        state.gruposBase[grupo].push(nombre);
+                    }
+                }
+            }
+
+            // Ordenamos alfabéticamente para que los selectores se vean bien
+            state.tecnicos.sort();
+            
+            // Agregamos un grupo "5" vacío por defecto si no existe para vacantes
+            if (!state.gruposBase["5"]) state.gruposBase["5"] = ["-- VACANTE --", "-- VACANTE --"];
+
+            console.log("✅ Datos cargados:", state.gruposBase);
+            showToast("Técnicos sincronizados desde CSV");
+
+        } catch (error) {
+            console.error("Error cargando CSV:", error);
+            showToast("Error al leer tecnicos.csv", "danger");
+            
+            // Fallback: Datos de emergencia por si el CSV falla
+            state.tecnicos = ["ERROR AL CARGAR CSV"];
+            state.gruposBase = {"!": ["Revisar archivo", "tecnicos.csv"]};
+        }
     }
-
     // --- RENDERIZADO ---
     function renderSidebar() {
         const container = document.getElementById('sidebar-groups');
