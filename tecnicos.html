@@ -7,93 +7,102 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc;
-            --border: #e2e8f0; --radius: 12px; --danger: #ef4444;
-        }
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { margin: 0; background: var(--bg); color: #1e293b; line-height: 1.5; }
+    :root {
+        --sidebar: #1e293b; 
+        --primary: #3b82f6; 
+        --accent: #60a5fa;
+        --bg: #f1f5f9;
+        --border: #e2e8f0; 
+        --radius: 16px; 
+        --danger: #ef4444;
+        --white: #ffffff;
+    }
+    * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body { margin: 0; background: var(--bg); color: #0f172a; line-height: 1.6; }
 
-        /* Header */
-        header {
-            background: var(--sidebar); color: white; padding: 15px 20px;
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .month-label { font-weight: 800; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
-        .sync-tag { font-size: 0.65rem; opacity: 0.8; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 20px; }
+    /* Header Modernizado */
+    header {
+        background: var(--sidebar); color: white; padding: 20px;
+        display: flex; justify-content: space-between; align-items: center;
+        position: sticky; top: 0; z-index: 100;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .month-label { font-weight: 800; font-size: 1.3rem; text-transform: capitalize; }
+    .sync-tag { font-size: 0.7rem; font-weight: 600; background: #10b981; color: white; padding: 5px 12px; border-radius: 50px; }
 
-        /* Calendario */
-        .container { padding: 15px; max-width: 1200px; margin: 0 auto; }
-        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day-name { text-align: center; font-size: 0.7rem; font-weight: 800; color: #64748b; padding-bottom: 10px; text-transform: uppercase; }
+    /* Contenedor */
+    .container { padding: 15px; max-width: 1400px; margin: 0 auto; }
+    .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+    .day-name { text-align: center; font-size: 0.75rem; font-weight: 800; color: #64748b; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
 
-        .day-card {
-            background: white; border: 1px solid var(--border); border-radius: var(--radius);
-            min-height: 120px; padding: 10px; display: flex; flex-direction: column; gap: 6px;
-            transition: transform 0.2s;
-        }
-        .day-card.weekend { background: #f1f5f9; }
-        .day-card.today { border: 2px solid var(--primary); box-shadow: 0 0 10px rgba(37, 99, 235, 0.1); }
-        .day-num { font-weight: 800; font-size: 0.9rem; margin-bottom: 4px; }
+    /* Tarjeta de Día Rediseñada */
+    .day-card {
+        background: var(--white); 
+        border: 1px solid var(--border); 
+        border-radius: var(--radius);
+        min-height: 160px; 
+        padding: 12px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .day-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .day-card.weekend { background: #f8fafc; }
+    .day-card.today { border: 2px solid var(--primary); background: #eff6ff; }
+    
+    .day-num { 
+        font-weight: 800; 
+        font-size: 1.1rem; 
+        color: #1e293b; 
+        display: flex; 
+        justify-content: space-between;
+        align-items: center;
+    }
+    .today-badge { font-size: 0.6rem; background: var(--primary); color: white; padding: 2px 8px; border-radius: 10px; }
 
-        /* Turnos */
-        .turno {
-            padding: 6px 8px; border-radius: 6px; font-size: 0.7rem;
-            border-left: 4px solid #94a3b8; background: #f8fafc;
-        }
-        .turno.principal { border-left-color: var(--primary); background: #ebf2ff; }
-        .turno-label { font-size: 0.55rem; font-weight: 800; color: #64748b; display: block; }
-        .turno.principal .turno-label { color: var(--primary); }
-        .name { font-weight: 700; display: block; color: #1e293b; }
+    /* Turnos Estilo "Pill" */
+    .turno {
+        padding: 10px; 
+        border-radius: 10px; 
+        font-size: 0.75rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+    }
+    .turno.principal { 
+        background: white; 
+        border: 1px solid #dbeafe; 
+        border-left: 4px solid var(--primary); 
+    }
+    .turno-label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: block; }
+    .turno.principal .turno-label { color: var(--primary); }
+    .name { font-weight: 700; color: #334155; font-size: 0.85rem; display: block; }
 
-        /* Bajas */
-        .baja-tag {
-            margin-top: auto; padding: 4px; background: #fff1f2; border: 1px solid #fecdd3;
-            border-radius: 4px; color: var(--danger); font-size: 0.6rem; font-weight: 800;
-            text-align: center;
-        }
+    /* Bajas */
+    .baja-tag {
+        margin-top: auto; padding: 6px; background: #fef2f2; border: 1px solid #fee2e2;
+        border-radius: 8px; color: var(--danger); font-size: 0.65rem; font-weight: 700;
+        display: flex; align-items: center; gap: 4px;
+    }
 
-        /* Cargando */
-        #loader {
-            position: fixed; inset: 0; background: white; z-index: 1000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    /* Botón HOME */
+    .home-fab {
+        position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px;
+        background: var(--sidebar); color: white; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; font-size: 24px;
+        text-decoration: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        z-index: 9999; border: 3px solid white; transition: 0.3s;
+    }
+    .home-fab:hover { transform: scale(1.1); background: #000; }
 
-        /* BOTÓN HOME FLOTANTE */
-        .home-fab {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 56px;
-            height: 56px;
-            background-color: var(--primary);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            text-decoration: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            z-index: 9999;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 2px solid white;
-        }
-        .home-fab:hover {
-            transform: scale(1.1) rotate(5deg);
-            background-color: #1d4ed8;
-        }
-        .home-fab:active { transform: scale(0.95); }
-
-        @media (max-width: 768px) {
-            .days-grid { grid-template-columns: repeat(2, 1fr); }
-            .day-name { display: none; }
-            .home-fab { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 20px; }
-        }
-    </style>
+    /* Vista Móvil: Un solo día por fila para máxima legibilidad */
+    @media (max-width: 768px) {
+        .days-grid { grid-template-columns: 1fr; }
+        .day-name { display: none; }
+        .day-card { min-height: auto; padding: 15px; }
+    }
+</style>
 </head>
 <body>
 
@@ -190,21 +199,24 @@
             cell.className = `day-card ${[0,6].includes(date.getDay()) ? 'weekend' : ''} ${isToday ? 'today' : ''}`;
 
             let turnosHtml = turnos.map((group, idx) => {
-                const p1 = absences.includes(group[0]) ? '<span style="color:red;text-decoration:line-through">BAJA</span>' : (group[0] || 'VACANTE');
-                const p2 = absences.includes(group[1]) ? '<span style="color:red;text-decoration:line-through">BAJA</span>' : (group[1] || 'VACANTE');
+                const p1 = absences.includes(group[0]) ? '<span style="color:#ef4444;text-decoration:line-through">BAJA</span>' : (group[0] || 'VACANTE');
+                const p2 = absences.includes(group[1]) ? '<span style="color:#ef4444;text-decoration:line-through">BAJA</span>' : (group[1] || 'VACANTE');
                 
                 return `
                 <div class="turno ${idx === 0 ? 'principal' : ''}">
-                    <span class="turno-label">${idx === 0 ? 'LÍDER' : 'APOYO'}</span>
+                    <span class="turno-label">${idx === 0 ? '🟢 Principal' : '⚪ Apoyo'}</span>
                     <span class="name">${p1}</span>
                     <span class="name">${p2}</span>
                 </div>`;
             }).join('');
 
-            let bajasHtml = absences.length ? `<div class="baja-tag"><i class="fas fa-medkit"></i> BAJA: ${absences.join(', ')}</div>` : "";
+            let bajasHtml = absences.length ? `<div class="baja-tag"><i class="fas fa-exclamation-circle"></i> BAJA: ${absences.join(', ')}</div>` : "";
 
             cell.innerHTML = `
-                <div class="day-num">${d} ${isToday ? ' <small>(Hoy)</small>' : ''}</div>
+                <div class="day-num">
+                    ${d} 
+                    ${isToday ? '<span class="today-badge">HOY</span>' : ''}
+                </div>
                 ${turnosHtml}
                 ${bajasHtml}
             `;
