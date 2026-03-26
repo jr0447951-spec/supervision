@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS v25.2 - EDICIÓN TOTAL</title>
+    <title>SISTEMA TURNOS v25.3 - FIX DRAG</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -13,26 +13,19 @@
         body { margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
         .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #334155; overflow-y: auto; }
         .section-title { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #334155; padding-bottom: 5px; }
-        
-        .sync-container { background: #1e293b; padding: 12px; border-radius: 10px; margin-top: auto; border: 1px solid #334155; }
+        .draggable-group { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: var(--radius); cursor: grab; margin-bottom: 8px; user-select: none; }
+        .draggable-group:hover { border-color: var(--primary); background: #24334d; }
+        .sync-container { background: #1e293b; padding: 12px; border-radius: 10px; margin-top: auto; }
         .progress-bg { background: #0f172a; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 8px; }
-        .progress-fill { width: 0%; height: 100%; transition: width 0.4s ease; background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .sync-text { font-size: 0.65rem; font-weight: 800; display: flex; justify-content: space-between; }
-
-        .draggable-group { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: var(--radius); cursor: grab; }
+        .progress-fill { width: 0%; height: 100%; transition: width 0.4s ease; background: var(--success); }
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-nav { height: 65px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; }
         .calendar-container { flex-grow: 1; overflow-y: auto; padding: 20px; background: white; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        
-        .day { 
-            border: 1px solid var(--border); border-radius: var(--radius); min-height: 200px; padding: 10px; 
-            display: flex; flex-direction: column; gap: 5px; position: relative;
-        }
+        .day { border: 1px solid var(--border); border-radius: var(--radius); min-height: 200px; padding: 10px; display: flex; flex-direction: column; gap: 5px; position: relative; }
         .day.weekend { background: #f8fafc; }
         .day.locked { border-top: 5px solid var(--sidebar); background: #f1f5f9; }
-        .day.drag-over { border: 2px dashed var(--primary); background: #eff6ff; }
-        
+        .day.drag-over { border: 2px dashed var(--primary) !important; background: #eff6ff !important; }
         .turno-card { border-radius: 8px; padding: 8px; font-size: 0.7rem; border-left: 4px solid var(--primary); background: #ebf2ff; cursor: grab; position: relative; }
         .btn { padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-blue { background: var(--primary); color: white; }
@@ -54,11 +47,11 @@
     <div id="sidebar-groups" style="display:flex; flex-direction:column; gap:8px;"></div>
     
     <div class="sync-container">
-        <div class="sync-text"><span>SYNC CLOUD</span><span id="sync-pc">0%</span></div>
+        <div style="font-size:0.65rem; display:flex; justify-content:space-between"><span>SINCRO NUBE</span><span id="sync-pc">0%</span></div>
         <div class="progress-bg"><div id="sync-bar" class="progress-fill"></div></div>
     </div>
 
-    <div class="section-title">Estadísticas (Global)</div>
+    <div class="section-title">Estadísticas Mensuales</div>
     <div id="stats-panel" style="padding:10px; background:#1e293b; border-radius:10px; font-size:0.7rem;"></div>
 </aside>
 
@@ -69,7 +62,7 @@
             <button class="btn" style="display:inline-flex" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
         </div>
         <div id="month-display" style="font-weight:800; font-size:1.2rem; text-transform: uppercase;"></div>
-        <button class="btn" onclick="capture()"><i class="fas fa-camera"></i> EXPORTAR PNG</button>
+        <button class="btn" onclick="capture()"><i class="fas fa-camera"></i> DESCARGAR PNG</button>
     </header>
     <div class="calendar-container">
         <div class="grid" id="grid"></div>
@@ -80,12 +73,10 @@
     <div class="modal-box">
         <h4>Editar Grupo</h4>
         <input type="hidden" id="m-id"><input type="hidden" id="m-idx">
-        <label style="font-size:0.7rem">Técnico 1</label>
         <select id="sel-t1" style="width:100%; padding:10px; margin-bottom:10px;"></select>
-        <label style="font-size:0.7rem">Técnico 2</label>
         <select id="sel-t2" style="width:100%; padding:10px; margin-bottom:20px;"></select>
-        <button class="btn btn-blue" style="width:100%; margin-bottom:5px" onclick="confirmEdit()">GUARDAR CAMBIOS</button>
-        <button class="btn" style="width:100%; background:#fee2e2; color:var(--danger)" onclick="deleteGroup()">ELIMINAR GRUPO</button>
+        <button class="btn btn-blue" style="width:100%; margin-bottom:5px" onclick="confirmEdit()">GUARDAR</button>
+        <button class="btn" style="width:100%; background:#fee2e2; color:var(--danger)" onclick="deleteGroup()">ELIMINAR</button>
         <button class="btn" style="width:100%" onclick="closeModal()">CANCELAR</button>
     </div>
 </div>
@@ -102,11 +93,9 @@
         await loadCSV();
         renderSidebar();
         try {
-            updateProgress(30);
             const res = await fetch(GOOGLE_SCRIPT_URL);
             const cloudData = await res.json();
             if (cloudData && cloudData.manual) state.db = cloudData;
-            updateProgress(100); setTimeout(() => updateProgress(0), 1000);
         } catch (e) {
             const local = localStorage.getItem(DB_KEY);
             if (local) state.db = JSON.parse(local);
@@ -131,7 +120,7 @@
                 }
             });
             state.tecnicos.sort();
-        } catch (e) { }
+        } catch (e) { console.error("CSV Error"); }
     }
 
     function getAutoTurno(date) {
@@ -153,19 +142,11 @@
 
         for(let i=0; i<offset; i++) grid.innerHTML += `<div></div>`;
 
-        // Calculamos estadísticas de TODO el historial manual para el panel lateral
-        Object.keys(state.db.manual).forEach(dateId => {
-            state.db.manual[dateId].forEach(g => {
-                g.forEach(name => { if(name && !state.db.absences[dateId]?.includes(name)) counts[name] = (counts[name]||0)+1; });
-            });
-        });
-
         for(let d=1; d<=total; d++) {
             const dateId = `${y}-${m+1}-${d}`;
             const date = new Date(y, m, d);
             const isWE = [0,6].includes(date.getDay());
             
-            // Si no hay estado de candado, por defecto fines de semana cerrados
             if (state.db.locks[dateId] === undefined) state.db.locks[dateId] = isWE;
             const isLocked = state.db.locks[dateId];
             
@@ -175,25 +156,23 @@
             const cell = document.createElement('div');
             cell.className = `day ${isWE?'weekend':''} ${isLocked?'locked':''}`;
             
-            // Habilitar soltar en CUALQUIER día
-            cell.ondragover = e => { e.preventDefault(); cell.classList.add('drag-over'); };
-            cell.ondragleave = () => cell.classList.remove('drag-over');
-            cell.ondrop = e => handleDrop(e, dateId, date);
+            // HABILITAR EVENTOS DE ARRASTRE
+            cell.addEventListener('dragover', (e) => { e.preventDefault(); cell.classList.add('drag-over'); });
+            cell.addEventListener('dragleave', () => cell.classList.remove('drag-over'));
+            cell.addEventListener('drop', (e) => handleDrop(e, dateId, date));
 
             let turnosHtml = turnos.map((group, idx) => {
-                const groupData = JSON.stringify(group).replace(/"/g, '&quot;');
-                return `<div class="turno-card" draggable="true" ondragstart="event.dataTransfer.setData('text/group', '${groupData}')">
+                group.forEach(n => { if(n && !dayAbs.includes(n)) counts[n]++ });
+                const groupJSON = JSON.stringify(group).replace(/"/g, '&quot;');
+                return `<div class="turno-card" draggable="true" ondragstart="event.dataTransfer.setData('text/group', '${groupJSON}')">
                     <b>${(group[0] && dayAbs.includes(group[0])) ? `<s>${group[0]}</s>` : (group[0]||'VACANTE')}</b><br>
                     <b>${(group[1] && dayAbs.includes(group[1])) ? `<s>${group[1]}</s>` : (group[1]||'VACANTE')}</b>
-                    <i class="fas fa-edit" style="position:absolute; right:5px; top:5px; opacity:0.5; cursor:pointer" onclick="openEditor('${dateId}',${idx})"></i>
+                    ${!isLocked ? `<i class="fas fa-edit" style="position:absolute; right:5px; top:5px; opacity:0.5; cursor:pointer" onclick="openEditor('${dateId}',${idx})"></i>` : ''}
                 </div>`;
             }).join('');
 
             cell.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <b>${d}</b>
-                    <i class="fas ${isLocked?'fa-lock':'fa-lock-open'}" onclick="toggleLock('${dateId}')" style="cursor:pointer; font-size:0.8rem; color:${isLocked?'#64748b':'#2563eb'}"></i>
-                </div>
+                <div style="display:flex; justify-content:space-between"><b>${d}</b><i class="fas ${isLocked?'fa-lock':'fa-lock-open'}" onclick="toggleLock('${dateId}')" style="cursor:pointer"></i></div>
                 ${turnosHtml}
                 ${dayAbs.length > 0 ? `<div style="margin-top:auto; padding-top:5px; border-top:1px dashed #fecdd3;">${dayAbs.map(n => `<div style="background:#fff1f2; color:#e11d48; padding:3px; border-radius:4px; font-size:0.6rem; display:flex; justify-content:space-between; margin-bottom:2px;"><span>${n}</span><i class="fas fa-times" onclick="removeAbsence('${dateId}','${n}')" style="cursor:pointer"></i></div>`).join('')}</div>` : ''}
             `;
@@ -204,27 +183,29 @@
 
     function handleDrop(e, id, date) {
         e.preventDefault();
+        const cell = document.querySelector(`[onclick*="toggleLock('${id}')"]`).closest('.day');
+        cell.classList.remove('drag-over');
+
         const rawData = e.dataTransfer.getData("text/group");
         if(!rawData) return;
         const group = JSON.parse(rawData);
         
-        // Si el día estaba bloqueado (auto), convertimos a manual para permitir añadir
-        if(!state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date)));
+        // REGLA: Si no hay manual, cargar auto para no perder los grupos previos
+        if(!state.db.manual[id]) {
+            state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date)));
+        }
         
-        if(state.db.manual[id].length >= 6) return alert("Máximo 6 grupos");
+        // Validar duplicados
         const existentes = state.db.manual[id].flat().filter(n => n !== "");
-        if (group.some(n => n !== "" && existentes.includes(n))) return alert("Técnico repetido");
+        if (group.some(n => n !== "" && existentes.includes(n))) return alert("Técnico ya asignado hoy");
 
         state.db.manual[id].push(group);
-        state.db.locks[id] = false; // Abrimos el candado al editar
+        state.db.locks[id] = false; // Abrir candado para confirmar edición manual
         save();
     }
 
     function toggleLock(id) {
-        // Al cerrar el candado, si no había datos manuales, se cargan los automáticos para que no quede vacío
-        if(state.db.locks[id] && !state.db.manual[id]) {
-             state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(new Date(id.replace(/-/g,'/')))));
-        }
+        if(state.db.locks[id] && !state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(new Date(id.replace(/-/g,'/')))));
         state.db.locks[id] = !state.db.locks[id];
         save();
     }
@@ -247,11 +228,11 @@
     function renderSidebar() {
         const cont = document.getElementById('sidebar-groups'); cont.innerHTML = "";
         Object.keys(state.gBase).sort().forEach(g => {
-            const groupData = JSON.stringify(state.gBase[g]).replace(/"/g, '&quot;');
+            const groupJSON = JSON.stringify(state.gBase[g]).replace(/"/g, '&quot;');
             const div = document.createElement('div');
             div.className = "draggable-group"; div.draggable = true;
             div.innerHTML = `<span style="font-size:0.6rem; color:var(--primary); font-weight:800">GRUPO ${g}</span><div style="font-size:0.75rem">${state.gBase[g].join(' & ')}</div>`;
-            div.ondragstart = e => e.dataTransfer.setData("text/group", groupData);
+            div.addEventListener('dragstart', (e) => e.dataTransfer.setData("text/group", JSON.parse(JSON.stringify(state.gBase[g])) ? JSON.stringify(state.gBase[g]) : ""));
             cont.appendChild(div);
         });
         const opts = `<option value="">-- SELECCIONAR --</option>` + state.tecnicos.map(t=>`<option value="${t}">${t}</option>`).join('');
