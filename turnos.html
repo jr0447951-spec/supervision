@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS v24.7 - FINAL</title>
+    <title>SISTEMA TURNOS v24.9 - CLOUD SYNC</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; --border: #e2e8f0; --danger: #ef4444; --radius: 12px; }
+        :root { --sidebar: #0f172a; --primary: #2563eb; --bg: #f8fafc; --border: #e2e8f0; --danger: #ef4444; --success: #10b981; --radius: 12px; }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden; }
         .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #334155; overflow-y: auto; }
         .section-title { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+        
+        /* Estilos de la Barra de Carga */
+        .sync-container { background: #1e293b; padding: 12px; border-radius: 10px; margin-top: auto; border: 1px solid #334155; }
+        .progress-bg { background: #0f172a; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; box-shadow: 0 0 10px var(--success); }
+        .sync-text { font-size: 0.65rem; font-weight: 800; display: flex; justify-content: space-between; }
+
         .draggable-group { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: var(--radius); cursor: grab; }
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-nav { height: 65px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; }
@@ -41,9 +48,19 @@
     </div>
     <div class="section-title">Arrastrar Grupos</div>
     <div id="sidebar-groups" style="display:flex; flex-direction:column; gap:8px;"></div>
+    
+    <div class="sync-container">
+        <div class="sync-text">
+            <span>SINCRO NUBE</span>
+            <span id="sync-pc">0%</span>
+        </div>
+        <div class="progress-bg">
+            <div id="sync-bar" class="progress-fill"></div>
+        </div>
+    </div>
+
     <div class="section-title">Estadísticas</div>
     <div id="stats-panel" style="padding:10px; background:#1e293b; border-radius:10px; font-size:0.7rem;"></div>
-    <button class="btn btn-blue" style="margin-top:auto" onclick="syncSheets()">Sincronizar Nube</button>
 </aside>
 
 <main class="main-content">
@@ -83,12 +100,16 @@
         renderSidebar();
         
         try {
+            updateProgress(30);
             const res = await fetch(GOOGLE_SCRIPT_URL);
             const cloudData = await res.json();
             if (cloudData && cloudData.manual) state.db = cloudData;
+            updateProgress(100);
+            setTimeout(() => updateProgress(0), 1500);
         } catch (e) {
             const local = localStorage.getItem(DB_KEY);
             if (local) state.db = JSON.parse(local);
+            updateProgress(0);
         }
         renderCalendar();
     }
@@ -110,7 +131,7 @@
                 }
             });
             state.tecnicos.sort();
-        } catch (e) { console.error("Error CSV"); }
+        } catch (e) { }
     }
 
     function getAutoTurno(date) {
@@ -155,7 +176,8 @@
 
             let turnosHtml = turnos.map((group, idx) => {
                 group.forEach(n => { if(n && !dayAbs.includes(n)) counts[n]++ });
-                return `<div class="turno-card" draggable="true" ondragstart="event.dataTransfer.setData('text/group', JSON.stringify(${JSON.stringify(group)}))">
+                const jsonStr = JSON.stringify(group).replace(/"/g, '&quot;');
+                return `<div class="turno-card" draggable="true" ondragstart="event.dataTransfer.setData('text/group', '${jsonStr}')">
                     <b>${(group[0] && dayAbs.includes(group[0])) ? `<s>${group[0]}</s>` : (group[0]||'VACANTE')}</b><br>
                     <b>${(group[1] && dayAbs.includes(group[1])) ? `<s>${group[1]}</s>` : (group[1]||'VACANTE')}</b>
                     ${!isLocked ? `<i class="fas fa-edit" style="position:absolute; right:5px; top:5px; opacity:0.5; cursor:pointer" onclick="openEditor('${dateId}',${idx})"></i>` : ''}
@@ -174,12 +196,13 @@
 
     function handleDrop(e, id, date) {
         e.preventDefault();
-        const group = JSON.parse(e.dataTransfer.getData("text/group"));
+        const data = e.dataTransfer.getData("text/group");
+        if(!data) return;
+        const group = JSON.parse(data);
         if(!state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date)));
         
-        // Validación duplicados
-        const actuales = state.db.manual[id].flat().filter(n => n);
-        if (group.some(n => n && actuales.includes(n))) return alert("Técnico ya asignado hoy");
+        const existentes = state.db.manual[id].flat().filter(n => n);
+        if (group.some(n => n && existentes.includes(n))) return alert("Técnico ya asignado hoy");
 
         state.db.manual[id].push(group);
         state.db.locks[id] = true;
@@ -192,23 +215,31 @@
         save();
     }
 
-    function save() { 
-        localStorage.setItem(DB_KEY, JSON.stringify(state.db));
-        renderCalendar();
-        syncSheets(); 
+    function updateProgress(val) {
+        document.getElementById('sync-bar').style.width = val + '%';
+        document.getElementById('sync-pc').innerText = val + '%';
     }
 
-    async function syncSheets() {
-        try { await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(state.db) }); } catch (e) {}
+    async function save() { 
+        localStorage.setItem(DB_KEY, JSON.stringify(state.db));
+        renderCalendar();
+        
+        updateProgress(50);
+        try { 
+            await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(state.db) }); 
+            updateProgress(100);
+            setTimeout(() => updateProgress(0), 1000);
+        } catch (e) { updateProgress(0); }
     }
 
     function renderSidebar() {
         const cont = document.getElementById('sidebar-groups'); cont.innerHTML = "";
         Object.keys(state.gBase).sort().forEach(g => {
+            const jsonStr = JSON.stringify(state.gBase[g]).replace(/"/g, '&quot;');
             const div = document.createElement('div');
             div.className = "draggable-group"; div.draggable = true;
             div.innerHTML = `<span style="font-size:0.6rem; color:var(--primary); font-weight:800">GRUPO ${g}</span><div style="font-size:0.75rem">${state.gBase[g].join(' & ')}</div>`;
-            div.ondragstart = e => e.dataTransfer.setData("text/group", JSON.stringify(state.gBase[g]));
+            div.ondragstart = e => e.dataTransfer.setData("text/group", jsonStr);
             cont.appendChild(div);
         });
         const opts = `<option value="">-- SELECCIONAR --</option>` + state.tecnicos.map(t=>`<option value="${t}">${t}</option>`).join('');
