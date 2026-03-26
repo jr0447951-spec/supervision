@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS v24.9 - CLOUD SYNC</title>
+    <title>SISTEMA TURNOS v25.1 - MULTIGRUPO</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -14,10 +14,10 @@
         .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #334155; overflow-y: auto; }
         .section-title { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #334155; padding-bottom: 5px; }
         
-        /* Estilos de la Barra de Carga */
+        /* Barra de Sincronización */
         .sync-container { background: #1e293b; padding: 12px; border-radius: 10px; margin-top: auto; border: 1px solid #334155; }
         .progress-bg { background: #0f172a; height: 8px; border-radius: 10px; overflow: hidden; margin-top: 8px; }
-        .progress-fill { background: var(--success); width: 0%; height: 100%; transition: width 0.4s ease; box-shadow: 0 0 10px var(--success); }
+        .progress-fill { width: 0%; height: 100%; transition: width 0.4s ease; background: var(--success); box-shadow: 0 0 10px var(--success); }
         .sync-text { font-size: 0.65rem; font-weight: 800; display: flex; justify-content: space-between; }
 
         .draggable-group { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: var(--radius); cursor: grab; }
@@ -25,11 +25,18 @@
         .top-nav { height: 65px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; }
         .calendar-container { flex-grow: 1; overflow-y: auto; padding: 20px; background: white; }
         .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-        .day { border: 1px solid var(--border); border-radius: var(--radius); min-height: 180px; padding: 10px; display: flex; flex-direction: column; gap: 5px; position: relative; }
+        
+        .day { 
+            border: 1px solid var(--border); border-radius: var(--radius); min-height: 200px; padding: 10px; 
+            display: flex; flex-direction: column; gap: 5px; position: relative; transition: 0.2s;
+        }
         .day.weekend { background: #f8fafc; }
         .day.locked { border-top: 5px solid var(--sidebar); }
-        .day.drag-over { border: 2px dashed var(--primary); background: #eff6ff; }
+        .day.drag-over { border: 2px dashed var(--primary); background: #eff6ff; transform: scale(1.02); z-index: 10; }
+        
         .turno-card { border-radius: 8px; padding: 8px; font-size: 0.7rem; border-left: 4px solid var(--primary); background: #ebf2ff; cursor: grab; position: relative; }
+        .turno-card:hover { filter: brightness(0.95); }
+
         .btn { padding: 10px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-blue { background: var(--primary); color: white; }
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
@@ -50,13 +57,8 @@
     <div id="sidebar-groups" style="display:flex; flex-direction:column; gap:8px;"></div>
     
     <div class="sync-container">
-        <div class="sync-text">
-            <span>SINCRO NUBE</span>
-            <span id="sync-pc">0%</span>
-        </div>
-        <div class="progress-bg">
-            <div id="sync-bar" class="progress-fill"></div>
-        </div>
+        <div class="sync-text"><span>SINCRONIZACIÓN NUBE</span><span id="sync-pc">0%</span></div>
+        <div class="progress-bg"><div id="sync-bar" class="progress-fill"></div></div>
     </div>
 
     <div class="section-title">Estadísticas</div>
@@ -98,14 +100,12 @@
     async function init() {
         await loadCSV();
         renderSidebar();
-        
         try {
             updateProgress(30);
             const res = await fetch(GOOGLE_SCRIPT_URL);
             const cloudData = await res.json();
             if (cloudData && cloudData.manual) state.db = cloudData;
-            updateProgress(100);
-            setTimeout(() => updateProgress(0), 1500);
+            updateProgress(100); setTimeout(() => updateProgress(0), 1000);
         } catch (e) {
             const local = localStorage.getItem(DB_KEY);
             if (local) state.db = JSON.parse(local);
@@ -131,7 +131,7 @@
                 }
             });
             state.tecnicos.sort();
-        } catch (e) { }
+        } catch (e) { console.error("CSV error"); }
     }
 
     function getAutoTurno(date) {
@@ -139,8 +139,7 @@
         const diff = Math.floor((date - START_REF) / 86400000);
         const cycle = Math.max(0, Math.floor(diff / 7)) % 4;
         const map = { 0:["1","2"], 1:["3","4"], 2:["2","1"], 3:["4","3"] };
-        const g1 = map[cycle][0], g2 = map[cycle][1];
-        return [ [...(state.gBase[g1] || [])], [...(state.gBase[g2] || [])] ];
+        return [ [...(state.gBase[map[cycle][0]] || [])], [...(state.gBase[map[cycle][1]] || [])] ];
     }
 
     function renderCalendar() {
@@ -176,8 +175,9 @@
 
             let turnosHtml = turnos.map((group, idx) => {
                 group.forEach(n => { if(n && !dayAbs.includes(n)) counts[n]++ });
-                const jsonStr = JSON.stringify(group).replace(/"/g, '&quot;');
-                return `<div class="turno-card" draggable="true" ondragstart="event.dataTransfer.setData('text/group', '${jsonStr}')">
+                // Limpieza de datos para el atributo ondragstart
+                const groupData = JSON.stringify(group).replace(/"/g, '&quot;');
+                return `<div class="turno-card" draggable="true" ondragstart="event.dataTransfer.setData('text/group', '${groupData}')">
                     <b>${(group[0] && dayAbs.includes(group[0])) ? `<s>${group[0]}</s>` : (group[0]||'VACANTE')}</b><br>
                     <b>${(group[1] && dayAbs.includes(group[1])) ? `<s>${group[1]}</s>` : (group[1]||'VACANTE')}</b>
                     ${!isLocked ? `<i class="fas fa-edit" style="position:absolute; right:5px; top:5px; opacity:0.5; cursor:pointer" onclick="openEditor('${dateId}',${idx})"></i>` : ''}
@@ -196,13 +196,20 @@
 
     function handleDrop(e, id, date) {
         e.preventDefault();
-        const data = e.dataTransfer.getData("text/group");
-        if(!data) return;
-        const group = JSON.parse(data);
+        const rawData = e.dataTransfer.getData("text/group");
+        if(!rawData) return;
+        const group = JSON.parse(rawData);
+        
         if(!state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(date)));
         
-        const existentes = state.db.manual[id].flat().filter(n => n);
-        if (group.some(n => n && existentes.includes(n))) return alert("Técnico ya asignado hoy");
+        // REGLA: Hasta 6 grupos
+        if(state.db.manual[id].length >= 6) return alert("Máximo 6 grupos por día");
+
+        // REGLA: No repetir técnicos el mismo día
+        const existentes = state.db.manual[id].flat().filter(n => n !== "");
+        if (group.some(n => n !== "" && existentes.includes(n))) {
+            return alert("⚠️ BLOQUEO: Técnico ya asignado este día.");
+        }
 
         state.db.manual[id].push(group);
         state.db.locks[id] = true;
@@ -223,23 +230,21 @@
     async function save() { 
         localStorage.setItem(DB_KEY, JSON.stringify(state.db));
         renderCalendar();
-        
         updateProgress(50);
         try { 
             await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(state.db) }); 
-            updateProgress(100);
-            setTimeout(() => updateProgress(0), 1000);
+            updateProgress(100); setTimeout(() => updateProgress(0), 1000);
         } catch (e) { updateProgress(0); }
     }
 
     function renderSidebar() {
         const cont = document.getElementById('sidebar-groups'); cont.innerHTML = "";
         Object.keys(state.gBase).sort().forEach(g => {
-            const jsonStr = JSON.stringify(state.gBase[g]).replace(/"/g, '&quot;');
+            const groupData = JSON.stringify(state.gBase[g]).replace(/"/g, '&quot;');
             const div = document.createElement('div');
             div.className = "draggable-group"; div.draggable = true;
             div.innerHTML = `<span style="font-size:0.6rem; color:var(--primary); font-weight:800">GRUPO ${g}</span><div style="font-size:0.75rem">${state.gBase[g].join(' & ')}</div>`;
-            div.ondragstart = e => e.dataTransfer.setData("text/group", jsonStr);
+            div.ondragstart = e => e.dataTransfer.setData("text/group", groupData);
             cont.appendChild(div);
         });
         const opts = `<option value="">-- SELECCIONAR --</option>` + state.tecnicos.map(t=>`<option value="${t}">${t}</option>`).join('');
@@ -257,7 +262,13 @@
     function confirmEdit() {
         const id = document.getElementById('m-id').value, idx = parseInt(document.getElementById('m-idx').value);
         if(!state.db.manual[id]) state.db.manual[id] = JSON.parse(JSON.stringify(getAutoTurno(new Date(id.replace(/-/g,'/')))));
-        state.db.manual[id][idx] = [document.getElementById('sel-t1').value, document.getElementById('sel-t2').value];
+        
+        const nuevoGrupo = [document.getElementById('sel-t1').value, document.getElementById('sel-t2').value];
+        const otrosTurnos = state.db.manual[id].filter((_, i) => i !== idx).flat().filter(n => n !== "");
+        
+        if (nuevoGrupo.some(n => n !== "" && otrosTurnos.includes(n))) return alert("Técnico ya asignado hoy.");
+
+        state.db.manual[id][idx] = nuevoGrupo;
         state.db.locks[id] = true;
         save(); closeModal();
     }
