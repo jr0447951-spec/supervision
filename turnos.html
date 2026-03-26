@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA PROFESIONAL v24.5 - CLOUD</title>
+    <title>SISTEMA PROFESIONAL v24.6</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -14,7 +14,6 @@
         .sidebar { width: 320px; background: var(--sidebar); color: white; padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid #334155; overflow-y: auto; }
         .section-title { font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #334155; padding-bottom: 5px; }
         .draggable-group { background: #1e293b; border: 1px solid #334155; padding: 10px; border-radius: var(--radius); cursor: grab; }
-        .group-tag { font-size: 0.6rem; color: var(--primary); font-weight: 800; display: block; }
         .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
         .top-nav { height: 65px; background: white; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 25px; }
         .calendar-container { flex-grow: 1; overflow-y: auto; padding: 20px; background: white; }
@@ -84,14 +83,20 @@
         await loadCSV();
         renderSidebar();
         
+        // 1. Cargar datos locales primero para asegurar que haya algo que mostrar
+        const local = localStorage.getItem(DB_KEY);
+        if (local) state.db = JSON.parse(local);
+        
+        // 2. Intentar actualizar desde la nube
         try {
             const res = await fetch(GOOGLE_SCRIPT_URL);
             const cloudData = await res.json();
-            if (cloudData && cloudData.manual) state.db = cloudData;
-        } catch (e) {
-            const local = localStorage.getItem(DB_KEY);
-            if (local) state.db = JSON.parse(local);
-        }
+            if (cloudData && cloudData.manual) {
+                state.db = cloudData;
+                localStorage.setItem(DB_KEY, JSON.stringify(state.db));
+            }
+        } catch (e) { console.warn("Nube no disponible"); }
+
         renderCalendar();
     }
 
@@ -208,7 +213,7 @@
         Object.keys(state.gBase).sort().forEach(g => {
             const div = document.createElement('div');
             div.className = "draggable-group"; div.draggable = true;
-            div.innerHTML = `<span class="group-tag">GRUPO ${g}</span><div style="font-size:0.75rem">${state.gBase[g].join(' & ')}</div>`;
+            div.innerHTML = `<span style="font-size:0.6rem; color:var(--primary); font-weight:800">GRUPO ${g}</span><div style="font-size:0.75rem">${state.gBase[g].join(' & ')}</div>`;
             div.ondragstart = e => e.dataTransfer.setData("text/group", JSON.stringify(state.gBase[g]));
             cont.appendChild(div);
         });
