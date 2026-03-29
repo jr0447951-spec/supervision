@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CONSULTA DE TURNOS - VISTA TÉCNICA</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <style>
     :root {
         --sidebar: #0f172a; 
         --primary: #2563eb; 
         --bg: #f8fafc;
         --border: #e2e8f0; 
-        --radius: 12px; 
+        --radius: 16px; 
         --danger: #ef4444;
     }
     * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
-    body { margin: 0; background: var(--bg); color: #0f172a; overflow-x: hidden; }
+    body { margin: 0; background: var(--bg); color: #0f172a; }
 
     /* Loader */
     #loader {
@@ -26,54 +26,80 @@
     .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+    /* Header Rediseñado con el Mes en Curso */
     header {
-        background: var(--sidebar); color: white; padding: 15px 20px;
-        display: flex; justify-content: space-between; align-items: center;
-        position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        background: var(--sidebar);
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white; 
+        padding: 40px 20px;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
     }
-    .month-label { font-weight: 800; font-size: 1.1rem; text-transform: uppercase; }
-
-    .container { padding: 15px; max-width: 1400px; margin: 0 auto; }
     
-    .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
-    .day-name { text-align: center; font-size: 0.65rem; font-weight: 800; color: #64748b; padding-bottom: 5px; text-transform: uppercase; }
+    .month-title { 
+        font-weight: 900; 
+        font-size: 2.5rem; 
+        text-transform: uppercase; 
+        letter-spacing: -1px;
+        margin: 0;
+        background: linear-gradient(to right, #fff, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    .sub-title {
+        font-size: 0.8rem;
+        color: var(--primary);
+        font-weight: 800;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        margin-top: 5px;
+        display: block;
+    }
+
+    /* Contenedor y Grid */
+    .container { padding: 20px; max-width: 1400px; margin: 0 auto; }
+    .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; }
+    .day-name { text-align: center; font-size: 0.7rem; font-weight: 900; color: #64748b; padding-bottom: 10px; text-transform: uppercase; }
 
     .day-card {
         background: white; border: 1px solid var(--border); border-radius: var(--radius);
-        min-height: 150px; padding: 10px; display: flex; flex-direction: column; gap: 6px;
-        transition: 0.2s;
+        min-height: 160px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+        transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .day-card.weekend { background: #f1f5f9; }
-    .day-card.today { border: 2px solid var(--primary); box-shadow: 0 0 10px rgba(37, 99, 235, 0.1); }
+    .day-card.today { border: 2px solid var(--primary); background: #eff6ff; transform: scale(1.02); z-index: 5; }
     
-    .day-num { font-weight: 800; font-size: 1rem; color: #1e293b; display: flex; justify-content: space-between; }
-    .today-badge { font-size: 0.5rem; background: var(--primary); color: white; padding: 2px 6px; border-radius: 4px; }
+    .day-num { font-weight: 900; font-size: 1.2rem; color: #1e293b; display: flex; justify-content: space-between; }
+    .today-badge { font-size: 0.55rem; background: var(--primary); color: white; padding: 3px 8px; border-radius: 6px; }
 
     .turno {
-        padding: 8px; border-radius: 8px; font-size: 0.7rem;
+        padding: 10px; border-radius: 10px; font-size: 0.75rem;
         background: #f8fafc; border: 1px solid #e2e8f0;
     }
-    .turno.principal { border-left: 4px solid var(--primary); background: #eff6ff; }
-    .turno-label { font-size: 0.55rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; display: block; }
-    .name { font-weight: 700; color: #334155; display: block; line-height: 1.2; }
+    .turno.principal { border-left: 5px solid var(--primary); background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .turno-label { font-size: 0.6rem; font-weight: 900; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; display: block; }
+    .name { font-weight: 700; color: #334155; display: block; }
 
     .baja-tag {
-        margin-top: auto; padding: 4px; background: #fef2f2; border-radius: 6px; 
-        color: var(--danger); font-size: 0.6rem; font-weight: 700; text-align: center;
+        margin-top: auto; padding: 6px; background: #fef2f2; border-radius: 8px; 
+        color: var(--danger); font-size: 0.65rem; font-weight: 800; text-align: center;
     }
 
     .home-fab {
-        position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px;
+        position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px;
         background: var(--sidebar); color: white; border-radius: 50%;
-        display: flex; align-items: center; justify-content: center; font-size: 20px;
-        text-decoration: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000;
+        display: flex; align-items: center; justify-content: center; font-size: 24px;
+        text-decoration: none; box-shadow: 0 10px 20px rgba(0,0,0,0.3); z-index: 1000;
     }
 
     @media (max-width: 768px) {
-        .days-grid { gap: 5px; }
-        .day-card { min-height: 100px; padding: 5px; }
-        .name { font-size: 0.6rem; }
-        .turno { padding: 4px; }
+        .month-title { font-size: 1.8rem; }
+        .days-grid { gap: 6px; }
+        .day-card { min-height: 110px; padding: 6px; }
+        .name { font-size: 0.65rem; }
     }
 </style>
 </head>
@@ -81,18 +107,16 @@
 
 <div id="loader">
     <div class="spinner"></div>
-    <p style="margin-top:10px; font-size:0.8rem;">Cargando cuadrante...</p>
+    <p style="margin-top:15px; font-weight:700;">Sincronizando Cuadrante...</p>
 </div>
 
 <header>
-    <div class="month-label" id="month-display">---</div>
-    <div style="font-size: 0.6rem; background: #10b981; padding: 4px 8px; border-radius: 20px; font-weight: 800;">
-        OFICIAL <i class="fas fa-check-circle"></i>
-    </div>
+    <span class="sub-title">Programación de Turnos</span>
+    <h1 class="month-title" id="month-display">---</h1>
 </header>
 
 <div class="container">
-    <div class="days-grid" style="margin-bottom: 10px;">
+    <div class="days-grid" style="margin-bottom: 15px;">
         <div class="day-name">Lun</div><div class="day-name">Mar</div><div class="day-name">Mié</div>
         <div class="day-name">Jue</div><div class="day-name">Vie</div><div class="day-name">Sáb</div>
         <div class="day-name">Dom</div>
@@ -113,7 +137,6 @@
 
     async function init() {
         try {
-            // 1. Cargar Técnicos
             const r = await fetch('tecnicos.csv');
             const d = await r.text();
             const lines = d.split(/\r?\n/).slice(1);
@@ -125,7 +148,6 @@
                 }
             });
 
-            // 2. Cargar Datos Nube
             const response = await fetch(API_URL);
             state.db = await response.json();
 
@@ -133,7 +155,7 @@
             document.getElementById('loader').style.display = 'none';
         } catch (e) {
             console.error(e);
-            alert("Error de conexión con el servidor.");
+            alert("Error al obtener datos actualizados.");
         }
     }
 
@@ -151,6 +173,7 @@
         const now = new Date();
         const y = now.getFullYear(), m = now.getMonth();
         
+        // Título del mes en curso con formato elegante
         document.getElementById('month-display').innerText = new Intl.DateTimeFormat('es-ES', {month:'long', year:'numeric'}).format(now);
 
         const offset = (new Date(y, m, 1).getDay() || 7) - 1;
@@ -164,7 +187,6 @@
             const isToday = now.getDate() === d && now.getMonth() === m;
             const isWeekend = [0,6].includes(date.getDay());
             
-            // Lógica de Candados
             if (state.db.locks[dateId] === undefined) state.db.locks[dateId] = isWeekend;
             const isLocked = state.db.locks[dateId];
             
@@ -191,7 +213,7 @@
                     ${d} ${isToday ? '<span class="today-badge">HOY</span>' : ''}
                 </div>
                 ${turnosHtml}
-                ${dayAbs.length ? `<div class="baja-tag"><i class="fas fa-user-slash"></i> BAJA: ${dayAbs.length}</div>` : ""}
+                ${dayAbs.length ? `<div class="baja-tag"><i class="fas fa-user-slash"></i> BAJA ACTIVA</div>` : ""}
             `;
             grid.appendChild(cell);
         }
