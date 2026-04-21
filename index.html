@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.1.6/dom-to-image-more.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* ESTILOS GENERALES Y BASE */
@@ -111,10 +111,17 @@
             font-size: 1rem; letter-spacing: 1px;
         }
 
-        /* --- ÁREA DE CAPTURA (CORRECCIÓN CRÍTICA DE FONDO) --- */
+        /* --- ÁREA DE CAPTURA (CORRECCIÓN CRÍTICA) --- */
         #capture-area {
-            background: #ffffff !important; color: #002244; padding: 45px; border-radius: 2px;
-            width: 1180px; box-sizing: border-box; position: relative;
+            background-color: #ffffff !important; /* Forzar fondo blanco */
+            color: #002244;
+            padding: 45px;
+            border-radius: 2px;
+            width: 1180px;
+            box-sizing: border-box;
+            position: relative;
+            /* Asegurar que el contenido sea visible antes de capturar */
+            display: block; 
         }
 
         .report-header { 
@@ -124,7 +131,10 @@
 
         .report-header h1 { margin: 0; font-size: 1.8rem; color: #004488; font-weight: 900; text-transform: uppercase; }
 
-        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #002244; background: #ffffff !important; }
+        .excel-table { 
+            width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #002244;
+            background-color: #ffffff !important; /* Forzar fondo blanco en la tabla */
+        }
         .excel-table th { 
             background: #004488; color: #ffffff; padding: 14px; 
             font-size: 0.8rem; text-align: left; border: 1px solid #002244;
@@ -132,7 +142,8 @@
         }
         .excel-table td { 
             border: 1px solid #b3d9ff; padding: 0;
-            vertical-align: top; font-size: 0.85rem; background: #ffffff !important;
+            vertical-align: top; font-size: 0.85rem;
+            background-color: #ffffff !important; /* Forzar fondo blanco en las celdas */
         }
         
         .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366; }
@@ -447,7 +458,7 @@
             siteSelected = null;
         }
 
-        /* --- DESCARGA CORREGIDA (SIN RESUMIR) --- */
+        /* --- NUEVA FUNCIÓN DE DESCARGA USANDO dom-to-image-more --- */
         async function downloadImg() {
             const area = document.getElementById('capture-area');
             const btn = document.querySelector('.btn-download');
@@ -467,36 +478,39 @@
                 tr.querySelector('td:nth-child(6) .export-text').innerText = txtComm.value;
             });
 
+            // Activar modo exportación (oculta inputs, muestra texto)
             area.classList.add('is-exporting');
             
-            // Pausa de 500ms para asegurar que el DOM oscuro no interfiera
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Pausa breve para asegurar que el navegador aplique los cambios de estilo
+            await new Promise(resolve => setTimeout(resolve, 150));
 
-            try {
-                const canvas = await html2canvas(area, { 
-                    scale: 3,
-                    backgroundColor: "#ffffff",
-                    useCORS: true,
-                    logging: false,
-                    allowTaint: true,
-                    onclone: (clonedDoc) => {
-                        // Forzado extra de fondo blanco en el clon
-                        const clonedArea = clonedDoc.getElementById('capture-area');
-                        clonedArea.style.backgroundColor = '#ffffff';
-                    }
+            // Configuración para la captura
+            const config = {
+                quality: 1, // Calidad máxima
+                style: {
+                    'background-color': '#ffffff' // Forzar fondo blanco
+                },
+                bgcolor: '#ffffff' // Forzar fondo blanco (algunos navegadores lo requieren)
+            };
+
+            // Intentar generar la imagen PNG
+            domtoimage.toPng(area, config)
+                .then(function (dataUrl) {
+                    const a = document.createElement('a');
+                    a.download = `REPORTE_${document.getElementById('sel-tipo').value}_${Date.now()}.png`;
+                    a.href = dataUrl;
+                    a.click();
+                })
+                .catch(function (error) {
+                    console.error('Error al generar la imagen:', error);
+                    alert("❌ Error al generar la imagen. Esto puede deberse a políticas de seguridad del navegador con fuentes externas. Intente usar otro navegador o revise la consola para más detalles.");
+                })
+                .finally(function () {
+                    // Revertir cambios visuales
+                    area.classList.remove('is-exporting');
+                    btn.innerText = "💾 DESCARGAR PNG HD";
+                    btn.disabled = false;
                 });
-                
-                const a = document.createElement('a');
-                a.download = `REPORTE_${document.getElementById('sel-tipo').value}_${Date.now()}.png`;
-                a.href = canvas.toDataURL("image/png");
-                a.click();
-            } catch (e) {
-                alert("Error al generar imagen");
-            } finally {
-                area.classList.remove('is-exporting');
-                btn.innerText = "💾 DESCARGAR PNG HD";
-                btn.disabled = false;
-            }
         }
 
         function sendWhatsapp() {
