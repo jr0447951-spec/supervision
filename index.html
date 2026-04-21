@@ -66,7 +66,6 @@
         }
         .table-tech-option input { width: auto; margin: 0; transform: scale(0.9); }
 
-        /* Texto que reemplaza al selector en el PNG */
         .export-text { 
             display: none; color: #004488; 
             padding: 10px; font-size: 0.8rem; line-height: 1.4;
@@ -112,7 +111,7 @@
             font-size: 1rem; letter-spacing: 1px;
         }
 
-        /* --- ÁREA DE CAPTURA CORREGIDA --- */
+        /* --- ÁREA DE CAPTURA (CORRECCIÓN CRÍTICA DE FONDO) --- */
         #capture-area {
             background: #ffffff !important; color: #002244; padding: 45px; border-radius: 2px;
             width: 1180px; box-sizing: border-box; position: relative;
@@ -125,7 +124,7 @@
 
         .report-header h1 { margin: 0; font-size: 1.8rem; color: #004488; font-weight: 900; text-transform: uppercase; }
 
-        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #002244; }
+        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #002244; background: #ffffff !important; }
         .excel-table th { 
             background: #004488; color: #ffffff; padding: 14px; 
             font-size: 0.8rem; text-align: left; border: 1px solid #002244;
@@ -133,7 +132,7 @@
         }
         .excel-table td { 
             border: 1px solid #b3d9ff; padding: 0;
-            vertical-align: top; font-size: 0.85rem;
+            vertical-align: top; font-size: 0.85rem; background: #ffffff !important;
         }
         
         .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366; }
@@ -448,7 +447,7 @@
             siteSelected = null;
         }
 
-        /* --- DESCARGA CON PAUSA DE PROCESAMIENTO --- */
+        /* --- DESCARGA CORREGIDA (SIN RESUMIR) --- */
         async function downloadImg() {
             const area = document.getElementById('capture-area');
             const btn = document.querySelector('.btn-download');
@@ -456,6 +455,7 @@
             btn.innerText = "⏳ GENERANDO...";
             btn.disabled = true;
 
+            // Sincronizar todos los textos antes de capturar
             document.querySelectorAll('#table-body tr').forEach(tr => {
                 const selectedTechs = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
                 tr.querySelector('td:nth-child(3) .export-text').innerText = selectedTechs;
@@ -469,8 +469,8 @@
 
             area.classList.add('is-exporting');
             
-            // Pausa vital para evitar imagen negra
-            await new Promise(resolve => setTimeout(resolve, 400));
+            // Pausa de 500ms para asegurar que el DOM oscuro no interfiera
+            await new Promise(resolve => setTimeout(resolve, 500));
 
             try {
                 const canvas = await html2canvas(area, { 
@@ -478,7 +478,12 @@
                     backgroundColor: "#ffffff",
                     useCORS: true,
                     logging: false,
-                    allowTaint: true
+                    allowTaint: true,
+                    onclone: (clonedDoc) => {
+                        // Forzado extra de fondo blanco en el clon
+                        const clonedArea = clonedDoc.getElementById('capture-area');
+                        clonedArea.style.backgroundColor = '#ffffff';
+                    }
                 });
                 
                 const a = document.createElement('a');
@@ -486,7 +491,6 @@
                 a.href = canvas.toDataURL("image/png");
                 a.click();
             } catch (e) {
-                console.error(e);
                 alert("Error al generar imagen");
             } finally {
                 area.classList.remove('is-exporting');
