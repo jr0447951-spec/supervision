@@ -112,10 +112,10 @@
             font-size: 1rem; letter-spacing: 1px;
         }
 
-        /* --- ÁREA DE CAPTURA --- */
+        /* --- ÁREA DE CAPTURA CORREGIDA --- */
         #capture-area {
-            background: #ffffff; color: #002244; padding: 45px; border-radius: 2px;
-            width: 1180px; box-sizing: border-box;
+            background: #ffffff !important; color: #002244; padding: 45px; border-radius: 2px;
+            width: 1180px; box-sizing: border-box; position: relative;
         }
 
         .report-header { 
@@ -138,7 +138,6 @@
         
         .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366; }
         
-        /* CORRECCIÓN: Lógica para ocultar textarea y mostrar texto plano sin duplicar */
         #capture-area.is-exporting .table-select, 
         #capture-area.is-exporting .table-textarea,
         #capture-area.is-exporting .table-multi-tech,
@@ -449,10 +448,14 @@
             siteSelected = null;
         }
 
+        /* --- DESCARGA CON PAUSA DE PROCESAMIENTO --- */
         async function downloadImg() {
             const area = document.getElementById('capture-area');
+            const btn = document.querySelector('.btn-download');
             
-            // Sincronización final antes de la captura
+            btn.innerText = "⏳ GENERANDO...";
+            btn.disabled = true;
+
             document.querySelectorAll('#table-body tr').forEach(tr => {
                 const selectedTechs = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
                 tr.querySelector('td:nth-child(3) .export-text').innerText = selectedTechs;
@@ -466,12 +469,16 @@
 
             area.classList.add('is-exporting');
             
+            // Pausa vital para evitar imagen negra
+            await new Promise(resolve => setTimeout(resolve, 400));
+
             try {
                 const canvas = await html2canvas(area, { 
                     scale: 3,
                     backgroundColor: "#ffffff",
                     useCORS: true,
-                    logging: false
+                    logging: false,
+                    allowTaint: true
                 });
                 
                 const a = document.createElement('a');
@@ -479,9 +486,12 @@
                 a.href = canvas.toDataURL("image/png");
                 a.click();
             } catch (e) {
+                console.error(e);
                 alert("Error al generar imagen");
             } finally {
                 area.classList.remove('is-exporting');
+                btn.innerText = "💾 DESCARGAR PNG HD";
+                btn.disabled = false;
             }
         }
 
