@@ -111,10 +111,10 @@
             font-size: 1rem; letter-spacing: 1px;
         }
 
-        /* --- ÁREA DE CAPTURA (CORRECCIÓN CRÍTICA DE FONDO) --- */
+        /* --- ÁREA DE CAPTURA (FORZADO BLANCO ABSOLUTO) --- */
         #capture-area {
-            background: #ffffff !important; color: #002244; padding: 45px; border-radius: 2px;
-            width: 1180px; box-sizing: border-box; position: relative;
+            background: #ffffff !important; color: #002244 !important; padding: 45px; border-radius: 2px;
+            width: 1180px; box-sizing: border-box; position: relative; display: block;
         }
 
         .report-header { 
@@ -124,18 +124,18 @@
 
         .report-header h1 { margin: 0; font-size: 1.8rem; color: #004488; font-weight: 900; text-transform: uppercase; }
 
-        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #002244; background: #ffffff !important; }
+        .excel-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid #002244; background: white !important;}
         .excel-table th { 
-            background: #004488; color: #ffffff; padding: 14px; 
+            background: #004488 !important; color: #ffffff !important; padding: 14px; 
             font-size: 0.8rem; text-align: left; border: 1px solid #002244;
             text-transform: uppercase; letter-spacing: 0.5px;
         }
         .excel-table td { 
             border: 1px solid #b3d9ff; padding: 0;
-            vertical-align: top; font-size: 0.85rem; background: #ffffff !important;
+            vertical-align: top; font-size: 0.85rem; background: white !important;
         }
         
-        .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366; }
+        .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366 !important; }
         
         #capture-area.is-exporting .table-select, 
         #capture-area.is-exporting .table-textarea,
@@ -447,7 +447,7 @@
             siteSelected = null;
         }
 
-        /* --- DESCARGA CORREGIDA (SIN RESUMIR) --- */
+        /* --- DESCARGA CORREGIDA: MÉTODO DE CLONADO PARA EVITAR IMAGEN NEGRA --- */
         async function downloadImg() {
             const area = document.getElementById('capture-area');
             const btn = document.querySelector('.btn-download');
@@ -455,7 +455,7 @@
             btn.innerText = "⏳ GENERANDO...";
             btn.disabled = true;
 
-            // Sincronizar todos los textos antes de capturar
+            // Sincronizar textos
             document.querySelectorAll('#table-body tr').forEach(tr => {
                 const selectedTechs = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
                 tr.querySelector('td:nth-child(3) .export-text').innerText = selectedTechs;
@@ -467,12 +467,11 @@
                 tr.querySelector('td:nth-child(6) .export-text').innerText = txtComm.value;
             });
 
+            // Activar clase de exportación temporalmente
             area.classList.add('is-exporting');
-            
-            // Pausa de 500ms para asegurar que el DOM oscuro no interfiera
-            await new Promise(resolve => setTimeout(resolve, 500));
 
             try {
+                // html2canvas tiene una opción 'onclone' que es la mejor para evitar fondos negros
                 const canvas = await html2canvas(area, { 
                     scale: 3,
                     backgroundColor: "#ffffff",
@@ -480,9 +479,16 @@
                     logging: false,
                     allowTaint: true,
                     onclone: (clonedDoc) => {
-                        // Forzado extra de fondo blanco en el clon
+                        // Forzamos al clon a ser blanco y visible, sin importar el modo oscuro del sistema
                         const clonedArea = clonedDoc.getElementById('capture-area');
+                        clonedArea.style.display = 'block';
                         clonedArea.style.backgroundColor = '#ffffff';
+                        clonedArea.style.color = '#002244';
+                        // Forzar a todas las tablas y celdas en el clon a ser blancas
+                        clonedDoc.querySelectorAll('.excel-table, .excel-table td').forEach(el => {
+                            el.style.backgroundColor = '#ffffff';
+                            el.style.color = '#002244';
+                        });
                     }
                 });
                 
@@ -491,7 +497,8 @@
                 a.href = canvas.toDataURL("image/png");
                 a.click();
             } catch (e) {
-                alert("Error al generar imagen");
+                console.error(e);
+                alert("Error al generar imagen. Intente limpiar caché.");
             } finally {
                 area.classList.remove('is-exporting');
                 btn.innerText = "💾 DESCARGAR PNG HD";
