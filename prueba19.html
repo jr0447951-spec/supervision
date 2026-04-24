@@ -3,514 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOC Command Center - Operaciones SV</title>
+    <title>NOC Dashboard - High Performance</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        :root {
-            --primary: #00a1ff;
-            --accent: #22c55e;
-            --dark-bg: #0f172a;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --border-color: rgba(0, 161, 255, 0.3);
-            /* Colores Formato Azul Corporativo */
-            --report-blue: #4472c4;
-            --report-light: #d9e1f2;
+        :root { 
+            --primary: #00a1ff; 
+            --dark-ui: #020617; 
+            --report-blue: #4472c4; 
+            --report-bg: #d9e1f2;
+            --border-ui: rgba(0, 161, 255, 0.4);
         }
 
-        * { box-sizing: border-box; transition: all 0.2s ease; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            background: radial-gradient(circle at top right, #1e293b, #020617);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding-bottom: 100px;
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; margin: 0; background: var(--dark-ui); color: white; 
+            display: flex; flex-direction: column; align-items: center; padding-bottom: 100px;
         }
 
-        /* --- HEADER --- */
-        header {
-            width: 100%;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(15px);
-            padding: 25px 0;
-            text-align: center;
-            border-bottom: 2px solid var(--primary);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+        /* --- UI DE GESTIÓN (FRONTEND) --- */
+        header { 
+            width: 100%; background: #0f172a; padding: 20px; text-align: center; 
+            border-bottom: 4px solid var(--primary); position: sticky; top: 0; z-index: 1000;
         }
+        header h1 { font-family: 'Orbitron'; margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--primary); }
 
-        header h1 {
-            font-family: 'Orbitron', sans-serif;
-            margin: 0;
-            font-size: 1.5rem;
-            letter-spacing: 4px;
-            background: linear-gradient(to right, #fff, var(--primary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
+        .app-container { width: 95%; max-width: 1180px; margin-top: 30px; }
+
+        /* BUSCADOR AVANZADO */
+        .search-container { position: relative; margin-bottom: 25px; }
+        #siteSearch { 
+            width: 100%; padding: 20px; border-radius: 12px; border: 2px solid var(--border-ui); 
+            background: rgba(255,255,255,0.05); color: white; font-size: 1rem; outline: none;
         }
-
-        /* --- CONTENEDORES --- */
-        .container {
-            width: 95%;
-            max-width: 1200px;
-            margin-top: 30px;
+        .suggestions { 
+            position: absolute; top: 105%; left: 0; right: 0; background: #1e293b; 
+            border-radius: 10px; max-height: 250px; overflow-y: auto; z-index: 2000; display: none; border: 1px solid var(--primary);
         }
+        .sug-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+        .sug-item:hover { background: rgba(0, 161, 255, 0.2); }
 
-        /* --- BUSCADOR --- */
-        .search-wrapper {
-            position: relative;
-            margin-bottom: 40px;
+        /* PANEL DE CONFIGURACIÓN Y TÉCNICOS */
+        .config-card { 
+            background: rgba(255,255,255,0.05); border-radius: 15px; padding: 25px; 
+            border: 1px solid var(--primary); margin-bottom: 30px; display: none;
         }
-
-        #siteSearch {
-            width: 100%;
-            padding: 22px 25px;
-            font-size: 1.1rem;
-            border-radius: 18px;
-            border: 2px solid var(--border-color);
-            background: var(--card-bg);
-            color: white;
-            outline: none;
-            box-shadow: 0 0 20px rgba(0, 161, 255, 0.1);
+        .tech-grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; 
+            background: #000; padding: 15px; border-radius: 10px; max-height: 180px; overflow-y: auto; margin: 10px 0;
         }
+        .tech-item { font-size: 0.8rem; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-        #siteSearch:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 25px rgba(0, 161, 255, 0.3);
+        /* --- FORMATO CORPORATIVO (ÁREA DE CAPTURA) --- */
+        #capture-area { 
+            background: white !important; padding: 40px; border-radius: 2px; 
+            width: 1180px; margin-top: 30px; box-sizing: border-box;
         }
-
-        .suggestions {
-            position: absolute;
-            top: 105%;
-            left: 0;
-            right: 0;
-            background: #1e293b;
-            border-radius: 15px;
-            max-height: 350px;
-            overflow-y: auto;
-            z-index: 2000;
-            border: 1px solid var(--primary);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            display: none;
+        .blue-header { 
+            background: var(--report-blue) !important; color: white !important; 
+            text-align: center; padding: 10px; border: 1.5px solid #000; 
+            font-weight: bold; font-size: 18px; display: flex; justify-content: center; align-items: center;
         }
+        .blue-table { width: 100%; border-collapse: collapse; border: 1.5px solid #000; table-layout: fixed; }
+        .blue-table th { background: var(--report-blue) !important; color: white !important; padding: 12px; font-size: 13px; border: 1px solid #000; text-transform: uppercase; }
+        .blue-table td { border: 1px solid #000; background: var(--report-bg) !important; color: #000 !important; font-size: 12px; text-align: center; vertical-align: middle; padding: 0; }
+        .blue-table tr:nth-child(even) td { background: white !important; }
 
-        .sug-item {
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* CAMPOS DE EDICIÓN VIVA */
+        .edit-field { 
+            width: 100%; height: 70px; border: none; background: transparent; 
+            padding: 10px; text-align: center; font-size: 13px; font-family: 'Inter'; 
+            color: black; outline: none; resize: none;
         }
+        .edit-field:focus { background: rgba(0, 161, 255, 0.1); }
+        
+        /* ELEMENTOS PARA LA EXPORTACIÓN (Sincronizados vía JS) */
+        .export-label { display: none; padding: 10px; white-space: pre-wrap; font-weight: 700; color: black !important; text-align: center; }
 
-        .sug-item:hover { background: rgba(0, 161, 255, 0.15); }
-
-        /* --- PANEL DE CONFIGURACIÓN --- */
-        .config-panel {
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 30px;
-            border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
-            margin-bottom: 40px;
-            display: none;
-            animation: slideUp 0.4s ease;
-        }
-
-        .site-header-info {
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 12px;
-            background: rgba(0,0,0,0.3);
-            padding: 20px;
-            border-radius: 15px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .tech-card {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-        }
-
-        .tech-card:hover { background: rgba(255,255,255,0.05); }
-
-        .btn-add-master {
-            width: 100%;
-            padding: 20px;
-            margin-top: 25px;
-            border-radius: 14px;
-            border: none;
-            background: linear-gradient(90deg, #0077ff, #00d4ff);
-            color: white;
-            font-family: 'Orbitron';
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 119, 255, 0.4);
-        }
-
-        /* --- ÁREA DE CAPTURA (ESTILO EXCEL CORPORATIVO) --- */
-        .capture-container {
-            background: white !important;
-            padding: 50px;
-            border-radius: 4px;
-            width: 1180px; /* Ancho optimizado para reportes */
-            margin-top: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
-
-        .report-top-bar {
-            background: var(--report-blue) !important;
-            color: white !important;
-            text-align: center;
-            padding: 12px;
-            border: 2px solid #000;
-            font-weight: 800;
-            font-size: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: -2px;
-        }
-
-        .main-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 2px solid #000;
-            table-layout: fixed;
-        }
-
-        .main-table th {
-            background: var(--report-blue) !important;
-            color: white !important;
-            padding: 15px 10px;
-            font-size: 13px;
-            border: 1px solid #000;
-            text-transform: uppercase;
-        }
-
-        .main-table td {
-            border: 1px solid #000;
-            background: var(--report-light) !important;
-            color: #000 !important;
-            font-size: 13px;
-            height: 60px;
-            text-align: center;
-            vertical-align: middle;
-            padding: 0;
-            position: relative;
-        }
-
-        .main-table tr:nth-child(even) td {
-            background: #ffffff !important;
-        }
-
-        /* Edición dentro de tabla */
-        .cell-input {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: transparent;
-            text-align: center;
-            font-family: 'Inter';
-            font-size: 13px;
-            color: #000;
-            padding: 10px;
-            outline: none;
-        }
-
-        .cell-textarea {
-            text-align: left !important;
-            resize: none;
-            overflow: hidden;
-        }
-
-        .export-label {
-            display: none;
-            padding: 10px;
-            font-weight: 600;
-            word-wrap: break-word;
-        }
-
-        /* --- ESTADOS DE EXPORTACIÓN --- */
-        .is-exporting .no-capture,
-        .is-exporting .cell-input { display: none !important; }
+        /* CLASES DE ESTADO PARA PNG */
+        .is-exporting .no-capture, .is-exporting .edit-field { display: none !important; }
         .is-exporting .export-label { display: block !important; }
 
-        /* --- BOTONES DE ACCIÓN --- */
-        .floating-actions {
-            display: flex;
-            gap: 20px;
-            margin-top: 40px;
-            width: 95%;
-            max-width: 1200px;
-        }
-
-        .btn-action {
-            flex: 1;
-            padding: 20px;
-            border-radius: 50px;
-            border: none;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-
-        .btn-png { background: #fff; color: var(--report-blue); border: 2px solid var(--report-blue); }
-        .btn-wa { background: #22c55e; color: white; }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        /* BOTONES DE ACCIÓN */
+        .btn-master { background: var(--report-blue); color: white; padding: 20px 50px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; font-family: 'Orbitron'; margin-top: 30px; box-shadow: 0 5px 20px rgba(68, 114, 196, 0.4); }
+        .btn-add { background: var(--primary); color: white; padding: 12px; width: 100%; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>NOC OPERACIONES SV - REPORTING SYSTEM</h1>
+    <h1>NOC HUB - SISTEMA DE SUPERVISIÓN TÉCNICA</h1>
 </header>
 
-<div class="container">
-    <div class="search-wrapper">
-        <input type="text" id="siteSearch" placeholder="🔍 BUSCAR SITEID, NOMBRE DE SITIO O NIC/NIS..." autocomplete="off">
+<div class="app-container">
+    <div class="search-container">
+        <input type="text" id="siteSearch" placeholder="🔍 BUSCAR POR SITEID, NOMBRE DE SITIO O NIC/NIS..." autocomplete="off">
         <div id="suggestions" class="suggestions"></div>
     </div>
 
-    <div id="configPanel" class="config-panel">
-        <div class="site-header-info">
-            <h2 id="displaySiteName" style="margin:0; font-family:'Orbitron'; color:var(--primary);"></h2>
-            <p id="displaySiteMeta" style="margin:5px 0 0 0; opacity:0.7; font-size:0.9rem;"></p>
-        </div>
-
-        <div style="margin-bottom: 15px;">
-            <label style="font-size:0.7rem; font-weight:800; color:var(--primary); text-transform:uppercase;">Asignación de Personal Técnico (Desde DB):</label>
-            <div id="techGrid" class="tech-grid"></div>
-        </div>
-
-        <button class="btn-add-master" onclick="commitToTable()">INSERTAR EN REPORTE TÉCNICO</button>
+    <div id="config-panel" class="config-card">
+        <h3 id="site-display" style="margin:0; color:var(--primary); font-family: 'Orbitron';"></h3>
+        <p style="font-size:0.75rem; color: #aaa; margin: 10px 0;">Seleccione el personal asignado para este sitio:</p>
+        <div id="tech-list" class="tech-grid">
+            </div>
+        <button class="btn-add" onclick="agregarRegistro()">INSERTAR REGISTRO EN TABLA</button>
     </div>
 
-    <div id="captureArea" class="capture-container">
-        <div class="report-top-bar">
-            <input type="text" id="reportTitle" value="CORTE PROGRAMADO" style="background:transparent; border:none; color:white; font-weight:900; text-align:right; width:45%; font-size:20px; outline:none; text-transform:uppercase;">
-            <span>-</span>
-            <input type="text" id="reportDate" value="24/04/2026" style="background:transparent; border:none; color:white; font-weight:900; text-align:left; width:45%; font-size:20px; outline:none;">
+    <div id="capture-area">
+        <div class="blue-header">
+            <input type="text" id="headerTitle" value="CORTE PROGRAMADO" style="background:transparent; border:none; color:white; font-weight:bold; text-align:right; width:45%; font-size:18px; outline:none; text-transform:uppercase;">
+            <span style="margin: 0 10px;">-</span>
+            <input type="text" id="headerDate" style="background:transparent; border:none; color:white; font-weight:bold; width:45%; font-size:18px; outline:none;">
         </div>
-
-        <table class="main-table">
+        
+        <table class="blue-table">
             <thead>
                 <tr>
-                    <th style="width:12%">Distribuidora</th>
+                    <th style="width:11%">Distribuidora</th>
                     <th style="width:12%">Horario</th>
                     <th style="width:25%">Sitio / Nodo</th>
-                    <th style="width:16%">Personal Asignado</th>
+                    <th style="width:17%">Personal Asignado</th>
                     <th style="width:10%">Torrero</th>
-                    <th style="width:17%">Comentario Técnico</th>
-                    <th style="width:8%">NIC</th>
+                    <th style="width:16%">Comentario</th>
+                    <th style="width:9%">NIC</th>
                     <th class="no-capture" style="width:35px; background:white !important;"></th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
+            <tbody id="table-body">
                 </tbody>
         </table>
     </div>
 
-    <div class="floating-actions">
-        <button class="btn-action btn-png" onclick="exportToPNG()">💾 GENERAR REPORTE PNG HD</button>
-        <button class="btn-action btn-wa" onclick="window.open('https://wa.me/')">📱 COMPARTIR POR WHATSAPP</button>
+    <div style="display:flex; justify-content:center;">
+        <button class="btn-master" onclick="generarReportePNG()">💾 DESCARGAR REPORTE TÉCNICO (PNG HD)</button>
     </div>
 </div>
 
 <script>
-    let dbSitios = [];
-    let siteActive = null;
+let database = [];
+let itemSelected = null;
+const CSV_SITIOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+const CSV_TECNICOS = 'tecnicos.csv';
+
+// 1. CARGA DE DATOS DESDE LAS BASES
+Papa.parse(CSV_SITIOS, {
+    download: true, header: true,
+    complete: (r) => { database = r.data.filter(x => x.SITEID); }
+});
+
+Papa.parse(CSV_TECNICOS, {
+    download: true, header: true,
+    complete: (r) => {
+        const list = document.getElementById('tech-list');
+        r.data.forEach(t => {
+            if(t.Nombre) list.innerHTML += `<label class="tech-item"><input type="checkbox" value="${t.Nombre}"> ${t.Nombre}</label>`;
+        });
+    }
+});
+
+// 2. MOTOR DEL BUSCADOR (ID, Nombre, NIC)
+document.getElementById('siteSearch').addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    const sug = document.getElementById('suggestions');
+    if (query.length < 2) { sug.style.display = 'none'; return; }
+
+    const results = database.filter(s => 
+        String(s.SITEID).toLowerCase().includes(query) || 
+        String(s['NOMBRE DE SITIO']).toLowerCase().includes(query) || 
+        String(s['NIC/NIS']).toLowerCase().includes(query)
+    ).slice(0, 8);
+
+    sug.innerHTML = results.map(s => `
+        <div class="sug-item" onclick="prepararFila('${s.SITEID}')">
+            <strong>${s.SITEID}</strong> - ${s['NOMBRE DE SITIO']}
+        </div>
+    `).join('');
+    sug.style.display = results.length ? 'block' : 'none';
+});
+
+function prepararFila(id) {
+    itemSelected = database.find(x => x.SITEID === id);
+    document.getElementById('suggestions').style.display = 'none';
+    document.getElementById('siteSearch').value = itemSelected.SITEID;
+    document.getElementById('config-panel').style.display = 'block';
+    document.getElementById('site-display').innerText = `${itemSelected.SITEID} - ${itemSelected['NOMBRE DE SITIO']}`;
+    document.getElementById('site-display').scrollIntoView({ behavior: 'smooth' });
+}
+
+// 3. INSERCIÓN EN LA TABLA
+function agregarRegistro() {
+    const personal = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
+    const body = document.getElementById('table-body');
+    const tr = document.createElement('tr');
     
-    // URLs de Datos
-    const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-    const TECNICOS_CSV = 'tecnicos.csv'; // Asegúrate de que esté en la misma carpeta
+    tr.innerHTML = `
+        <td><input type="text" class="edit-field" value="${itemSelected.Distribuidora || ''}"><div class="export-label">${itemSelected.Distribuidora || ''}</div></td>
+        <td><input type="text" class="edit-field" placeholder="Escribir Horario..."><div class="export-label"></div></td>
+        <td style="color:#4472c4; font-weight:800; font-size:12px;">${itemSelected.SITEID}<br>${itemSelected['NOMBRE DE SITIO']}</td>
+        <td style="font-size:10px; font-weight:bold; padding:5px;">${personal}</td>
+        <td>${itemSelected.Propietario || 'N/A'}</td>
+        <td><textarea class="edit-field" style="text-align:left;" placeholder="Comentarios..."></textarea><div class="export-label"></div></td>
+        <td style="color:#4472c4; font-weight:800;">${itemSelected['NIC/NIS'] || '---'}</td>
+        <td class="no-capture" style="background:white !important; text-align:center;">
+            <button onclick="this.closest('tr').remove()" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:18px;">✕</button>
+        </td>
+    `;
+    
+    body.appendChild(tr);
+    // Limpieza de UI
+    document.getElementById('config-panel').style.display = 'none';
+    document.querySelectorAll('#tech-list input').forEach(i => i.checked = false);
+    document.getElementById('siteSearch').value = '';
+}
 
-    // 1. INICIALIZACIÓN Y CARGA DE DATOS
-    window.onload = () => {
-        // Cargar Sitios
-        Papa.parse(SITIOS_CSV, {
-            download: true, header: true,
-            complete: (results) => {
-                dbSitios = results.data.filter(s => s.SITEID);
-                console.log("Base de datos de sitios cargada.");
+// 4. GENERACIÓN DE PNG HD (SIN PÉRDIDA DE DATOS)
+async function generarReportePNG() {
+    const area = document.getElementById('capture-area');
+    const btn = document.querySelector('.btn-master');
+    
+    btn.innerText = "⏳ PROCESANDO REPORTE...";
+    btn.disabled = true;
+
+    // SINCRONIZACIÓN FORZADA DE CAMPOS EDITABLES
+    area.querySelectorAll('tr').forEach(row => {
+        const fields = row.querySelectorAll('.edit-field');
+        fields.forEach(field => {
+            const label = field.nextElementSibling;
+            if (label && label.classList.contains('export-label')) {
+                label.innerText = field.value || field.placeholder;
             }
         });
-
-        // Cargar Técnicos
-        Papa.parse(TECNICOS_CSV, {
-            download: true, header: true,
-            complete: (results) => {
-                const grid = document.getElementById('techGrid');
-                results.data.forEach(t => {
-                    if(t.Nombre) {
-                        grid.innerHTML += `
-                            <label class="tech-card">
-                                <input type="checkbox" value="${t.Nombre}" style="accent-color:var(--primary)">
-                                ${t.Nombre}
-                            </label>`;
-                    }
-                });
-            }
-        });
-
-        // Set Fecha Actual
-        const hoy = new Date();
-        document.getElementById('reportDate').value = hoy.toLocaleDateString();
-    };
-
-    // 2. MOTOR DE BÚSQUEDA TRIPLE
-    document.getElementById('siteSearch').addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        const sugBox = document.getElementById('suggestions');
-        
-        if (query.length < 2) { sugBox.style.display = 'none'; return; }
-
-        const matches = dbSitios.filter(s => 
-            String(s.SITEID).toLowerCase().includes(query) || 
-            String(s['NOMBRE DE SITIO']).toLowerCase().includes(query) ||
-            String(s['NIC/NIS']).toLowerCase().includes(val)
-        ).slice(0, 10);
-
-        sugBox.innerHTML = matches.map(s => `
-            <div class="sug-item" onclick="selectSite('${s.SITEID}')">
-                <div>
-                    <b style="color:var(--primary)">${s.SITEID}</b> - ${s['NOMBRE DE SITIO']}
-                </div>
-                <span style="font-size:0.7rem; background:#004488; padding:3px 8px; border-radius:5px;">NIC: ${s['NIC/NIS'] || '---'}</span>
-            </div>
-        `).join('');
-        sugBox.style.display = matches.length ? 'block' : 'none';
     });
 
-    function selectSite(id) {
-        siteActive = dbSitios.find(s => s.SITEID === id);
-        document.getElementById('suggestions').style.display = 'none';
-        document.getElementById('siteSearch').value = siteActive.SITEID;
-        
-        // Abrir Panel de Configuración
-        document.getElementById('configPanel').style.display = 'block';
-        document.getElementById('displaySiteName').innerText = `${siteActive.SITEID} - ${siteActive['NOMBRE DE SITIO']}`;
-        document.getElementById('displaySiteMeta').innerText = `Distribuidora: ${siteActive.Distribuidora || 'N/A'} | Propietario: ${siteActive.Propietario || 'N/A'}`;
-        
-        window.scrollTo({ top: 150, behavior: 'smooth' });
-    }
+    area.classList.add('is-exporting');
 
-    // 3. PASAR DATOS A LA TABLA MAESTRA
-    function commitToTable() {
-        if(!siteActive) return;
-
-        const techs = Array.from(document.querySelectorAll('#techGrid input:checked'))
-                           .map(i => i.value).join(' / ') || 'SIN ASIGNAR';
-        
-        const tbody = document.getElementById('tableBody');
-        const tr = document.createElement('tr');
-
-        tr.innerHTML = `
-            <td>
-                <input type="text" class="cell-input" value="${siteActive.Distribuidora || ''}">
-                <div class="export-label">${siteActive.Distribuidora || ''}</div>
-            </td>
-            <td>
-                <input type="text" class="cell-input" value="9:00 AM - 4:00 PM">
-                <div class="export-label">9:00 AM - 4:00 PM</div>
-            </td>
-            <td style="color:#4472c4; font-weight:900;">
-                ${siteActive.SITEID}<br>${siteActive['NOMBRE DE SITIO']}
-            </td>
-            <td style="font-weight:700; font-size:11px; line-height:1.2;">${techs}</td>
-            <td>${siteActive.Propietario || 'N/A'}</td>
-            <td>
-                <textarea class="cell-input cell-textarea" rows="2" oninput="syncText(this)">Corte programado por mantenimiento de red.</textarea>
-                <div class="export-label">Corte programado por mantenimiento de red.</div>
-            </td>
-            <td style="color:#4472c4; font-weight:900;">${siteActive['NIC/NIS'] || '---'}</td>
-            <td class="no-capture" style="background:white !important; text-align:center;">
-                <button onclick="this.closest('tr').remove()" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:20px;">×</button>
-            </td>
-        `;
-
-        tbody.appendChild(tr);
-        
-        // Reset y Scroll
-        document.getElementById('configPanel').style.display = 'none';
-        document.querySelectorAll('#techGrid input').forEach(i => i.checked = false);
-        document.getElementById('siteSearch').value = '';
-        document.getElementById('captureArea').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function syncText(el) {
-        el.nextElementSibling.innerText = el.value;
-    }
-
-    // 4. GENERACIÓN DE IMAGEN PROFESIONAL
-    async function exportToPNG() {
-        const area = document.getElementById('captureArea');
-        const btn = document.querySelector('.btn-png');
-        
-        btn.innerText = "⏳ PROCESANDO IMAGEN...";
-        btn.disabled = true;
-
-        // Sincronizar todos los campos antes de capturar
-        area.querySelectorAll('.cell-input').forEach(input => {
-            if(input.nextElementSibling) input.nextElementSibling.innerText = input.value;
+    try {
+        const canvas = await html2canvas(area, {
+            scale: 3, // Calidad Premium
+            backgroundColor: "#ffffff",
+            useCORS: true,
+            logging: false
         });
-
-        area.classList.add('is-exporting');
-
-        try {
-            const canvas = await html2canvas(area, {
-                scale: 3, // Calidad ultra HD
-                backgroundColor: "#ffffff",
-                useCORS: true,
-                logging: false
-            });
-
-            const link = document.createElement('a');
-            link.download = `REPORTE_NOC_${Date.now()}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-        } catch (err) {
-            console.error("Error en exportación:", err);
-            alert("Error al generar la imagen.");
-        } finally {
-            area.classList.remove('is-exporting');
-            btn.innerText = "💾 GENERAR REPORTE PNG HD";
-            btn.disabled = false;
-        }
+        
+        const link = document.createElement('a');
+        link.download = `REPORTE_TECNICO_NOC_${Date.now()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    } catch (e) {
+        alert("Error crítico en la generación de imagen.");
+        console.error(e);
+    } finally {
+        area.classList.remove('is-exporting');
+        btn.innerText = "💾 DESCARGAR REPORTE TÉCNICO (PNG HD)";
+        btn.disabled = false;
     }
-</script>
+}
 
+// Inicializar fecha
+document.getElementById('headerDate').value = new Date().toLocaleDateString();
+</script>
 </body>
 </html>
