@@ -3,267 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOC Dashboard - High Performance</title>
+    <title>NOC Command Center - Agrupación Inteligente</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
     <style>
-        :root { 
-            --primary: #00a1ff; 
-            --dark-ui: #020617; 
-            --report-blue: #4472c4; 
-            --report-bg: #d9e1f2;
-            --border-ui: rgba(0, 161, 255, 0.4);
-        }
+        :root { --primary: #00a1ff; --report-blue: #4472c4; --report-light: #d9e1f2; }
+        body { font-family: 'Inter', sans-serif; background: #020617; color: white; display: flex; flex-direction: column; align-items: center; padding-bottom: 100px; margin: 0; }
+        
+        header { width: 100%; background: #0f172a; padding: 20px; text-align: center; border-bottom: 3px solid var(--primary); position: sticky; top: 0; z-index: 1000; }
+        h1 { font-family: 'Orbitron'; font-size: 1.2rem; color: var(--primary); letter-spacing: 3px; margin: 0; }
 
-        * { box-sizing: border-box; }
-        body { 
-            font-family: 'Inter', sans-serif; margin: 0; background: var(--dark-ui); color: white; 
-            display: flex; flex-direction: column; align-items: center; padding-bottom: 100px;
-        }
-
-        /* --- UI DE GESTIÓN (FRONTEND) --- */
-        header { 
-            width: 100%; background: #0f172a; padding: 20px; text-align: center; 
-            border-bottom: 4px solid var(--primary); position: sticky; top: 0; z-index: 1000;
-        }
-        header h1 { font-family: 'Orbitron'; margin: 0; font-size: 1.2rem; letter-spacing: 3px; color: var(--primary); }
-
-        .app-container { width: 95%; max-width: 1180px; margin-top: 30px; }
-
-        /* BUSCADOR AVANZADO */
-        .search-container { position: relative; margin-bottom: 25px; }
-        #siteSearch { 
-            width: 100%; padding: 20px; border-radius: 12px; border: 2px solid var(--border-ui); 
-            background: rgba(255,255,255,0.05); color: white; font-size: 1rem; outline: none;
-        }
-        .suggestions { 
-            position: absolute; top: 105%; left: 0; right: 0; background: #1e293b; 
-            border-radius: 10px; max-height: 250px; overflow-y: auto; z-index: 2000; display: none; border: 1px solid var(--primary);
-        }
+        .container { width: 95%; max-width: 1250px; margin-top: 30px; }
+        
+        /* BUSCADOR */
+        #siteSearch { width: 100%; padding: 20px; border-radius: 12px; border: 2px solid var(--primary); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; outline: none; }
+        .suggestions { position: absolute; width: 100%; background: #1e293b; border-radius: 10px; max-height: 250px; overflow-y: auto; z-index: 2000; display: none; border: 1px solid var(--primary); }
         .sug-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
-        .sug-item:hover { background: rgba(0, 161, 255, 0.2); }
 
-        /* PANEL DE CONFIGURACIÓN Y TÉCNICOS */
-        .config-card { 
-            background: rgba(255,255,255,0.05); border-radius: 15px; padding: 25px; 
-            border: 1px solid var(--primary); margin-bottom: 30px; display: none;
-        }
-        .tech-grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; 
-            background: #000; padding: 15px; border-radius: 10px; max-height: 180px; overflow-y: auto; margin: 10px 0;
-        }
+        /* CONFIGURACIÓN */
+        .config-card { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 25px; border: 1px solid var(--primary); margin: 20px 0; display: none; }
+        .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; background: #000; padding: 15px; border-radius: 10px; max-height: 150px; overflow-y: auto; }
         .tech-item { font-size: 0.8rem; display: flex; align-items: center; gap: 8px; cursor: pointer; }
 
-        /* --- FORMATO CORPORATIVO (ÁREA DE CAPTURA) --- */
-        #capture-area { 
-            background: white !important; padding: 40px; border-radius: 2px; 
-            width: 1180px; margin-top: 30px; box-sizing: border-box;
-        }
-        .blue-header { 
-            background: var(--report-blue) !important; color: white !important; 
-            text-align: center; padding: 10px; border: 1.5px solid #000; 
-            font-weight: bold; font-size: 18px; display: flex; justify-content: center; align-items: center;
-        }
+        /* TABLA DE EXPORTACIÓN (PNG) */
+        #capture-area { background: white !important; padding: 40px; width: 1200px; margin-top: 30px; border-radius: 2px; }
+        .blue-header { background: var(--report-blue) !important; color: white !important; text-align: center; padding: 10px; border: 1.5px solid #000; font-weight: bold; font-size: 20px; }
         .blue-table { width: 100%; border-collapse: collapse; border: 1.5px solid #000; table-layout: fixed; }
-        .blue-table th { background: var(--report-blue) !important; color: white !important; padding: 12px; font-size: 13px; border: 1px solid #000; text-transform: uppercase; }
-        .blue-table td { border: 1px solid #000; background: var(--report-bg) !important; color: #000 !important; font-size: 12px; text-align: center; vertical-align: middle; padding: 0; }
-        .blue-table tr:nth-child(even) td { background: white !important; }
-
-        /* CAMPOS DE EDICIÓN VIVA */
-        .edit-field { 
-            width: 100%; height: 70px; border: none; background: transparent; 
-            padding: 10px; text-align: center; font-size: 13px; font-family: 'Inter'; 
-            color: black; outline: none; resize: none;
-        }
-        .edit-field:focus { background: rgba(0, 161, 255, 0.1); }
+        .blue-table th { background: var(--report-blue) !important; color: white !important; padding: 12px; font-size: 13px; border: 1px solid #000; }
+        .blue-table td { border: 1px solid #000; color: #000 !important; font-size: 12px; text-align: center; vertical-align: middle; padding: 0; background: white !important; }
         
-        /* ELEMENTOS PARA LA EXPORTACIÓN (Sincronizados vía JS) */
-        .export-label { display: none; padding: 10px; white-space: pre-wrap; font-weight: 700; color: black !important; text-align: center; }
+        /* Sombrado alterno manual para cuando no hay agrupación */
+        .row-even { background: #f2f2f2 !important; }
+        .row-odd { background: #ffffff !important; }
+        .row-grouped { background: #d9e1f2 !important; }
 
-        /* CLASES DE ESTADO PARA PNG */
-        .is-exporting .no-capture, .is-exporting .edit-field { display: none !important; }
-        .is-exporting .export-label { display: block !important; }
+        .edit-input { width: 100%; height: 60px; border: none; background: transparent; padding: 8px; text-align: center; font-size: 12px; font-family: 'Inter'; color: black; outline: none; }
+        .export-text { display: none; padding: 8px; white-space: pre-wrap; font-weight: 700; text-align: center; }
 
-        /* BOTONES DE ACCIÓN */
-        .btn-master { background: var(--report-blue); color: white; padding: 20px 50px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; font-family: 'Orbitron'; margin-top: 30px; box-shadow: 0 5px 20px rgba(68, 114, 196, 0.4); }
-        .btn-add { background: var(--primary); color: white; padding: 12px; width: 100%; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; margin-top: 15px; }
+        .is-exporting .edit-input, .is-exporting .no-capture { display: none !important; }
+        .is-exporting .export-text { display: block !important; }
+
+        .btn-action { background: var(--report-blue); color: white; padding: 18px 40px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; font-family: 'Orbitron'; margin-top: 25px; transition: 0.3s; }
+        .btn-add { background: var(--primary); color: white; padding: 12px; width: 100%; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>NOC HUB - SISTEMA DE SUPERVISIÓN TÉCNICA</h1>
+    <h1>NOC REPORTING MASTER V13.0</h1>
 </header>
 
-<div class="app-container">
-    <div class="search-container">
-        <input type="text" id="siteSearch" placeholder="🔍 BUSCAR POR SITEID, NOMBRE DE SITIO O NIC/NIS..." autocomplete="off">
+<div class="container">
+    <div style="position:relative;">
+        <input type="text" id="siteSearch" placeholder="🔍 Buscar SITEID, Nombre o NIC..." autocomplete="off">
         <div id="suggestions" class="suggestions"></div>
     </div>
 
     <div id="config-panel" class="config-card">
-        <h3 id="site-display" style="margin:0; color:var(--primary); font-family: 'Orbitron';"></h3>
-        <p style="font-size:0.75rem; color: #aaa; margin: 10px 0;">Seleccione el personal asignado para este sitio:</p>
-        <div id="tech-list" class="tech-grid">
-            </div>
-        <button class="btn-add" onclick="agregarRegistro()">INSERTAR REGISTRO EN TABLA</button>
+        <h3 id="site-display" style="margin:0; color:var(--primary);"></h3>
+        <p style="font-size:0.7rem; font-weight:800; margin-top:15px;">SELECCIONAR PERSONAL TÉCNICO ASIGNADO:</p>
+        <div id="tech-list" class="tech-grid"></div>
+        <button class="btn-add" onclick="insertarSitio()">AÑADIR AL REPORTE</button>
     </div>
 
     <div id="capture-area">
         <div class="blue-header">
-            <input type="text" id="headerTitle" value="CORTE PROGRAMADO" style="background:transparent; border:none; color:white; font-weight:bold; text-align:right; width:45%; font-size:18px; outline:none; text-transform:uppercase;">
-            <span style="margin: 0 10px;">-</span>
-            <input type="text" id="headerDate" style="background:transparent; border:none; color:white; font-weight:bold; width:45%; font-size:18px; outline:none;">
+            <input type="text" id="reportTitle" value="CORTE PROGRAMADO" style="background:transparent; border:none; color:white; font-weight:bold; text-align:right; width:45%; font-size:20px; outline:none;">
+            - 
+            <input type="text" id="reportDate" style="background:transparent; border:none; color:white; font-weight:bold; width:45%; font-size:20px; outline:none;">
         </div>
-        
         <table class="blue-table">
             <thead>
                 <tr>
                     <th style="width:11%">Distribuidora</th>
                     <th style="width:12%">Horario</th>
-                    <th style="width:25%">Sitio / Nodo</th>
-                    <th style="width:17%">Personal Asignado</th>
+                    <th style="width:25%">Nodo / Sitio</th>
                     <th style="width:10%">Torrero</th>
-                    <th style="width:16%">Comentario</th>
+                    <th style="width:22%">Comentario</th>
                     <th style="width:9%">NIC</th>
-                    <th class="no-capture" style="width:35px; background:white !important;"></th>
+                    <th style="width:16%">Personal Técnico</th>
+                    <th class="no-capture" style="width:30px; background:white !important;"></th>
                 </tr>
             </thead>
-            <tbody id="table-body">
-                </tbody>
+            <tbody id="table-body"></tbody>
         </table>
     </div>
 
-    <div style="display:flex; justify-content:center;">
-        <button class="btn-master" onclick="generarReportePNG()">💾 DESCARGAR REPORTE TÉCNICO (PNG HD)</button>
-    </div>
+    <button class="btn-action" onclick="exportarPNG()">💾 DESCARGAR REPORTE PNG HD</button>
 </div>
 
 <script>
-let database = [];
-let itemSelected = null;
-const CSV_SITIOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
-const CSV_TECNICOS = 'tecnicos.csv';
+let sites = [];
+let siteSelected = null;
+let sitesInTable = [];
+const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
+const TECH_CSV = 'tecnicos.csv';
 
-// 1. CARGA DE DATOS DESDE LAS BASES
-Papa.parse(CSV_SITIOS, {
-    download: true, header: true,
-    complete: (r) => { database = r.data.filter(x => x.SITEID); }
-});
+Papa.parse(SITIOS_CSV, { download: true, header: true, complete: (r) => { sites = r.data.filter(x => x.SITEID); }});
+Papa.parse(TECH_CSV, { download: true, header: true, complete: (r) => {
+    const list = document.getElementById('tech-list');
+    r.data.forEach(t => { if(t.Nombre) list.innerHTML += `<label class="tech-item"><input type="checkbox" value="${t.Nombre}"> ${t.Nombre}</label>`; });
+}});
 
-Papa.parse(CSV_TECNICOS, {
-    download: true, header: true,
-    complete: (r) => {
-        const list = document.getElementById('tech-list');
-        r.data.forEach(t => {
-            if(t.Nombre) list.innerHTML += `<label class="tech-item"><input type="checkbox" value="${t.Nombre}"> ${t.Nombre}</label>`;
-        });
-    }
-});
-
-// 2. MOTOR DEL BUSCADOR (ID, Nombre, NIC)
 document.getElementById('siteSearch').addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase().trim();
+    const val = e.target.value.toLowerCase().trim();
     const sug = document.getElementById('suggestions');
-    if (query.length < 2) { sug.style.display = 'none'; return; }
-
-    const results = database.filter(s => 
-        String(s.SITEID).toLowerCase().includes(query) || 
-        String(s['NOMBRE DE SITIO']).toLowerCase().includes(query) || 
-        String(s['NIC/NIS']).toLowerCase().includes(query)
-    ).slice(0, 8);
-
-    sug.innerHTML = results.map(s => `
-        <div class="sug-item" onclick="prepararFila('${s.SITEID}')">
-            <strong>${s.SITEID}</strong> - ${s['NOMBRE DE SITIO']}
-        </div>
-    `).join('');
-    sug.style.display = results.length ? 'block' : 'none';
+    if (val.length < 2) { sug.style.display = 'none'; return; }
+    const matches = sites.filter(s => String(s.SITEID).toLowerCase().includes(val) || String(s['NOMBRE DE SITIO']).toLowerCase().includes(val) || String(s['NIC/NIS']).toLowerCase().includes(val)).slice(0, 8);
+    sug.innerHTML = matches.map(s => `<div class="sug-item" onclick="seleccionar('${s.SITEID}')"><strong>${s.SITEID}</strong> - ${s['NOMBRE DE SITIO']}</div>`).join('');
+    sug.style.display = matches.length ? 'block' : 'none';
 });
 
-function prepararFila(id) {
-    itemSelected = database.find(x => x.SITEID === id);
+function seleccionar(id) {
+    siteSelected = sites.find(x => x.SITEID === id);
     document.getElementById('suggestions').style.display = 'none';
-    document.getElementById('siteSearch').value = itemSelected.SITEID;
+    document.getElementById('siteSearch').value = siteSelected.SITEID;
     document.getElementById('config-panel').style.display = 'block';
-    document.getElementById('site-display').innerText = `${itemSelected.SITEID} - ${itemSelected['NOMBRE DE SITIO']}`;
-    document.getElementById('site-display').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('site-display').innerText = `${siteSelected.SITEID} - ${siteSelected['NOMBRE DE SITIO']}`;
 }
 
-// 3. INSERCIÓN EN LA TABLA
-function agregarRegistro() {
-    const personal = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
-    const body = document.getElementById('table-body');
-    const tr = document.createElement('tr');
+function insertarSitio() {
+    const techs = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value).join(' / ') || 'PENDIENTE';
+    const rowData = {
+        dist: siteSelected.Distribuidora || '',
+        horario: "9:00 a. m. a 4:00 p. m.",
+        site: `${siteSelected.SITEID} - ${siteSelected['NOMBRE DE SITIO']}`,
+        torrero: siteSelected.Propietario || 'N/A',
+        comentario: "SITIO CON FALLA DE MG",
+        nic: siteSelected['NIC/NIS'] || '---',
+        personal: techs
+    };
+    sitesInTable.push(rowData);
+    renderTable();
     
-    tr.innerHTML = `
-        <td><input type="text" class="edit-field" value="${itemSelected.Distribuidora || ''}"><div class="export-label">${itemSelected.Distribuidora || ''}</div></td>
-        <td><input type="text" class="edit-field" placeholder="Escribir Horario..."><div class="export-label"></div></td>
-        <td style="color:#4472c4; font-weight:800; font-size:12px;">${itemSelected.SITEID}<br>${itemSelected['NOMBRE DE SITIO']}</td>
-        <td style="font-size:10px; font-weight:bold; padding:5px;">${personal}</td>
-        <td>${itemSelected.Propietario || 'N/A'}</td>
-        <td><textarea class="edit-field" style="text-align:left;" placeholder="Comentarios..."></textarea><div class="export-label"></div></td>
-        <td style="color:#4472c4; font-weight:800;">${itemSelected['NIC/NIS'] || '---'}</td>
-        <td class="no-capture" style="background:white !important; text-align:center;">
-            <button onclick="this.closest('tr').remove()" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:18px;">✕</button>
-        </td>
-    `;
-    
-    body.appendChild(tr);
-    // Limpieza de UI
     document.getElementById('config-panel').style.display = 'none';
     document.querySelectorAll('#tech-list input').forEach(i => i.checked = false);
     document.getElementById('siteSearch').value = '';
 }
 
-// 4. GENERACIÓN DE PNG HD (SIN PÉRDIDA DE DATOS)
-async function generarReportePNG() {
-    const area = document.getElementById('capture-area');
-    const btn = document.querySelector('.btn-master');
+function renderTable() {
+    const body = document.getElementById('table-body');
+    body.innerHTML = '';
     
-    btn.innerText = "⏳ PROCESANDO REPORTE...";
-    btn.disabled = true;
+    sitesInTable.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        
+        // Lógica de Agrupación
+        const isDuplicateDist = index > 0 && sitesInTable[index-1].dist === item.dist && sitesInTable[index-1].horario === item.horario;
+        const distColor = isDuplicateDist ? 'transparent' : 'black';
+        const topBorder = isDuplicateDist ? 'none' : '1px solid black';
 
-    // SINCRONIZACIÓN FORZADA DE CAMPOS EDITABLES
-    area.querySelectorAll('tr').forEach(row => {
-        const fields = row.querySelectorAll('.edit-field');
-        fields.forEach(field => {
-            const label = field.nextElementSibling;
-            if (label && label.classList.contains('export-label')) {
-                label.innerText = field.value || field.placeholder;
-            }
-        });
+        tr.innerHTML = `
+            <td style="border-top:${topBorder}; color:${distColor};">
+                <input type="text" class="edit-input" value="${item.dist}" oninput="updateVal(${index}, 'dist', this.value)">
+                <div class="export-text" style="color:${distColor};">${item.dist}</div>
+            </td>
+            <td style="border-top:${topBorder};">
+                <input type="text" class="edit-input" value="${item.horario}" oninput="updateVal(${index}, 'horario', this.value)">
+                <div class="export-text">${item.horario}</div>
+            </td>
+            <td style="color:#4472c4; font-weight:900;">${item.site}</td>
+            <td>${item.torrero}</td>
+            <td><textarea class="edit-input" style="text-align:left;" oninput="updateVal(${index}, 'comentario', this.value)">${item.comentario}</textarea><div class="export-text">${item.comentario}</div></td>
+            <td style="color:#4472c4; font-weight:900; background:#d9e1f2 !important;">${item.nic}</td>
+            <td style="font-size:10px; font-weight:bold;">${item.personal}</td>
+            <td class="no-capture" style="background:white !important;"><button onclick="remover(${index})" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;">✕</button></td>
+        `;
+        body.appendChild(tr);
+    });
+}
+
+function updateVal(index, field, val) {
+    sitesInTable[index][field] = val;
+    // Si se actualiza el horario, re-renderizamos para evaluar agrupaciones
+    if(field === 'horario' || field === 'dist') renderTable();
+}
+
+function remover(index) {
+    sitesInTable.splice(index, 1);
+    renderTable();
+}
+
+async function exportarPNG() {
+    const area = document.getElementById('capture-area');
+    const btn = document.querySelector('.btn-action');
+    btn.innerText = "⏳ GENERANDO...";
+
+    // Sincronizar inputs finales
+    area.querySelectorAll('.edit-input').forEach(inp => {
+        if(inp.nextElementSibling) inp.nextElementSibling.innerText = inp.value;
     });
 
     area.classList.add('is-exporting');
-
     try {
-        const canvas = await html2canvas(area, {
-            scale: 3, // Calidad Premium
-            backgroundColor: "#ffffff",
-            useCORS: true,
-            logging: false
-        });
-        
+        const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff" });
         const link = document.createElement('a');
-        link.download = `REPORTE_TECNICO_NOC_${Date.now()}.png`;
-        link.href = canvas.toDataURL("image/png");
+        link.download = `REPORTE_TECNICO_${Date.now()}.png`;
+        link.href = canvas.toDataURL();
         link.click();
-    } catch (e) {
-        alert("Error crítico en la generación de imagen.");
-        console.error(e);
     } finally {
         area.classList.remove('is-exporting');
-        btn.innerText = "💾 DESCARGAR REPORTE TÉCNICO (PNG HD)";
-        btn.disabled = false;
+        btn.innerText = "💾 DESCARGAR REPORTE PNG HD";
     }
 }
 
-// Inicializar fecha
-document.getElementById('headerDate').value = new Date().toLocaleDateString();
+document.getElementById('reportDate').value = new Date().toLocaleDateString();
 </script>
 </body>
 </html>
