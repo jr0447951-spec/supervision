@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOC Hub V15.0 - Agrupación Inteligente</title>
+    <title>NOC Command Center V17.0 - High Performance</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -20,80 +20,47 @@
         .container { width: 95%; max-width: 1300px; margin-top: 30px; }
         
         /* BUSCADOR */
-        .search-box { width: 100%; padding: 20px; border-radius: 12px; border: 2px solid var(--primary); background: rgba(255,255,255,0.1); color: white; font-size: 1rem; outline: none; }
+        #siteSearch { width: 100%; padding: 20px; border-radius: 12px; border: 2px solid var(--primary); background: rgba(255,255,255,0.1); color: white; font-size: 1rem; outline: none; }
         .suggestions { position: absolute; width: 100%; background: #1e293b; border-radius: 10px; max-height: 250px; overflow-y: auto; z-index: 2000; display: none; border: 1px solid var(--primary); }
         .sug-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
 
-        /* PANEL CONFIGURACIÓN (SELECTOR DE TÉCNICOS) */
-        .config-card { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 25px; border: 1px solid var(--primary); margin: 20px 0; display: none; }
-        .tech-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-            gap: 12px; 
-            background: #000; 
-            padding: 20px; 
-            border-radius: 10px; 
-            max-height: 200px; 
-            overflow-y: auto; 
-        }
-        .tech-item { 
-            font-size: 0.85rem; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            cursor: pointer; 
-            color: #fff;
-            padding: 5px;
-            border-radius: 5px;
-            transition: 0.2s;
-        }
-        .tech-item:hover { background: rgba(0, 161, 255, 0.2); }
-        .tech-item input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary); }
+        /* SELECTOR DE TÉCNICOS (DROPDOWN) */
+        .tech-dropdown { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .tech-menu { position: absolute; top: 0; left: 0; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); width: 180px; z-index: 5000; display: none; padding: 10px; text-align: left; max-height: 200px; overflow-y: auto; }
+        .tech-option { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #333; margin-bottom: 5px; font-weight: 600; }
+        .tech-option input { cursor: pointer; }
 
         /* TABLA DE REPORTE */
         #capture-area { background: white !important; padding: 40px; width: 1250px; margin-top: 30px; }
         .report-header { background: var(--report-blue) !important; color: white !important; text-align: center; padding: 12px; border: 2px solid #000; font-weight: 800; font-size: 20px; }
         .report-table { width: 100%; border-collapse: collapse; border: 2px solid #000; table-layout: fixed; }
         .report-table th { background: var(--report-blue) !important; color: white !important; padding: 12px; font-size: 13px; border: 1px solid #000; }
-        .report-table td { border: 1px solid #000; color: #000 !important; font-size: 12px; text-align: center; vertical-align: middle; padding: 0; background: white !important; height: 70px; }
+        .report-table td { border: 1px solid #000; color: #000 !important; font-size: 12px; text-align: center; vertical-align: middle; padding: 0; background: white !important; height: 75px; }
         
         /* EDICIÓN */
         .cell-input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; font-family: 'Inter'; font-size: 12px; color: black; outline: none; padding: 8px; }
         .export-label { display: none; padding: 10px; white-space: pre-wrap; font-weight: 700; text-align: center; }
 
-        /* CLASES DE AGRUPACIÓN DINÁMICA */
-        .grouped-cell { color: transparent !important; border-top: none !important; }
-        .first-of-group { border-top: 1px solid black !important; }
-
         /* MODO EXPORTACIÓN */
-        .is-exporting .cell-input, .is-exporting .no-capture { display: none !important; }
+        .is-exporting .cell-input, .is-exporting .no-capture, .is-exporting .tech-menu { display: none !important; }
         .is-exporting .export-label { display: block !important; }
 
-        /* BOTONES */
         .actions { display: flex; gap: 20px; justify-content: center; margin-top: 40px; }
         .btn { padding: 18px 40px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; font-family: 'Orbitron'; transition: 0.3s; }
         .btn-png { background: var(--report-blue); color: white; }
         .btn-xlsx { background: #1d6f42; color: white; }
-        .btn-add { background: var(--primary); color: white; border-radius: 10px; width: 100%; margin-top: 15px; padding: 15px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>NOC MASTER V15.0 - AUTO GROUP</h1>
+    <h1>NOC COMMAND CENTER V17.0</h1>
 </header>
 
 <div class="container">
-    <div style="position:relative;">
-        <input type="text" id="siteSearch" class="search-box" placeholder="🔍 Buscar sitio por ID, Nombre o NIC..." autocomplete="off">
+    <div style="position:relative; margin-bottom: 30px;">
+        <input type="text" id="siteSearch" placeholder="🔍 BUSCAR SITEID, NOMBRE O NIC..." autocomplete="off">
         <div id="suggestions" class="suggestions"></div>
-    </div>
-
-    <div id="config-panel" class="config-card">
-        <h3 id="site-display" style="margin:0; color:var(--primary); font-family: 'Orbitron';"></h3>
-        <p style="font-size:0.75rem; font-weight:800; margin-top:20px; color:#aaa;">ASIGNAR PERSONAL TÉCNICO (CHECKLIST):</p>
-        <div id="tech-list" class="tech-grid"></div>
-        <button class="btn btn-add" onclick="agregarSitio()">INSERTAR EN REPORTE</button>
     </div>
 
     <div id="capture-area">
@@ -127,7 +94,7 @@
 
 <script>
 let database = [];
-let selectedSite = null;
+let tecnicos = [];
 let reportEntries = [];
 
 const CSV_SITES = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
@@ -135,16 +102,7 @@ const CSV_TECH = 'tecnicos.csv';
 
 // CARGA DE DATOS
 Papa.parse(CSV_SITES, { download: true, header: true, complete: (r) => { database = r.data.filter(x => x.SITEID); }});
-Papa.parse(CSV_TECH, { download: true, header: true, complete: (r) => {
-    const list = document.getElementById('tech-list');
-    r.data.forEach(t => { 
-        if(t.Nombre) list.innerHTML += `
-            <label class="tech-item">
-                <input type="checkbox" value="${t.Nombre}"> 
-                ${t.Nombre}
-            </label>`; 
-    });
-}});
+Papa.parse(CSV_TECH, { download: true, header: true, complete: (r) => { tecnicos = r.data.filter(t => t.Nombre).map(t => t.Nombre); }});
 
 // BUSCADOR
 document.getElementById('siteSearch').addEventListener('input', (e) => {
@@ -152,40 +110,25 @@ document.getElementById('siteSearch').addEventListener('input', (e) => {
     const sug = document.getElementById('suggestions');
     if (val.length < 2) { sug.style.display = 'none'; return; }
     const matches = database.filter(s => String(s.SITEID).toLowerCase().includes(val) || String(s['NOMBRE DE SITIO']).toLowerCase().includes(val) || String(s['NIC/NIS']).toLowerCase().includes(val)).slice(0, 10);
-    sug.innerHTML = matches.map(s => `<div class="sug-item" onclick="selectSite('${s.SITEID}')"><strong>${s.SITEID}</strong> - ${s['NOMBRE DE SITIO']}</div>`).join('');
+    sug.innerHTML = matches.map(s => `<div class="sug-item" onclick="insertarSitio('${s.SITEID}')"><strong>${s.SITEID}</strong> - ${s['NOMBRE DE SITIO']}</div>`).join('');
     sug.style.display = matches.length ? 'block' : 'none';
 });
 
-function selectSite(id) {
-    selectedSite = database.find(x => x.SITEID === id);
-    document.getElementById('suggestions').style.display = 'none';
-    document.getElementById('siteSearch').value = selectedSite.SITEID;
-    document.getElementById('config-panel').style.display = 'block';
-    document.getElementById('site-display').innerText = `${selectedSite.SITEID} - ${selectedSite['NOMBRE DE SITIO']}`;
-}
-
-// LOGICA DE REPORTE Y AGRUPACIÓN
-function agregarSitio() {
-    const techs = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
+function insertarSitio(id) {
+    const s = database.find(x => x.SITEID === id);
     const entry = {
-        distribuidora: selectedSite.Distribuidora || 'N/A',
-        horario: '', // Blanco por defecto
-        nodo: `${selectedSite.SITEID} - ${selectedSite['NOMBRE DE SITIO']}`,
-        torrero: selectedSite.Propietario || 'N/A',
-        comentario: '', // Blanco por defecto
-        nic: selectedSite['NIC/NIS'] || '---',
-        personal: techs
+        distribuidora: s.Distribuidora || 'N/A',
+        horario: '',
+        nodo: `${s.SITEID} - ${s['NOMBRE DE SITIO']}`,
+        torrero: s.Propietario || '---',
+        comentario: '',
+        nic: s['NIC/NIS'] || '---',
+        personal: [] // Array de técnicos seleccionados
     };
     reportEntries.push(entry);
-    
-    // ORDENAR AUTOMÁTICAMENTE POR DISTRIBUIDORA
     reportEntries.sort((a, b) => a.distribuidora.localeCompare(b.distribuidora));
-    
     renderTable();
-    
-    // Limpieza
-    document.getElementById('config-panel').style.display = 'none';
-    document.querySelectorAll('#tech-list input').forEach(i => i.checked = false);
+    document.getElementById('suggestions').style.display = 'none';
     document.getElementById('siteSearch').value = '';
 }
 
@@ -195,30 +138,38 @@ function renderTable() {
 
     reportEntries.forEach((row, i) => {
         const tr = document.createElement('tr');
-        
-        // --- MOTOR DE AGRUPACIÓN ---
         const esMismaAnterior = i > 0 && reportEntries[i-1].distribuidora === row.distribuidora;
-        const distStyle = esMismaAnterior ? 'grouped-cell' : 'first-of-group';
-        const distVal = esMismaAnterior ? '' : row.distribuidora;
+        
+        // Generar lista de checkboxes para técnicos
+        let techChecks = tecnicos.map(name => {
+            const isChecked = row.personal.includes(name) ? 'checked' : '';
+            return `<label class="tech-option"><input type="checkbox" ${isChecked} onchange="toggleTech(${i}, '${name}')"> ${name}</label>`;
+        }).join('');
 
         tr.innerHTML = `
-            <td class="${distStyle}">
-                <input class="cell-input" value="${row.distribuidora}" oninput="updateRow(${i}, 'distribuidora', this.value)">
+            <td style="${esMismaAnterior ? 'border-top:none;' : ''}">
+                <input class="cell-input" value="${row.distribuidora}" oninput="updateVal(${i}, 'distribuidora', this.value)">
                 <div class="export-label" style="${esMismaAnterior ? 'color:transparent;' : ''}">${row.distribuidora}</div>
             </td>
             <td>
-                <input class="cell-input" placeholder="00:00 - 00:00" value="${row.horario}" oninput="updateRow(${i}, 'horario', this.value)">
+                <input class="cell-input" placeholder="00:00 - 00:00" value="${row.horario}" oninput="updateVal(${i}, 'horario', this.value)">
                 <div class="export-label">${row.horario}</div>
             </td>
-            <td style="color:#4472c4; font-weight:900; padding:5px;">${row.nodo}</td>
+            <td style="color:#4472c4; font-weight:900;">${row.nodo}</td>
             <td>${row.torrero}</td>
             <td>
-                <textarea class="cell-input" style="text-align:left;" oninput="updateRow(${i}, 'comentario', this.value)">${row.comentario}</textarea>
+                <textarea class="cell-input" style="text-align:left;" oninput="updateVal(${i}, 'comentario', this.value)">${row.comentario}</textarea>
                 <div class="export-label" style="text-align:left;">${row.comentario}</div>
             </td>
             <td style="color:#4472c4; font-weight:900; background:var(--report-light) !important;">${row.nic}</td>
-            <td style="font-size:10px; font-weight:bold;">${row.personal}</td>
-            <td class="no-capture" style="background:white !important;">
+            <td>
+                <div class="tech-dropdown" onclick="toggleMenu(event)">
+                    <span class="no-capture">${row.personal.length > 0 ? row.personal.join(' / ') : 'Asignar'}</span>
+                    <div class="export-label" style="display:block;">${row.personal.join(' / ')}</div>
+                    <div class="tech-menu no-capture">${techChecks}</div>
+                </div>
+            </td>
+            <td class="no-capture" style="background:white !important; text-align:center;">
                 <button onclick="borrar(${i})" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:18px;">✕</button>
             </td>
         `;
@@ -226,9 +177,27 @@ function renderTable() {
     });
 }
 
-function updateRow(index, key, val) {
+function toggleMenu(e) {
+    const menu = e.currentTarget.querySelector('.tech-menu');
+    const allMenus = document.querySelectorAll('.tech-menu');
+    allMenus.forEach(m => { if(m !== menu) m.style.display = 'none'; });
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+    e.stopPropagation();
+}
+
+function toggleTech(index, name) {
+    const list = reportEntries[index].personal;
+    if (list.includes(name)) {
+        reportEntries[index].personal = list.filter(n => n !== name);
+    } else {
+        reportEntries[index].personal.push(name);
+    }
+    renderTable();
+}
+
+function updateVal(index, key, val) {
     reportEntries[index][key] = val;
-    if(key === 'distribuidora') renderTable(); // Re-agrupar si cambia nombre
+    if(key === 'distribuidora') renderTable();
 }
 
 function borrar(index) {
@@ -236,11 +205,11 @@ function borrar(index) {
     renderTable();
 }
 
-// EXPORTACIONES
+document.addEventListener('click', () => { document.querySelectorAll('.tech-menu').forEach(m => m.style.display = 'none'); });
+
 async function exportarImagen() {
     const area = document.getElementById('capture-area');
-    const btn = document.querySelector('.btn-png');
-    btn.innerText = "⏳ GENERANDO...";
+    document.querySelectorAll('.tech-menu').forEach(m => m.style.display = 'none');
     
     // Sincronizar inputs
     area.querySelectorAll('.cell-input').forEach(inp => {
@@ -251,17 +220,17 @@ async function exportarImagen() {
     try {
         const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff" });
         const link = document.createElement('a');
-        link.download = `Reporte_NOC_${Date.now()}.png`;
+        link.download = `NOC_Report_${Date.now()}.png`;
         link.href = canvas.toDataURL();
         link.click();
     } finally {
         area.classList.remove('is-exporting');
-        btn.innerText = "💾 DESCARGAR PNG HD";
     }
 }
 
 function exportarExcel() {
-    const ws = XLSX.utils.json_to_sheet(reportEntries);
+    const data = reportEntries.map(e => ({...e, personal: e.personal.join(' / ')}));
+    const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Reporte");
     XLSX.writeFile(wb, `Reporte_NOC_${Date.now()}.xlsx`);
