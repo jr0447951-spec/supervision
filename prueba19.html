@@ -3,168 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOC Dashboard - Consultor & Reporte</title>
+    <title>NOC Hub - Consultor & Reportes Profesionales</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
     <style>
-        :root { 
-            --primary: #00a1ff; 
-            --dark-bg: #0f172a;
-            --glass: rgba(255, 255, 255, 0.08);
-            --border: rgba(255, 255, 255, 0.15);
-            --success: #22c55e;
-            --warning: #fbbf24;
-        }
+        :root { --primary: #00a1ff; --dark: #0f172a; --border: rgba(255, 255, 255, 0.15); }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: #001a33; color: white; display: flex; flex-direction: column; align-items: center; padding-bottom: 80px; }
+        
+        header { width: 100%; background: #0f172a; padding: 20px 0; text-align: center; border-bottom: 2px solid var(--primary); position: sticky; top: 0; z-index: 1000; }
+        h1 { font-family: 'Orbitron'; font-size: 1.2rem; margin: 0; color: var(--primary); letter-spacing: 2px; }
 
-        body { 
-            font-family: 'Inter', sans-serif; margin: 0; background: #001a33; color: white;
-            display: flex; flex-direction: column; align-items: center; padding-bottom: 50px;
-        }
-
-        header { 
-            width: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);
-            padding: 20px 0; position: sticky; top: 0; z-index: 2000; border-bottom: 1px solid var(--border); text-align: center;
-        }
-        h1 { font-family: 'Orbitron', sans-serif; margin: 0; font-size: 1.3rem; letter-spacing: 2px; color: var(--primary); }
-
-        .container { width: 92%; max-width: 900px; margin-top: 20px; }
-
+        .container { width: 95%; max-width: 1000px; margin-top: 20px; }
+        
         /* BUSCADOR */
-        .search-section { position: relative; margin-bottom: 25px; }
-        #siteSearch { 
-            width: 100%; padding: 18px; border-radius: 15px; border: 2px solid var(--primary); 
-            background: rgba(255,255,255,0.05); color: white; font-size: 1rem; outline: none; box-sizing: border-box;
-        }
-        .suggestions { 
-            position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; 
-            border-radius: 12px; max-height: 250px; overflow-y: auto; z-index: 3000; display: none; margin-top: 5px; border: 1px solid var(--primary);
-        }
+        .search-box { position: relative; margin-bottom: 20px; }
+        #siteSearch { width: 100%; padding: 18px; border-radius: 12px; border: 2px solid var(--primary); background: rgba(255,255,255,0.05); color: white; font-size: 1rem; box-sizing: border-box; outline: none; }
+        .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #1e293b; border-radius: 10px; max-height: 200px; overflow-y: auto; z-index: 2000; display: none; border: 1px solid var(--primary); margin-top: 5px; }
         .suggestion-item { padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
-        .suggestion-item:hover { background: rgba(0, 161, 255, 0.1); }
-
+        
         /* FICHA TÉCNICA */
-        .card-tech { 
-            background: var(--glass); border-radius: 20px; padding: 20px; border: 1px solid var(--border);
-            margin-bottom: 30px; animation: fadeIn 0.3s ease;
-        }
-        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
-        .info-item { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; border-left: 4px solid var(--primary); }
-        .info-label { font-size: 0.65rem; color: var(--primary); font-weight: 800; text-transform: uppercase; display: block; }
-        .btn-add { 
-            width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--primary); 
-            color: white; font-weight: 800; font-family: 'Orbitron'; cursor: pointer; transition: 0.3s;
-        }
-        .btn-add:hover { filter: brightness(1.2); transform: scale(1.01); }
+        .card-tech { background: rgba(255,255,255,0.05); border-radius: 15px; padding: 20px; border: 1px solid var(--border); margin-bottom: 30px; animation: fadeIn 0.3s ease; }
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .info-cell { background: rgba(0, 161, 255, 0.05); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); }
+        .label { font-size: 0.65rem; color: var(--primary); font-weight: 800; text-transform: uppercase; display: block; }
+        .btn-group { display: flex; gap: 10px; }
+        .btn-add { flex: 1; padding: 15px; border-radius: 10px; border: none; font-weight: 800; cursor: pointer; font-family: 'Orbitron'; transition: 0.3s; }
+        
+        /* FORMATO TABLA AZUL (CORTE PROGRAMADO) */
+        .capture-wrapper { background: white !important; padding: 30px; margin-top: 40px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .blue-report-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1.5px solid #002244; }
+        .blue-report-table th { background: #4472c4 !important; color: white !important; padding: 10px; font-size: 13px; border: 1px solid #002244; }
+        .blue-report-table td { border: 1px solid #002244; background: #d9e1f2 !important; color: #002244 !important; font-size: 13px; padding: 0; vertical-align: middle; text-align: center; }
+        .blue-report-table tr:nth-child(even) td { background: white !important; }
+        
+        .input-table { width: 100%; border: none; background: transparent; padding: 10px; font-family: 'Inter'; font-size: 13px; color: #002244; text-align: center; outline: none; }
+        .txt-coment { text-align: left !important; font-size: 12px !important; }
+        .export-text { display: none; padding: 10px; word-wrap: break-word; }
 
-        /* ÁREA DE REPORTE (CAPTURABLE) */
-        #capture-area { 
-            background: white !important; color: #002244 !important; padding: 40px; 
-            border-radius: 4px; width: 1100px; margin-top: 40px; box-sizing: border-box;
-        }
-        .report-header { border-bottom: 5px solid #004488; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .report-header h2 { margin: 0; color: #004488; font-size: 1.8rem; font-weight: 900; }
+        .is-exporting .input-table { display: none !important; }
+        .is-exporting .export-text { display: block !important; }
+        .is-exporting .no-capture { display: none !important; }
 
-        .excel-table { width: 100%; border-collapse: collapse; border: 2px solid #002244; }
-        .excel-table th { background: #004488 !important; color: white !important; padding: 12px; font-size: 0.8rem; text-transform: uppercase; }
-        .excel-table td { border: 1px solid #b3d9ff; padding: 0; background: white !important; }
-
-        .table-select, .table-textarea { 
-            width: 100%; border: none; padding: 10px; box-sizing: border-box; 
-            font-family: 'Inter'; font-size: 0.85rem; background: #f9f9f9;
-        }
-        .export-text { display: none; padding: 10px; font-size: 0.85rem; font-weight: 600; }
-
-        #capture-area.is-exporting .no-capture, 
-        #capture-area.is-exporting .table-select, 
-        #capture-area.is-exporting .table-textarea { display: none !important; }
-        #capture-area.is-exporting .export-text { display: block !important; }
-
-        .actions { display: flex; gap: 15px; margin-top: 30px; width: 92%; max-width: 900px; }
-        .btn-action { flex: 1; padding: 18px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; transition: 0.3s; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-dl { background: #4472c4; color: white; padding: 15px 30px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 15px rgba(68, 114, 196, 0.4); }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>CONSULTOR & REPORTE TÉCNICO</h1>
+    <h1>CONSULTOR & FORMATO DE REPORTE</h1>
 </header>
 
 <div class="container">
-    <div class="search-section">
-        <input type="text" id="siteSearch" placeholder="🔍 Buscar por SITEID, Nombre o NIC/NIS..." autocomplete="off">
+    <div class="search-box">
+        <input type="text" id="siteSearch" placeholder="🔍 Buscar SITEID, Nombre o NIC/NIS..." autocomplete="off">
         <div id="suggestions" class="suggestions"></div>
     </div>
 
     <div id="tech-result"></div>
 
-    <div class="card-tech" style="border-style: dashed;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <select id="sel-tipo" style="padding:12px; border-radius:8px; background:#0f172a; color:white; border:1px solid var(--primary);">
-                <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
-                <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
-            </select>
-            <input type="date" id="sel-fecha" style="padding:12px; border-radius:8px; background:#0f172a; color:white; border:1px solid var(--primary);">
+    <div class="capture-wrapper" id="blue-capture">
+        <div style="background:#4472c4; color:white; text-align:center; padding:5px; border:1px solid #002244; font-weight:bold; font-size:16px; margin-bottom:-1px;">
+            <span id="title-report">CORTE PROGRAMADO</span> 
+            <input type="text" id="report-date" value="2/2/2026" style="background:transparent; border:none; color:white; font-weight:bold; width:100px; text-align:center;">
         </div>
+        
+        <table class="blue-report-table">
+            <thead>
+                <tr>
+                    <th style="width:12%">Distribuidora</th>
+                    <th style="width:14%">Horario</th>
+                    <th style="width:28%">Sitio:</th>
+                    <th style="width:12%">Torrero</th>
+                    <th style="width:24%">Comentario:</th>
+                    <th style="width:10%">NIC</th>
+                    <th class="no-capture" style="width:30px; background:white !important;"></th>
+                </tr>
+            </thead>
+            <tbody id="blue-body">
+                </tbody>
+        </table>
     </div>
-</div>
 
-<div id="capture-area">
-    <div class="report-header">
-        <div>
-            <h2 id="h-titulo">VISITAS REALIZADAS</h2>
-            <span style="font-weight: 800; color: #004488; font-size: 0.8rem;">EQUIPO TÉCNICO OPERACIONES - ZONA PARACENTRAL</span>
-        </div>
-        <div id="h-fecha-display" style="font-size: 1.8rem; font-weight: 900; color: #004488;"></div>
+    <div style="display:flex; justify-content:center;">
+        <button class="btn-dl" onclick="downloadBlueReport()">💾 DESCARGAR REPORTE TÉCNICO (PNG)</button>
     </div>
-
-    <table class="excel-table">
-        <thead>
-            <tr>
-                <th style="width:25%">SITIO / NODO</th>
-                <th style="width:15%">TORRERO</th>
-                <th style="width:15%">FALLA</th>
-                <th style="width:20%">ESTADO</th>
-                <th style="width:25%">COMENTARIOS TÉCNICOS</th>
-                <th class="no-capture" style="width:40px"></th>
-            </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-    </table>
-</div>
-
-<div class="actions">
-    <button class="btn-action" style="background: white; color: #004488; border: 2px solid #004488;" onclick="downloadImg()">💾 DESCARGAR PNG</button>
-    <button class="btn-action" style="background: #25d366; color: white;" onclick="window.open('https://wa.me/')">📱 ENVIAR WHATSAPP</button>
 </div>
 
 <script>
 let sites = [];
+// Cambia este URL por el tuyo de Google Sheets CSV
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
 
-// CARGA DE DATOS
 Papa.parse(CSV_URL, {
     download: true, header: true,
     complete: (r) => { sites = r.data.filter(x => x.SITEID); }
 });
 
-// BUSCADOR TRIPLE
 document.getElementById('siteSearch').addEventListener('input', (e) => {
     const val = e.target.value.toLowerCase().trim();
     const sug = document.getElementById('suggestions');
     if (val.length < 2) { sug.style.display = 'none'; return; }
 
     const matches = sites.filter(s => 
-        (s.SITEID && s.SITEID.toLowerCase().includes(val)) || 
-        (s['NOMBRE DE SITIO'] && s['NOMBRE DE SITIO'].toLowerCase().includes(val)) ||
-        (s['NIC/NIS'] && s['NIC/NIS'].toLowerCase().includes(val))
-    ).slice(0, 10);
+        String(s.SITEID).toLowerCase().includes(val) || 
+        String(s['NOMBRE DE SITIO']).toLowerCase().includes(val) ||
+        String(s['NIC/NIS']).toLowerCase().includes(val)
+    ).slice(0, 8);
 
     sug.innerHTML = matches.map(s => `
-        <div class="suggestion-item" onclick="mostrarInfo('${s.SITEID}')">
+        <div class="suggestion-item" onclick="verInfo('${s.SITEID}')">
             <strong>${s.SITEID}</strong> - ${s['NOMBRE DE SITIO']} <br>
             <small style="color:var(--primary)">NIC: ${s['NIC/NIS'] || 'N/A'}</small>
         </div>
@@ -172,78 +123,61 @@ document.getElementById('siteSearch').addEventListener('input', (e) => {
     sug.style.display = matches.length ? 'block' : 'none';
 });
 
-// MOSTRAR CONSULTOR
-function mostrarInfo(id) {
+function verInfo(id) {
     const s = sites.find(x => x.SITEID === id);
     document.getElementById('suggestions').style.display = 'none';
     document.getElementById('siteSearch').value = s.SITEID;
 
     document.getElementById('tech-result').innerHTML = `
         <div class="card-tech">
-            <h3 style="font-family:'Orbitron'; color:var(--primary); margin:0 0 10px 0;">${s.SITEID} - ${s['NOMBRE DE SITIO']}</h3>
-            <div class="info-grid">
-                <div class="info-item"><span class="info-label">NIC/NIS</span><span>${s['NIC/NIS'] || 'PENDIENTE'}</span></div>
-                <div class="info-item"><span class="info-label">Distribuidora</span><span>${s.Distribuidora || 'N/A'}</span></div>
-                <div class="info-item"><span class="info-label">Propietario</span><span>${s.Propietario || 'N/A'}</span></div>
-                <div class="info-item"><span class="info-label">Municipio</span><span>${s.Municipio || 'N/A'}</span></div>
+            <h3 style="color:var(--primary); margin:0 0 15px 0;">${s.SITEID} - ${s['NOMBRE DE SITIO']}</h3>
+            <div class="grid-info">
+                <div class="info-cell"><span class="label">Distribuidora</span>${s.Distribuidora || 'N/A'}</div>
+                <div class="info-cell"><span class="label">NIC / NIS</span>${s['NIC/NIS'] || 'Pte'}</div>
+                <div class="info-cell"><span class="label">Torrero</span>${s.Propietario || 'N/A'}</div>
+                <div class="info-cell"><span class="label">Municipio</span>${s.Municipio || 'N/A'}</div>
             </div>
-            <button class="btn-add" onclick="trasladarTabla('${s.SITEID}', '${s['NOMBRE DE SITIO']}', '${s.Propietario}')">➕ AGREGAR AL REPORTE</button>
+            <button class="btn-add" style="background:var(--primary); color:white;" onclick="addBlue('${s.SITEID}', '${s['NOMBRE DE SITIO']}', '${s.Propietario}', '${s['NIC/NIS']}', '${s.Distribuidora}')">➕ AÑADIR AL REPORTE AZUL</button>
         </div>
     `;
 }
 
-// TRASLADAR A TABLA
-function trasladarTabla(id, nombre, torrero) {
-    const body = document.getElementById('table-body');
+function addBlue(id, nombre, torrero, nic, dist) {
+    const body = document.getElementById('blue-body');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-        <td style="padding:10px; font-weight:800; color:#004488;">${id} - ${nombre}</td>
-        <td style="padding:10px; font-weight:600;">${torrero || 'N/A'}</td>
-        <td><select class="table-select"><option>FDS</option><option>3G FDS</option><option>LTE FDS</option><option>MANTENIMIENTO</option><option>FALLA AC</option><option>VISITA TÉCNICA</option></select></td>
-        <td>
-            <select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text">
-                <option value="OPERATIVO">✅ OPERATIVO</option>
-                <option value="ASIGNADO" selected>🔹 ASIGNADO</option>
-                <option value="EN SITIO">📍 EN SITIO</option>
-                <option value="PENDIENTE">⏳ PENDIENTE</option>
-            </select>
-            <div class="export-text">🔹 ASIGNADO</div>
-        </td>
-        <td>
-            <textarea class="table-textarea" placeholder="Escriba aquí..." oninput="this.nextElementSibling.innerText=this.value"></textarea>
-            <div class="export-text"></div>
-        </td>
-        <td class="no-capture" style="text-align:center"><button onclick="this.closest('tr').remove()" style="color:red; border:none; background:none; font-size:1.5rem; cursor:pointer;">×</button></td>
+        <td><input type="text" class="input-table" value="${dist || ''}" oninput="sync(this)"><div class="export-text">${dist || ''}</div></td>
+        <td><input type="text" class="input-table" value="9:00 am - 4:00 pm" oninput="sync(this)"><div class="export-text">9:00 am - 4:00 pm</div></td>
+        <td style="color:#4472c4; font-weight:bold;">${id} - ${nombre}</td>
+        <td>${torrero || 'N/A'}</td>
+        <td><textarea class="input-table txt-coment" rows="2" oninput="sync(this)">Escriba comentario...</textarea><div class="export-text"></div></td>
+        <td style="color:#4472c4; font-weight:bold;">${nic || '---'}</td>
+        <td class="no-capture" style="background:white !important;"><button onclick="this.closest('tr').remove()" style="color:red; border:none; background:none; cursor:pointer; font-weight:bold;">✕</button></td>
     `;
     body.appendChild(tr);
-    document.getElementById('capture-area').scrollIntoView({ behavior: 'smooth' });
+    document.getElementById('blue-capture').scrollIntoView({ behavior: 'smooth' });
 }
 
-// EXPORTAR IMAGEN
-async function downloadImg() {
-    const area = document.getElementById('capture-area');
-    const btn = document.querySelector('.btn-action');
-    btn.innerText = "⏳ GENERANDO...";
-    
-    // Actualizar encabezados
-    document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
-    const f = document.getElementById('sel-fecha').value.split('-');
-    document.getElementById('h-fecha-display').innerText = `${f[2]}/${f[1]}/${f[0]}`;
+function sync(el) {
+    el.nextElementSibling.innerText = el.value;
+}
 
+async function downloadBlueReport() {
+    const area = document.getElementById('blue-capture');
     area.classList.add('is-exporting');
+    
+    // Forzar sincronización de todos los campos
+    area.querySelectorAll('.input-table').forEach(input => {
+        input.nextElementSibling.innerText = input.value;
+    });
+
     const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff" });
     const link = document.createElement('a');
-    link.download = `Reporte_${Date.now()}.png`;
+    link.download = `Reporte_NOC_${Date.now()}.png`;
     link.href = canvas.toDataURL();
     link.click();
     area.classList.remove('is-exporting');
-    btn.innerText = "💾 DESCARGAR PNG";
 }
-
-// Inicializar fecha
-const hoy = new Date();
-document.getElementById('sel-fecha').value = hoy.toISOString().split('T')[0];
-document.getElementById('h-fecha-display').innerText = hoy.toLocaleDateString();
 </script>
 
 </body>
