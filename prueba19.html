@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOC COMMAND CENTER V20.0 - FULL SYSTEM</title>
+    <title>NOC COMMAND CENTER V22.0 - OPERACIONES</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -33,7 +33,6 @@
             align-items: center;
         }
 
-        /* --- INTERFAZ DE USUARIO (PANEL DE CONTROL) --- */
         header {
             width: 100%;
             background: #0f172a;
@@ -64,14 +63,6 @@
             border: 1px solid var(--border-ui);
         }
 
-        .query-panel {
-            background: rgba(0,0,0,0.3);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            margin-bottom: 30px;
-        }
-
         h3 {
             margin: 25px 0 10px 0;
             color: #00d4ff;
@@ -92,8 +83,6 @@
             font-size: 0.95rem;
             outline: none;
         }
-
-        input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 161, 255, 0.3); }
 
         /* SELECTOR DE TÉCNICOS (CHECKLIST PRO) */
         .tech-selector {
@@ -288,7 +277,6 @@
 
         .btn-png { background: white; color: var(--report-blue); border: 3px solid var(--report-blue); }
         .btn-xlsx { background: #1d6f42; color: white; }
-        .btn-cloud { background: #f39c12; color: white; }
 
         .btn-action:hover { transform: translateY(-5px); filter: brightness(1.1); }
     </style>
@@ -296,39 +284,11 @@
 <body>
 
     <header>
-        <h1>NOC MASTER COMMAND V20.0</h1>
+        <h1>NOC MASTER COMMAND V22.0</h1>
     </header>
 
     <div class="config-card">
-        <div class="query-panel">
-            <h3 style="margin-top:0;">🔍 CONSULTAR HISTORIAL EN NUBE</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: end;">
-                <div>
-                    <label style="font-size: 0.75rem; color: #b3e6ff; font-weight: 800;">FECHA:</label>
-                    <input type="date" id="cloud-fecha">
-                </div>
-                <div>
-                    <label style="font-size: 0.75rem; color: #b3e6ff; font-weight: 800;">TIPO:</label>
-                    <select id="cloud-tipo">
-                        <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
-                        <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
-                    </select>
-                </div>
-                <button onclick="consultarNube()" class="btn-add" style="margin:0; padding: 0 30px; height: 55px; width: auto; font-size: 0.8rem;">BUSCAR</button>
-            </div>
-        </div>
-
-        <hr style="border: 0; border-top: 1px solid var(--border-ui); margin: 30px 0;">
-
-        <h3>1. Encabezado de Reporte</h3>
-        <select id="sel-tipo" onchange="syncUI()">
-            <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
-            <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
-            <option value="CORTE PROGRAMADO">CORTE PROGRAMADO</option>
-        </select>
-        <input type="date" id="sel-fecha" onchange="syncUI()">
-
-        <h3>2. Búsqueda y Selección de Sitio</h3>
+        <h3>1. Búsqueda y Selección de Sitio</h3>
         <div class="search-container">
             <input type="text" id="main-search" placeholder="Escriba SITEID, Nombre o NIC..." autocomplete="off">
             <div id="suggestions"></div>
@@ -340,7 +300,7 @@
                 🏢 <b>TORRERO:</b> <span id="val-torrero" style="color:white;"></span>
             </p>
 
-            <h3>Personal Técnico Asignado:</h3>
+            <h3>Asignar Personal Técnico:</h3>
             <div id="tech-checklist" class="tech-selector"></div>
 
             <button class="btn-add" onclick="insertRow()">AÑADIR AL REPORTE MAESTRO</button>
@@ -349,7 +309,9 @@
 
     <div id="capture-area">
         <div class="report-header-blue">
-            <span id="txt-h-titulo">VISITAS REALIZADAS</span> - <span id="txt-h-fecha"></span>
+            <input type="text" value="REPORTE DIARIO DE OPERACIONES" style="background:transparent; border:none; color:white; font-weight:900; text-align:right; width:45%; font-size:20px; outline:none; text-transform:uppercase;">
+            <span style="margin: 0 10px;">-</span>
+            <input type="text" id="reportDate" style="background:transparent; border:none; color:white; font-weight:900; text-align:left; width:45%; font-size:20px; outline:none;">
         </div>
         <table class="excel-table">
             <thead>
@@ -371,11 +333,9 @@
     <div class="footer-actions">
         <button class="btn-action btn-png" onclick="downloadPNG()">💾 DESCARGAR PNG HD</button>
         <button class="btn-action btn-xlsx" onclick="downloadExcel()">📊 EXPORTAR EXCEL</button>
-        <button class="btn-action btn-cloud" onclick="guardarNube()">☁️ GUARDAR EN NUBE</button>
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwi04YsTUdOZnObRzT7-oETBJUovK1qMW1x5hUftlsOzwV-In-7-kmC-JTd2u2BafEp_g/exec";
         const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
         const TECNICOS_CSV = 'tecnicos.csv';
 
@@ -385,11 +345,8 @@
         let reportData = [];
 
         window.onload = () => {
-            const hoy = new Date();
-            document.getElementById('sel-fecha').value = hoy.toISOString().split('T')[0];
-            syncUI();
+            document.getElementById('reportDate').value = new Date().toLocaleDateString();
 
-            // Cargar Sitios
             Papa.parse(SITIOS_CSV, {
                 download: true, header: true,
                 complete: (r) => {
@@ -404,7 +361,6 @@
                 }
             });
 
-            // Cargar Técnicos
             Papa.parse(TECNICOS_CSV, {
                 download: true, header: true,
                 complete: (r) => {
@@ -417,13 +373,6 @@
             });
         };
 
-        function syncUI() {
-            const f = document.getElementById('sel-fecha').value.split('-');
-            document.getElementById('txt-h-fecha').innerText = `${f[2]}/${f[1]}/${f[0]}`;
-            document.getElementById('txt-h-titulo').innerText = document.getElementById('sel-tipo').value;
-        }
-
-        // BUSCADOR
         document.getElementById('main-search').addEventListener('input', (e) => {
             const val = e.target.value.toLowerCase().trim();
             const sug = document.getElementById('suggestions');
@@ -450,7 +399,6 @@
             }
         });
 
-        // INSERTAR FILA
         function insertRow() {
             if(!siteActive) return;
             const techsArr = Array.from(document.querySelectorAll('#tech-checklist input:checked')).map(i => i.value);
@@ -462,30 +410,24 @@
                 personal: techsArr
             });
 
-            // ORDENAR POR DISTRIBUIDORA PARA AGRUPAR
             reportData.sort((a, b) => a.distribuidora.localeCompare(b.distribuidora));
-            
-            renderMasterTable();
+            renderTable();
 
-            // Limpiar
             document.getElementById('site-form').style.display = 'none';
             document.getElementById('main-search').value = '';
             document.querySelectorAll('#tech-checklist input').forEach(i => i.checked = false);
             siteActive = null;
         }
 
-        function renderMasterTable() {
+        function renderTable() {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
 
             reportData.forEach((row, i) => {
                 const tr = document.createElement('tr');
-                
-                // --- Lógica de Agrupación Estricta ---
                 const isGrouped = i > 0 && reportData[i-1].distribuidora === row.distribuidora;
                 const distClass = isGrouped ? 'grouped-hidden' : '';
 
-                // --- Checklist de Técnicos en Tabla ---
                 let techChecks = dbTecnicos.map(nom => {
                     const chk = row.personal.includes(nom) ? 'checked' : '';
                     return `<label class="tech-item" style="color:black; font-size:10px;"><input type="checkbox" value="${nom}" ${chk} onchange="updateTech(${i}, '${nom}')"> ${nom}</label>`;
@@ -493,7 +435,7 @@
 
                 tr.innerHTML = `
                     <td class="${distClass}">
-                        <input class="table-input" value="${row.distribuidora}" oninput="reportData[${i}].distribuidora=this.value; renderMasterTable();">
+                        <input class="table-input" value="${row.distribuidora}" oninput="reportData[${i}].distribuidora=this.value; renderTable();">
                         <div class="export-text">${row.distribuidora}</div>
                     </td>
                     <td>
@@ -512,7 +454,7 @@
                         <div class="export-text">${row.personal.join(' / ')}</div>
                     </td>
                     <td class="no-capture" style="text-align:center;">
-                        <button onclick="reportData.splice(${i},1); renderMasterTable();" style="color:red; border:none; background:none; cursor:pointer; font-size:2rem;">×</button>
+                        <button onclick="reportData.splice(${i},1); renderTable();" style="color:red; border:none; background:none; cursor:pointer; font-size:2rem;">×</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
@@ -523,18 +465,14 @@
             const arr = reportData[idx].personal;
             if(arr.includes(name)) reportData[idx].personal = arr.filter(n => n !== name);
             else arr.push(name);
-            // No renderizar de nuevo para no perder el foco, solo actualizar el export-text interno
-            const row = document.querySelectorAll('#table-body tr')[idx];
-            row.querySelector('td:nth-child(7) .export-text').innerText = reportData[idx].personal.join(' / ');
+            document.querySelectorAll('#table-body tr')[idx].querySelector('td:nth-child(7) .export-text').innerText = reportData[idx].personal.join(' / ');
         }
 
-        // EXPORTACIÓN PNG HD
         async function downloadPNG() {
             const area = document.getElementById('capture-area');
             const btn = document.querySelector('.btn-png');
-            btn.innerText = "⏳ GENERANDO...";
+            btn.innerText = "⏳...";
 
-            // Sincronizar inputs
             area.querySelectorAll('tr').forEach((tr, i) => {
                 tr.querySelector('td:nth-child(2) .export-text').innerText = reportData[i].horario;
                 tr.querySelector('td:nth-child(5) .export-text').innerText = reportData[i].comentario;
@@ -544,11 +482,7 @@
             area.classList.add('is-exporting');
 
             try {
-                const canvas = await html2canvas(area, {
-                    scale: 3,
-                    backgroundColor: "#ffffff",
-                    useCORS: true
-                });
+                const canvas = await html2canvas(area, { scale: 3, backgroundColor: "#ffffff", useCORS: true });
                 const link = document.createElement('a');
                 link.download = `REPORTE_NOC_${Date.now()}.png`;
                 link.href = canvas.toDataURL();
@@ -559,7 +493,6 @@
             }
         }
 
-        // EXCEL
         function downloadExcel() {
             const data = reportData.map(r => ({
                 "Distribuidora": r.distribuidora,
@@ -574,23 +507,6 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Reporte");
             XLSX.writeFile(wb, `Reporte_NOC_${Date.now()}.xlsx`);
-        }
-
-        // NUBE
-        async function guardarNube() {
-            if(reportData.length === 0) return alert("Tabla vacía.");
-            const btn = document.querySelector('.btn-cloud');
-            btn.innerText = "⏳...";
-            const payload = {
-                fecha: document.getElementById('sel-fecha').value,
-                tipo: document.getElementById('sel-tipo').value,
-                rows: reportData.map(r => ({ ...r, personal: r.personal.join(' / ') }))
-            };
-            try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-                alert("✅ Guardado en nube.");
-            } catch(e) { alert("Error al guardar."); }
-            btn.innerText = "☁️ GUARDAR EN NUBE";
         }
     </script>
 </body>
