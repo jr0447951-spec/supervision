@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Buscador - Operaciones</title>
+    <style>
+        :root {
+            --primary: #003366; /* Azul corporativo */
+            --accent: #00cc99;
+            --bg: #f4f7f6;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); padding: 20px; }
+        
+        .search-container { max-width: 500px; margin: 0 auto; position: relative; }
+        
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: var(--primary); }
+
+        input#siteSearch {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input#siteSearch:focus { border-color: var(--primary); }
+
+        /* Contenedor de Sugerencias */
+        #suggestions {
+            position: absolute;
+            width: 100%;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .suggestion-item:hover { background-color: #f0f7ff; }
+
+        .badge-nic {
+            font-size: 0.65rem;
+            background: var(--primary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="search-container">
+    <label for="siteSearch">Buscador de Sitios</label>
+    <input type="text" id="siteSearch" placeholder="Ej: 391038, Nombre o NIC...">
+    <div id="suggestions"></div>
+</div>
+
+<script>
+    // 1. DATOS DE PRUEBA (Simulando lo que vendría de Google Sheets)
+    const sites = [
+        { "SITEID": "391038", "NOMBRE DE SITIO": "SANTA ANA CENTRO", "NIC/NIS": "1234567" },
+        { "SITEID": "405521", "NOMBRE DE SITIO": "CERRO PACHO", "NIC/NIS": "9876543" },
+        { "SITEID": "220199", "NOMBRE DE SITIO": "AGUA CALIENTE", "NIC/NIS": "5556667" },
+        { "SITEID": "110450", "NOMBRE DE SITIO": "SAN SALVADOR ESCALON", "NIC/NIS": "8889990" }
+    ];
+
+    // 2. LÓGICA DEL BUSCADOR
+    const searchInput = document.getElementById('siteSearch');
+    const sugDiv = document.getElementById('suggestions');
+
+    searchInput.addEventListener('input', (e) => {
+        const val = e.target.value.toLowerCase().trim();
+        
+        if (val.length < 2) { 
+            sugDiv.style.display = 'none'; 
+            return; 
+        }
+        
+        const matches = sites.filter(s => {
+            const id = String(s.SITEID || "").toLowerCase();
+            const nombre = String(s['NOMBRE DE SITIO'] || "").toLowerCase();
+            const nic = String(s['NIC/NIS'] || "").toLowerCase();
+            
+            return id.includes(val) || nombre.includes(val) || nic.includes(val);
+        }).slice(0, 10);
+        
+        sugDiv.innerHTML = matches.map(s => `
+            <div class="suggestion-item" onclick="alert('Seleccionaste: ' + '${s.SITEID}')">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong>${s.SITEID}</strong>
+                    <span class="badge-nic">NIC: ${s['NIC/NIS'] || '---'}</span>
+                </div>
+                <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 4px;">
+                    ${s['NOMBRE DE SITIO']}
+                </div>
+            </div>
+        `).join('');
+        
+        sugDiv.style.display = matches.length ? 'block' : 'none';
+    });
+
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target)) {
+            sugDiv.style.display = 'none';
+        }
+    });
+</script>
+
+</body>
+</html>
