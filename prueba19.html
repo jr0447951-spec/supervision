@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TURNOS v27.1 - ALTO CONTRASTE</title>
+    <title>SISTEMA TURNOS v27.2 - ALTO CONTRASTE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -265,19 +265,19 @@
         renderStats(counts);
     }
 
-    // EXPORTACIÓN EXCEL MODIFICADA: SOLO BAJAS/AUSENCIAS
+    // EXPORTACIÓN EXCEL: NOMBRES EN FILAS, DÍAS EN COLUMNAS
     function exportToExcel() {
         const y = currentView.getFullYear(), m = currentView.getMonth();
         const totalDays = new Date(y, m + 1, 0).getDate();
         const monthName = new Intl.DateTimeFormat('es-ES', {month:'long'}).format(currentView).toUpperCase();
         
-        // Encabezados: Técnico | 1 | 2 | ... | 31
+        // Fila 1: Encabezados (Técnico y Días 1 al Total)
         const headers = ["TÉCNICO"];
         for(let i=1; i<=totalDays; i++) headers.push(i.toString());
 
+        // Generar filas para TODOS los técnicos
         const rows = state.tecnicos.map(t => {
-            const row = [t];
-            let tieneAusencias = false;
+            const row = [t]; // Primera celda es el nombre
 
             for(let d=1; d<=totalDays; d++) {
                 const dateId = `${y}-${m+1}-${d}`;
@@ -285,32 +285,29 @@
                 const absData = dayAbs.find(a => (typeof a === 'string' ? a : a.n) === t);
 
                 if (absData) {
-                    const tipo = (typeof absData === 'string' ? 'BAJA MÉDICA' : absData.tipo);
-                    // Normalizar texto para el Excel
+                    const tipo = (typeof absData === 'string' ? 'BAJA' : absData.tipo);
                     let textoExcel = "MÉDICA";
                     if(tipo === "PERMISO") textoExcel = "PERMISO";
                     if(tipo === "FALTA") textoExcel = "FALTA INJUST.";
                     if(tipo === "BAJA") textoExcel = "MÉDICA";
-                    
                     row.push(textoExcel);
-                    tieneAusencias = true;
                 } else {
-                    row.push(""); // Celda vacía si no hay ausencia
+                    row.push(""); // Blanco total si no hay ausencia registrada
                 }
             }
-            return tieneAusencias ? row : null; // Solo incluir técnicos que tengan al menos una ausencia
-        }).filter(r => r !== null);
+            return row;
+        });
 
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
         
-        // Ajuste básico de ancho de columnas
-        const wscols = [{wch:20}];
+        // Ajustar anchos
+        const wscols = [{wch:25}]; // Nombre más ancho
         for(let i=1; i<=totalDays; i++) wscols.push({wch:12});
         ws['!cols'] = wscols;
 
-        XLSX.utils.book_append_sheet(wb, ws, "Reporte Ausencias");
-        XLSX.writeFile(wb, `Ausencias_${monthName}_${y}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte_Ausencias");
+        XLSX.writeFile(wb, `Reporte_Mensual_${monthName}_${y}.xlsx`);
     }
 
     function addAbsence() {
