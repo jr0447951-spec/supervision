@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Tiempo entre Horas</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        input[type="time"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1d4ed8;
+        }
+
+        .result-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f1f5f9;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: none;
+        }
+
+        .note {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Calculadora de Horas</h2>
+    
+    <div class="input-group">
+        <label for="hora-inicio">Hora de Inicio:</label>
+        <input type="time" id="hora-inicio" required>
+    </div>
+
+    <div class="input-group">
+        <label for="hora-fin">Hora de Fin:</label>
+        <input type="time" id="hora-fin" required>
+    </div>
+
+    <button onclick="calcularDiferencia()">Calcular Tiempo</button>
+
+    <div id="resultado" class="result-box"></div>
+    <p class="note">Nota: Si la hora de fin es menor que la de inicio, el sistema detecta automáticamente que corresponde al día siguiente.</p>
+</div>
+
+<script>
+    function calcularDiferencia() {
+        const horaInicio = document.getElementById('hora-inicio').value;
+        const horaFin = document.getElementById('hora-fin').value;
+        const resultadoDiv = document.getElementById('resultado');
+
+        if (!horaInicio || !horaFin) {
+            resultadoDiv.style.display = "block";
+            resultadoDiv.style.color = "#dc2626";
+            resultadoDiv.innerText = "Por favor, ingresa ambas horas.";
+            return;
+        }
+
+        // Crear objetos de fecha base ficticios para calcular
+        const hoy = "2026-01-01T"; // Fecha pivote cualquiera
+        let fechaInicio = new Date(hoy + horaInicio);
+        let fechaFin = new Date(hoy + horaFin);
+
+        // Lógica clave: Si la hora de fin es menor o igual a la de inicio, asumimos que es del día siguiente
+        if (fechaFin <= fechaInicio) {
+            fechaFin.setDate(fechaFin.getDate() + 1);
+        }
+
+        // Diferencia en milisegundos
+        let diferenciaMs = fechaFin - fechaInicio;
+
+        // Convertir a horas y minutos
+        let totalMinutos = Math.floor(diferenciaMs / 1000 / 60);
+        let horas = Math.floor(totalMinutos / 60);
+        let minutos = totalMinutos % 60;
+
+        // Dar formato al texto de salida
+        let textoResultado = `Resultado: ${horas} h`;
+        if (minutos > 0) {
+            textoResultado += ` ${minutos} min`;
+        }
+
+        // Mostrar el resultado en pantalla
+        resultadoDiv.style.display = "block";
+        resultadoDiv.style.color = "var(--text)";
+        resultadoDiv.innerText = textoResultado;
+    }
+</script>
+
+</body>
+</html>
