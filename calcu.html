@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Tiempo entre Horas</title>
+    <title>Calculadora de Tiempo y Jornadas</title>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -30,7 +30,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
         }
 
         h2 {
@@ -77,19 +77,32 @@
 
         .result-box {
             margin-top: 1.5rem;
-            padding: 1rem;
+            padding: 1.25rem;
             background-color: #f1f5f9;
             border-radius: 6px;
-            text-align: center;
+            display: none;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .result-item.total {
+            border-top: 2px solid #cbd5e1;
+            padding-top: 0.5rem;
             font-weight: bold;
             font-size: 1.1rem;
-            display: none;
+            color: var(--primary-color);
+            margin-bottom: 0;
         }
 
         .note {
             font-size: 0.85rem;
             color: #64748b;
-            margin-top: 0.5rem;
+            margin-top: 1rem;
             text-align: center;
         }
     </style>
@@ -101,61 +114,95 @@
     
     <div class="input-group">
         <label for="hora-inicio">Hora de Inicio:</label>
-        <input type="time" id="hora-inicio" required>
+        <input type="time" id="hora-inicio" step="3600" required>
     </div>
 
     <div class="input-group">
         <label for="hora-fin">Hora de Fin:</label>
-        <input type="time" id="hora-fin" required>
+        <input type="time" id="hora-fin" step="3600" required>
     </div>
 
-    <button onclick="calcularDiferencia()">Calcular Tiempo</button>
+    <button onclick="calcularJornadas()">Calcular Tiempo</button>
 
-    <div id="resultado" class="result-box"></div>
-    <p class="note">Nota: Si la hora de fin es menor que la de inicio, el sistema detecta automáticamente que corresponde al día siguiente.</p>
+    <div id="resultado-box" class="result-box">
+        <div class="result-item">
+            <span>Horas Diurnas (6 AM - 7 PM):</span>
+            <span id="res-diurnas">0h 0m</span>
+        </div>
+        <div class="result-item">
+            <span>Horas Nocturnas (7 PM - 6 AM):</span>
+            <span id="res-nocturnas">0h 0m</span>
+        </div>
+        <div class="result-item total">
+            <span>Tiempo Total:</span>
+            <span id="res-total">0h 0m</span>
+        </div>
+    </div>
+    
+    <p class="note">Nota: Los selectores se moverán en horas enteras por defecto, pero puedes escribir los minutos manualmente si lo necesitas.</p>
 </div>
 
 <script>
-    function calcularDiferencia() {
-        const horaInicio = document.getElementById('hora-inicio').value;
-        const horaFin = document.getElementById('hora-fin').value;
-        const resultadoDiv = document.getElementById('resultado');
+    // Pequeño script para forzar que al seleccionar/cambiar la hora se limpie a minutos en 00 si el usuario no escribe algo específico
+    document.querySelectorAll('input[type="time"]').forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value) {
+                let partes = this.value.split(':');
+                // Si por alguna razón no tiene minutos asignados o se borraron, asegura el formato HH:00
+                if (partes.length === 2 && partes[1] === '') {
+                    this.value = partes[0] + ':00';
+                }
+            }
+        });
+    });
 
-        if (!horaInicio || !horaFin) {
-            resultadoDiv.style.display = "block";
-            resultadoDiv.style.color = "#dc2626";
-            resultadoDiv.innerText = "Por favor, ingresa ambas horas.";
+    function calcularJornadas() {
+        const horaInicioStr = document.getElementById('hora-inicio').value;
+        const horaFinStr = document.getElementById('hora-fin').value;
+        const resultadoBox = document.getElementById('resultado-box');
+
+        if (!horaInicioStr || !horaFinStr) {
+            alert("Por favor, ingresa ambas horas.");
             return;
         }
 
-        // Crear objetos de fecha base ficticios para calcular
-        const hoy = "2026-01-01T"; // Fecha pivote cualquiera
-        let fechaInicio = new Date(hoy + horaInicio);
-        let fechaFin = new Date(hoy + horaFin);
+        const fechaBase = "2026-01-01T";
+        let fechaInicio = new Date(fechaBase + horaInicioStr);
+        let fechaFin = new Date(fechaBase + horaFinStr);
 
-        // Lógica clave: Si la hora de fin es menor o igual a la de inicio, asumimos que es del día siguiente
         if (fechaFin <= fechaInicio) {
             fechaFin.setDate(fechaFin.getDate() + 1);
         }
 
-        // Diferencia en milisegundos
-        let diferenciaMs = fechaFin - fechaInicio;
+        let minutosDiurnos = 0;
+        let minutosNocturnos = 0;
+        let tiempoActual = new Date(fechaInicio.getTime());
 
-        // Convertir a horas y minutos
-        let totalMinutos = Math.floor(diferenciaMs / 1000 / 60);
-        let horas = Math.floor(totalMinutos / 60);
-        let minutos = totalMinutos % 60;
+        while (tiempoActual < fechaFin) {
+            let hora = tiempoActual.getHours();
 
-        // Dar formato al texto de salida
-        let textoResultado = `Resultado: ${horas} h`;
-        if (minutos > 0) {
-            textoResultado += ` ${minutos} min`;
+            if (hora >= 6 && hora < 19) {
+                minutosDiurnos++;
+            } else {
+                minutosNocturnos++;
+            }
+
+            tiempoActual.setMinutes(tiempoActual.getMinutes() + 1);
         }
 
-        // Mostrar el resultado en pantalla
-        resultadoDiv.style.display = "block";
-        resultadoDiv.style.color = "var(--text)";
-        resultadoDiv.innerText = textoResultado;
+        const formatTiempo = (totMinutos) => {
+            let h = Math.floor(totMinutos / 60);
+            let m = totMinutos % 60;
+            return `${h}h ${m}m`;
+        };
+
+        let totalMinutos = minutosDiurnos + minutosNocturnos;
+
+        document.getElementById('res-diurnas').innerText = formatTiempo(minutosDiurnos);
+        document.getElementById('res-nocturnas').innerText = formatTiempo(minutosNocturnos);
+        document.getElementById('res-total').innerText = formatTiempo(totalMinutos);
+
+        resultadoBox.style.display = "block";
     }
 </script>
 
