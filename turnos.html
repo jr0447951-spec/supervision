@@ -77,7 +77,7 @@
         .abs-baja { background: #fee2e2; color: #b91c1c; }
         .abs-permiso { background: #fef3c7; color: #92400e; }
 
-        .btn { padding: 10px 15px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .btn { padding: 10px 15px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .btn-blue { background: var(--primary); color: white; }
         #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
         .modal-box { background: white; width: 350px; padding: 25px; border-radius: 12px; }
@@ -138,12 +138,18 @@
             <label style="font-size:0.8rem; font-weight:700">Técnico Superior</label>
             <select id="sel-t1" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px"></select>
         </div>
-        <div style="margin-bottom:20px">
+        <div style="margin-bottom:15px">
             <label style="font-size:0.8rem; font-weight:700">Técnico Inferior</label>
             <select id="sel-t2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px"></select>
         </div>
+        
+        <!-- Botón de Borrado Rápido -->
+        <button class="btn" style="width:100%; background:#d97706; color:white; margin-bottom:10px" onclick="clearGroupSelection()">
+            <i class="fas fa-eraser"></i> BORRAR / LIMPIAR GRUPO
+        </button>
+        
         <button class="btn btn-blue" style="width:100%; margin-bottom:10px" onclick="confirmEdit()">GUARDAR CAMBIOS</button>
-        <button class="btn" style="width:100%; background:#fee2e2; color:var(--danger); margin-bottom:10px" onclick="deleteGroup()">ELIMINAR ESTE GRUPO</button>
+        <button class="btn" style="width:100%; background:#fee2e2; color:var(--danger); margin-bottom:10px" onclick="deleteGroup()">ELIMINAR TARJETA</button>
         <button class="btn" style="width:100%; background:#f1f5f9" onclick="closeModal()">CANCELAR</button>
     </div>
 </div>
@@ -191,6 +197,11 @@
     }
 
     function getAutoTurno(date) {
+        // A partir de Septiembre 2026 (mes 8 en indice JavaScript), la asignacion es completamente manual
+        if (date.getFullYear() > 2026 || (date.getFullYear() === 2026 && date.getMonth() >= 8)) {
+            return [];
+        }
+
         if (date.getDay() !== 6 && date.getDay() !== 0) return [];
         const diff = Math.floor((date - START_REF) / 86400000);
         const cycle = Math.max(0, Math.floor(diff / 7)) % 4;
@@ -215,7 +226,11 @@
             const isWE = [0,6].includes(date.getDay());
             const dayName = new Intl.DateTimeFormat('es-ES', {weekday: 'long'}).format(date);
             
-            if (state.db.locks[dateId] === undefined) state.db.locks[dateId] = isWE;
+            // Si es Septiembre 2026 o posterior, el valor bloqueado por defecto es FALSE
+            const isManualPeriod = (y > 2026 || (y === 2026 && m >= 8));
+            if (state.db.locks[dateId] === undefined) {
+                state.db.locks[dateId] = isManualPeriod ? false : isWE;
+            }
             const isLocked = state.db.locks[dateId];
             
             let turnos = isLocked ? (state.db.manual[dateId] || getAutoTurno(date)) : (state.db.manual[dateId] || []);
@@ -320,9 +335,15 @@
         const p = id.split('-');
         const turnos = state.db.manual[id] || getAutoTurno(new Date(p[0], p[1]-1, p[2]));
         document.getElementById('m-id').value = id; document.getElementById('m-idx').value = idx;
-        document.getElementById('sel-t1').value = turnos[idx][0] || "";
-        document.getElementById('sel-t2').value = turnos[idx][1] || "";
+        document.getElementById('sel-t1').value = turnos[idx] ? turnos[idx][0] || "" : "";
+        document.getElementById('sel-t2').value = turnos[idx] ? turnos[idx][1] || "" : "";
         document.getElementById('modal').style.display = 'flex';
+    }
+
+    /* Funcion de Borrado Rapido de Seleccion */
+    function clearGroupSelection() {
+        document.getElementById('sel-t1').value = "";
+        document.getElementById('sel-t2').value = "";
     }
 
     function confirmEdit() {
@@ -336,7 +357,11 @@
 
     function deleteGroup() {
         const id = document.getElementById('m-id').value, idx = parseInt(document.getElementById('m-idx').value);
-        state.db.manual[id].splice(idx, 1); save(); closeModal();
+        if (state.db.manual[id]) {
+            state.db.manual[id].splice(idx, 1); 
+            save(); 
+        }
+        closeModal();
     }
 
     function renderStats(counts) {
