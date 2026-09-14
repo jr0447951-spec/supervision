@@ -58,6 +58,18 @@
         .day-name { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; }
         .day-num { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); }
 
+        /* Icono de borrado de fecha */
+        .btn-trash-day {
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: transform 0.1s ease, color 0.1s ease;
+        }
+        .btn-trash-day:hover {
+            color: #b91c1c;
+            transform: scale(1.15);
+        }
+
         /* Tarjetas de Turno: Texto Negro para mejor lectura */
         .turno-card { 
             border-radius: 6px; 
@@ -138,18 +150,12 @@
             <label style="font-size:0.8rem; font-weight:700">Técnico Superior</label>
             <select id="sel-t1" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px"></select>
         </div>
-        <div style="margin-bottom:15px">
+        <div style="margin-bottom:20px">
             <label style="font-size:0.8rem; font-weight:700">Técnico Inferior</label>
             <select id="sel-t2" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:5px"></select>
         </div>
-        
-        <!-- Botón de Borrado Rápido -->
-        <button class="btn" style="width:100%; background:#d97706; color:white; margin-bottom:10px" onclick="clearGroupSelection()">
-            <i class="fas fa-eraser"></i> BORRAR / LIMPIAR GRUPO
-        </button>
-        
         <button class="btn btn-blue" style="width:100%; margin-bottom:10px" onclick="confirmEdit()">GUARDAR CAMBIOS</button>
-        <button class="btn" style="width:100%; background:#fee2e2; color:var(--danger); margin-bottom:10px" onclick="deleteGroup()">ELIMINAR TARJETA</button>
+        <button class="btn" style="width:100%; background:#fee2e2; color:var(--danger); margin-bottom:10px" onclick="deleteGroup()">ELIMINAR ESTE GRUPO</button>
         <button class="btn" style="width:100%; background:#f1f5f9" onclick="closeModal()">CANCELAR</button>
     </div>
 </div>
@@ -197,7 +203,7 @@
     }
 
     function getAutoTurno(date) {
-        // A partir de Septiembre 2026 (mes 8 en indice JavaScript), la asignacion es completamente manual
+        // A partir de Septiembre 2026 (mes 8 en JS), la asignación es completamente manual (cuadro solo)
         if (date.getFullYear() > 2026 || (date.getFullYear() === 2026 && date.getMonth() >= 8)) {
             return [];
         }
@@ -226,7 +232,7 @@
             const isWE = [0,6].includes(date.getDay());
             const dayName = new Intl.DateTimeFormat('es-ES', {weekday: 'long'}).format(date);
             
-            // Si es Septiembre 2026 o posterior, el valor bloqueado por defecto es FALSE
+            // Septiembre 2026 en adelante: nace desbloqueado (lock = false)
             const isManualPeriod = (y > 2026 || (y === 2026 && m >= 8));
             if (state.db.locks[dateId] === undefined) {
                 state.db.locks[dateId] = isManualPeriod ? false : isWE;
@@ -259,8 +265,11 @@
                         <span class="day-name">${dayName}</span>
                         <span class="day-num">${d}</span>
                     </div>
-                    <i class="fas ${isLocked?'fa-lock':'fa-lock-open'}" onclick="toggleLock('${dateId}')" 
-                       style="cursor:pointer; color:${isLocked?'var(--locked-color)':'#cbd5e1'}"></i>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${!isLocked ? `<i class="fas fa-trash-alt btn-trash-day" onclick="clearAllTurnos('${dateId}')" title="Limpiar todas las cuadrillas de esta fecha"></i>` : ''}
+                        <i class="fas ${isLocked?'fa-lock':'fa-lock-open'}" onclick="toggleLock('${dateId}')" 
+                           style="cursor:pointer; color:${isLocked?'var(--locked-color)':'#cbd5e1'}"></i>
+                    </div>
                 </div>
                 ${turnosHtml}
                 <div style="margin-top:auto">
@@ -274,6 +283,12 @@
             grid.appendChild(cell);
         }
         renderStats(counts);
+    }
+
+    /* Función para borrar todas las cuadrillas de una fecha desbloqueada */
+    function clearAllTurnos(id) {
+        state.db.manual[id] = [];
+        save();
     }
 
     function addAbsence() {
@@ -335,15 +350,9 @@
         const p = id.split('-');
         const turnos = state.db.manual[id] || getAutoTurno(new Date(p[0], p[1]-1, p[2]));
         document.getElementById('m-id').value = id; document.getElementById('m-idx').value = idx;
-        document.getElementById('sel-t1').value = turnos[idx] ? turnos[idx][0] || "" : "";
-        document.getElementById('sel-t2').value = turnos[idx] ? turnos[idx][1] || "" : "";
+        document.getElementById('sel-t1').value = turnos[idx][0] || "";
+        document.getElementById('sel-t2').value = turnos[idx][1] || "";
         document.getElementById('modal').style.display = 'flex';
-    }
-
-    /* Funcion de Borrado Rapido de Seleccion */
-    function clearGroupSelection() {
-        document.getElementById('sel-t1').value = "";
-        document.getElementById('sel-t2').value = "";
     }
 
     function confirmEdit() {
@@ -357,11 +366,7 @@
 
     function deleteGroup() {
         const id = document.getElementById('m-id').value, idx = parseInt(document.getElementById('m-idx').value);
-        if (state.db.manual[id]) {
-            state.db.manual[id].splice(idx, 1); 
-            save(); 
-        }
-        closeModal();
+        state.db.manual[id].splice(idx, 1); save(); closeModal();
     }
 
     function renderStats(counts) {
