@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.2</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -200,6 +200,12 @@
         </div>
         <input type="date" id="sel-fecha" onchange="updateHeader()">
 
+        <h3>Ordenamiento de Tabla</h3>
+        <select id="sel-ordenamiento" onchange="sortTableRows()">
+            <option value="PERSONAL">👥 Agrupar por Personal Asignado</option>
+            <option value="INGRESO" selected>⏱️ Por Orden de Ingreso</option>
+        </select>
+
         <h3>2. Detalles y Asignación de Sitio</h3>
         <div class="search-container">
             <input type="text" id="site-search" placeholder="Escriba SITEID o Nombre del sitio..." autocomplete="off">
@@ -297,6 +303,7 @@
         let dbSitios = [];
         let listaNombresTecnicos = [];
         let siteSelected = null;
+        let entryCounter = 0;
 
         window.onload = () => {
             const today = new Date();
@@ -351,6 +358,48 @@
             document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
         }
 
+        function getAssignedText(tr) {
+            const checkedBoxes = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value);
+            return checkedBoxes.join(' / ') || 'SIN ASIGNAR';
+        }
+
+        function isMaintenanceRow(tr) {
+            const estadoSelect = tr.querySelector('td:nth-child(5) .table-select');
+            const estado = estadoSelect ? estadoSelect.value : '';
+            const fallaCell = tr.querySelector('td:nth-child(4) .static-cell');
+            const falla = fallaCell ? fallaCell.innerText.trim().toUpperCase() : '';
+            return estado === 'MANTENIMIENTO PROGRAMADO' || falla === 'MANTENIMIENTO';
+        }
+
+        function sortTableRows() {
+            const body = document.getElementById('table-body');
+            const rows = Array.from(body.querySelectorAll('tr'));
+            if (rows.length === 0) return;
+
+            const mode = document.getElementById('sel-ordenamiento').value;
+
+            rows.sort((a, b) => {
+                const aMaint = isMaintenanceRow(a);
+                const bMaint = isMaintenanceRow(b);
+
+                if (aMaint && !bMaint) return 1;
+                if (!aMaint && bMaint) return -1;
+
+                if (mode === 'PERSONAL') {
+                    const techA = getAssignedText(a).toUpperCase();
+                    const techB = getAssignedText(b).toUpperCase();
+                    const techComp = techA.localeCompare(techB);
+                    if (techComp !== 0) return techComp;
+                }
+
+                const indexA = parseInt(a.dataset.entryIndex || '0', 10);
+                const indexB = parseInt(b.dataset.entryIndex || '0', 10);
+                return indexA - indexB;
+            });
+
+            rows.forEach(r => body.appendChild(r));
+        }
+
         document.getElementById('site-search').addEventListener('input', (e) => {
             const v = e.target.value.toLowerCase().trim();
             const sug = document.getElementById('suggestions');
@@ -387,6 +436,7 @@
 
         function addRow() {
             if(!siteSelected) return;
+            entryCounter++;
             const checkedBoxesInForm = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value);
             const allSelectedText = checkedBoxesInForm.join(' / ') || 'SIN ASIGNAR';
             
@@ -398,11 +448,12 @@
             
             const body = document.getElementById('table-body');
             const tr = document.createElement('tr');
+            tr.dataset.entryIndex = entryCounter;
 
             let techChecksHtml = '';
             listaNombresTecnicos.forEach(nombre => {
                 const isChecked = checkedBoxesInForm.includes(nombre) ? 'checked' : '';
-                techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked}> ${nombre}</label>`;
+                techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked} onchange="sortTableRows()"> ${nombre}</label>`;
             });
 
             tr.innerHTML = `
@@ -417,7 +468,7 @@
                 <td><span class="static-cell" style="font-weight:700; color: #0077ff;">${falla}</span></td>
                 <td>
                     <div style="padding:5px;">
-                        <select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text">
+                        <select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text; sortTableRows();">
                             <option value="OPERATIVO" ${estadoActualValue === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
                             <option value="ASIGNADO" ${estadoActualValue === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
                             <option value="EN RUTA" ${estadoActualValue === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
@@ -440,7 +491,7 @@
                     </div>
                 </td>
                 <td class="no-capture" style="text-align:center; vertical-align: middle; padding: 10px;">
-                    <button style="color:#ff3333; font-weight:bold; border:none; background:none; cursor:pointer; font-size:1.5rem;" onclick="this.closest('tr').remove()">×</button>
+                    <button style="color:#ff3333; font-weight:bold; border:none; background:none; cursor:pointer; font-size:1.5rem;" onclick="this.closest('tr').remove(); sortTableRows();">×</button>
                 </td>
             `;
             
@@ -452,19 +503,20 @@
             document.getElementById('txt-comentario').value = '';
             document.querySelectorAll('#tech-list input').forEach(i => i.checked = false);
             siteSelected = null;
+
+            sortTableRows();
         }
 
-        /* --- DESCARGA CORREGIDA: MÉTODO DE CLONADO PARA EVITAR IMAGEN NEGRA --- */
         async function downloadImg() {
+            sortTableRows();
             const area = document.getElementById('capture-area');
             const btn = document.querySelector('.btn-download');
             
             btn.innerText = "⏳ GENERANDO...";
             btn.disabled = true;
 
-            // Sincronizar textos
             document.querySelectorAll('#table-body tr').forEach(tr => {
-                const selectedTechs = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
+                const selectedTechs = getAssignedText(tr);
                 tr.querySelector('td:nth-child(3) .export-text').innerText = selectedTechs;
                 
                 const selEst = tr.querySelector('td:nth-child(5) .table-select');
@@ -474,11 +526,9 @@
                 tr.querySelector('td:nth-child(6) .export-text').innerText = txtComm.value;
             });
 
-            // Activar clase de exportación temporalmente
             area.classList.add('is-exporting');
 
             try {
-                // html2canvas tiene una opción 'onclone' que es la mejor para evitar fondos negros
                 const canvas = await html2canvas(area, { 
                     scale: 3,
                     backgroundColor: "#ffffff",
@@ -486,12 +536,10 @@
                     logging: false,
                     allowTaint: true,
                     onclone: (clonedDoc) => {
-                        // Forzamos al clon a ser blanco y visible, sin importar el modo oscuro del sistema
                         const clonedArea = clonedDoc.getElementById('capture-area');
                         clonedArea.style.display = 'block';
                         clonedArea.style.backgroundColor = '#ffffff';
                         clonedArea.style.color = '#002244';
-                        // Forzar a todas las tablas y celdas en el clon a ser blancas
                         clonedDoc.querySelectorAll('.excel-table, .excel-table td').forEach(el => {
                             el.style.backgroundColor = '#ffffff';
                             el.style.color = '#002244';
@@ -518,6 +566,7 @@
         }
 
         async function enviarAlHistorial() {
+            sortTableRows();
             const filas = document.querySelectorAll("#table-body tr");
             if (filas.length === 0) return alert("⚠️ Agregue datos a la tabla primero.");
 
@@ -532,7 +581,7 @@
             };
 
             filas.forEach(tr => {
-                const asignados = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value).join(' / ') || 'SIN ASIGNAR';
+                const asignados = getAssignedText(tr);
                 dataReporte.rows.push({
                     sitio: tr.cells[0].innerText,
                     torrero: tr.cells[1].innerText,
@@ -580,13 +629,15 @@
                     updateHeader();
 
                     data.forEach(item => {
+                        entryCounter++;
                         const body = document.getElementById('table-body');
                         const tr = document.createElement('tr');
+                        tr.dataset.entryIndex = entryCounter;
                         
                         let techChecksHtml = '';
                         listaNombresTecnicos.forEach(nombre => {
                             const isChecked = item.asignado.includes(nombre) ? 'checked' : '';
-                            techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked}> ${nombre}</label>`;
+                            techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked} onchange="sortTableRows()"> ${nombre}</label>`;
                         });
 
                         tr.innerHTML = `
@@ -601,7 +652,7 @@
                             <td><span class="static-cell" style="font-weight:700; color: #0077ff;">${item.falla}</span></td>
                             <td>
                                 <div style="padding:5px;">
-                                    <select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text">
+                                    <select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text; sortTableRows();">
                                         <option value="OPERATIVO" ${item.estado === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
                                         <option value="ASIGNADO" ${item.estado === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
                                         <option value="EN RUTA" ${item.estado === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
@@ -623,11 +674,13 @@
                                     <div class="export-text">${item.comentarios}</div>
                                 </div>
                             </td>
-                            <td class="no-capture" style="text-align:center;"><button style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:1.5rem;" onclick="this.closest('tr').remove()">×</button></td>
+                            <td class="no-capture" style="text-align:center;"><button style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:1.5rem;" onclick="this.closest('tr').remove(); sortTableRows();">×</button></td>
                         `;
                         body.appendChild(tr);
                         tr.querySelectorAll('textarea').forEach(tx => autoResize(tx));
                     });
+
+                    sortTableRows();
                 }
             } catch (e) { 
                 alert("Error al conectar con la base de datos."); 
