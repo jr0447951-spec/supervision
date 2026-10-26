@@ -426,6 +426,7 @@
                             <option value="AFECTADO" ${estadoActualValue === 'AFECTADO' ? 'selected' : ''}>❌ AFECTADO</option>
                             <option value="LPU" ${estadoActualValue === 'LPU' ? 'selected' : ''}>❌ LPU</option>
                             <option value="PENDIENTE" ${estadoActualValue === 'PENDIENTE' ? 'selected' : ''}>⏳ PENDIENTE</option>
+                            <option value="OBSERVACION" ${estadoActualValue === 'OBSERVACION' ? 'selected' : ''}>✅ OPERATIVO, EN OBSERVACION</option>
                             <option value="REASIGNADO" ${estadoActualValue === 'REASIGNADO' ? 'selected' : ''}>🔄 REASIGNADO</option>
                             <option value="MANTENIMIENTO PROGRAMADO" ${estadoActualValue === 'MANTENIMIENTO PROGRAMADO' ? 'selected' : ''}>⚙️📅 MANTENIMIENTO PROGRAMADO</option>
                         </select>
@@ -609,8 +610,9 @@
                                         <option value="AFECTADO" ${item.estado === 'AFECTADO' ? 'selected' : ''}>❌ AFECTADO</option>
                                         <option value="LPU" ${item.estado === 'LPU' ? 'selected' : ''}>❌ LPU</option>
                                         <option value="PENDIENTE" ${item.estado === 'PENDIENTE' ? 'selected' : ''}>⏳ PENDIENTE</option>
+                                        <option value="OBSERVACION" ${item.estado === 'OBSERVACION' ? 'selected' : ''}>✅ OPERATIVO, EN OBSERVACION</option>
                                         <option value="REASIGNADO" ${item.estado === 'REASIGNADO' ? 'selected' : ''}>🔄 REASIGNADO</option>
-                                        <option value="MANTENIMIENTO PROGRAMADO" ${item.estado 'MANTENIMIENTO PROGRAMADO' ? 'selected' : ''}>⚙️📅 MANTENIMIENTO PROGRAMADO</option>
+                                        <option value="MANTENIMIENTO PROGRAMADO" ${item.estado === 'MANTENIMIENTO PROGRAMADO' ? 'selected' : ''}>⚙️📅 MANTENIMIENTO PROGRAMADO</option>
                                     </select>
                                     <div class="export-text">${item.estado}</div>
                                 </div>
