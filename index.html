@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.3</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -137,6 +137,15 @@
         
         .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366 !important; }
         
+        /* ESTILOS DE SECCIÓN DE MANTENIMIENTO PREVENTIVO */
+        .section-title {
+            margin-top: 35px; margin-bottom: 15px; font-size: 1.2rem; font-weight: 900;
+            color: #004488; text-transform: uppercase; border-bottom: 3px solid #004488;
+            padding-bottom: 5px; display: flex; align-items: center; gap: 8px;
+        }
+
+        #maint-section { display: none; }
+
         #capture-area.is-exporting .table-select, 
         #capture-area.is-exporting .table-textarea,
         #capture-area.is-exporting .table-multi-tech,
@@ -200,8 +209,8 @@
         </div>
         <input type="date" id="sel-fecha" onchange="updateHeader()">
 
-        <h3>Ordenamiento de Tabla</h3>
-        <select id="sel-ordenamiento" onchange="sortTableRows()">
+        <h3>Ordenamiento de Tabla Principal</h3>
+        <select id="sel-ordenamiento" onchange="processAllTables()">
             <option value="PERSONAL">👥 Agrupar por Personal Asignado</option>
             <option value="INGRESO" selected>⏱️ Por Orden de Ingreso</option>
         </select>
@@ -274,6 +283,7 @@
             <div id="h-fecha-display" style="font-weight:900; color: #004488; font-size: 1.6rem; border-left: 6px solid #00d4ff; padding-left: 20px;"></div>
         </div>
 
+        <!-- TABLA PRINCIPAL DE NOVEDADES/INCIDENCIAS -->
         <table class="excel-table">
             <thead>
                 <tr>
@@ -288,6 +298,24 @@
             </thead>
             <tbody id="table-body"></tbody>
         </table>
+
+        <!-- SECCIÓN Y TABLA SEPARADA DE MANTENIMIENTO PREVENTIVO -->
+        <div id="maint-section">
+            <div class="section-title">⚙️ MANTENIMIENTO PREVENTIVO</div>
+            <table class="excel-table">
+                <thead>
+                    <tr>
+                        <th style="width:25%">Sitio / Nodo</th>
+                        <th style="width:13%">Torrero</th>
+                        <th style="width:22%">Asignado</th>
+                        <th style="width:18%">Estado</th>
+                        <th style="width:22%">Comentarios</th>
+                        <th class="no-capture" style="width:40px"></th>
+                    </tr>
+                </thead>
+                <tbody id="maint-table-body"></tbody>
+            </table>
+        </div>
     </div>
 
     <div class="actions">
@@ -359,39 +387,66 @@
         }
 
         function getAssignedText(tr) {
-            const checkedBoxes = Array.from(tr.querySelectorAll('td:nth-child(3) input:checked')).map(i => i.value);
+            const checkedBoxes = Array.from(tr.querySelectorAll('td input[type="checkbox"]:checked')).map(i => i.value);
             return checkedBoxes.join(' / ') || 'SIN ASIGNAR';
         }
 
         function isMaintenanceRow(tr) {
-            const estadoSelect = tr.querySelector('td:nth-child(5) .table-select');
+            const estadoSelect = tr.querySelector('.table-select');
             const estado = estadoSelect ? estadoSelect.value : '';
-            const fallaCell = tr.querySelector('td:nth-child(4) .static-cell');
-            const falla = fallaCell ? fallaCell.innerText.trim().toUpperCase() : '';
-            return estado === 'MANTENIMIENTO PROGRAMADO' || falla === 'MANTENIMIENTO';
+            const fallaVal = tr.dataset.fallaVal || '';
+            return estado === 'MANTENIMIENTO PROGRAMADO' || fallaVal === 'MANTENIMIENTO';
         }
 
-        function sortTableRows() {
-            const body = document.getElementById('table-body');
+        // EVALUA Y MUEVE FILAS ENTRE AMBAS TABLAS DE FORMA DINÁMICA
+        function processAllTables() {
+            const mainBody = document.getElementById('table-body');
+            const maintBody = document.getElementById('maint-table-body');
+            const allRows = [...Array.from(mainBody.querySelectorAll('tr')), ...Array.from(maintBody.querySelectorAll('tr'))];
+
+            allRows.forEach(tr => {
+                const isMaint = isMaintenanceRow(tr);
+                const isCurrentlyMaintTable = tr.parentElement.id === 'maint-table-body';
+
+                if (isMaint && !isCurrentlyMaintTable) {
+                    // Convertir a estructura de 5 columnas para la tabla secundaria
+                    const fallaTd = tr.querySelector('td[data-col="falla"]');
+                    if (fallaTd) fallaTd.style.display = 'none';
+                    maintBody.appendChild(tr);
+                } else if (!isMaint && isCurrentlyMaintTable) {
+                    // Restaurar columna de Falla para la tabla principal
+                    const fallaTd = tr.querySelector('td[data-col="falla"]');
+                    if (fallaTd) fallaTd.style.display = '';
+                    mainBody.appendChild(tr);
+                }
+            });
+
+            // MOSTRAR U OCULTAR SECCIÓN DE MANTENIMIENTO SI TIENE REGISTROS
+            const maintSection = document.getElementById('maint-section');
+            if (maintBody.children.length > 0) {
+                maintSection.style.display = 'block';
+            } else {
+                maintSection.style.display = 'none';
+            }
+
+            // ORDENAR AMBAS TABLAS INDEPENDIENTEMENTE
+            sortSingleTable(mainBody);
+            sortSingleTable(maintBody);
+        }
+
+        function sortSingleTable(body) {
             const rows = Array.from(body.querySelectorAll('tr'));
             if (rows.length === 0) return;
 
             const mode = document.getElementById('sel-ordenamiento').value;
 
             rows.sort((a, b) => {
-                const aMaint = isMaintenanceRow(a);
-                const bMaint = isMaintenanceRow(b);
-
-                if (aMaint && !bMaint) return 1;
-                if (!aMaint && bMaint) return -1;
-
                 if (mode === 'PERSONAL') {
                     const techA = getAssignedText(a).toUpperCase();
                     const techB = getAssignedText(b).toUpperCase();
                     const techComp = techA.localeCompare(techB);
                     if (techComp !== 0) return techComp;
                 }
-
                 const indexA = parseInt(a.dataset.entryIndex || '0', 10);
                 const indexB = parseInt(b.dataset.entryIndex || '0', 10);
                 return indexA - indexB;
@@ -434,53 +489,55 @@
             }
         });
 
-        function addRow() {
-            if(!siteSelected) return;
-            entryCounter++;
-            const checkedBoxesInForm = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value);
-            const allSelectedText = checkedBoxesInForm.join(' / ') || 'SIN ASIGNAR';
-            
-            const falla = document.getElementById('sel-falla').value;
-            const estadoSelect = document.getElementById('sel-estado-fila');
-            const estadoActualText = estadoSelect.options[estadoSelect.selectedIndex].text;
-            const estadoActualValue = estadoSelect.value;
-            const comment = document.getElementById('txt-comentario').value;
-            
-            const body = document.getElementById('table-body');
+        function createRowElement(site, torrero, checkedTechs, falla, estadoValue, comment, entryIndex) {
             const tr = document.createElement('tr');
-            tr.dataset.entryIndex = entryCounter;
+            tr.dataset.entryIndex = entryIndex;
+            tr.dataset.fallaVal = falla;
+
+            const estadoOptions = [
+                { val: 'OPERATIVO', label: '✅ OPERATIVO' },
+                { val: 'ASIGNADO', label: '🔹 ASIGNADO' },
+                { val: 'EN RUTA', label: '🚗 EN RUTA' },
+                { val: 'EN SITIO', label: '📍 EN SITIO' },
+                { val: 'PDR', label: '⏸️ PDR' },
+                { val: 'AFECTADO', label: '❌ AFECTADO' },
+                { val: 'LPU', label: '❌ LPU' },
+                { val: 'PENDIENTE', label: '⏳ PENDIENTE' },
+                { val: 'OBSERVACION', label: '✅ OPERATIVO, EN OBSERVACION' },
+                { val: 'REASIGNADO', label: '🔄 REASIGNADO' },
+                { val: 'MANTENIMIENTO PROGRAMADO', label: '⚙️📅 MANTENIMIENTO PROGRAMADO' }
+            ];
+
+            let selectHtml = `<select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text; processAllTables();">`;
+            let estadoActualText = '';
+            estadoOptions.forEach(opt => {
+                const isSelected = opt.val === estadoValue ? 'selected' : '';
+                if (isSelected) estadoActualText = opt.label;
+                selectHtml += `<option value="${opt.val}" ${isSelected}>${opt.label}</option>`;
+            });
+            selectHtml += `</select>`;
 
             let techChecksHtml = '';
             listaNombresTecnicos.forEach(nombre => {
-                const isChecked = checkedBoxesInForm.includes(nombre) ? 'checked' : '';
-                techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked} onchange="sortTableRows()"> ${nombre}</label>`;
+                const isChecked = checkedTechs.includes(nombre) ? 'checked' : '';
+                techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked} onchange="processAllTables()"> ${nombre}</label>`;
             });
 
+            const allSelectedText = checkedTechs.join(' / ') || 'SIN ASIGNAR';
+
             tr.innerHTML = `
-                <td><span class="static-cell" style="color: #004488; font-weight:800;">${siteSelected.full.toUpperCase()}</span></td>
-                <td><span class="static-cell">${siteSelected.torrero || 'N/A'}</span></td>
+                <td><span class="static-cell" style="color: #004488; font-weight:800;">${site.toUpperCase()}</span></td>
+                <td><span class="static-cell">${torrero || 'N/A'}</span></td>
                 <td>
                     <div style="padding:5px;">
                         <div class="table-multi-tech">${techChecksHtml}</div>
                         <div class="export-text">${allSelectedText}</div>
                     </div>
                 </td>
-                <td><span class="static-cell" style="font-weight:700; color: #0077ff;">${falla}</span></td>
+                <td data-col="falla"><span class="static-cell" style="font-weight:700; color: #0077ff;">${falla}</span></td>
                 <td>
                     <div style="padding:5px;">
-                        <select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text; sortTableRows();">
-                            <option value="OPERATIVO" ${estadoActualValue === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
-                            <option value="ASIGNADO" ${estadoActualValue === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
-                            <option value="EN RUTA" ${estadoActualValue === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
-                            <option value="EN SITIO" ${estadoActualValue === 'EN SITIO' ? 'selected' : ''}>📍 EN SITIO</option>
-                            <option value="PDR" ${estadoActualValue === 'PDR' ? 'selected' : ''}>⏸️ PDR</option>
-                            <option value="AFECTADO" ${estadoActualValue === 'AFECTADO' ? 'selected' : ''}>❌ AFECTADO</option>
-                            <option value="LPU" ${estadoActualValue === 'LPU' ? 'selected' : ''}>❌ LPU</option>
-                            <option value="PENDIENTE" ${estadoActualValue === 'PENDIENTE' ? 'selected' : ''}>⏳ PENDIENTE</option>
-                            <option value="OBSERVACION" ${estadoActualValue === 'OBSERVACION' ? 'selected' : ''}>✅ OPERATIVO, EN OBSERVACION</option>
-                            <option value="REASIGNADO" ${estadoActualValue === 'REASIGNADO' ? 'selected' : ''}>🔄 REASIGNADO</option>
-                            <option value="MANTENIMIENTO PROGRAMADO" ${estadoActualValue === 'MANTENIMIENTO PROGRAMADO' ? 'selected' : ''}>⚙️📅 MANTENIMIENTO PROGRAMADO</option>
-                        </select>
+                        ${selectHtml}
                         <div class="export-text">${estadoActualText}</div>
                     </div>
                 </td>
@@ -491,11 +548,34 @@
                     </div>
                 </td>
                 <td class="no-capture" style="text-align:center; vertical-align: middle; padding: 10px;">
-                    <button style="color:#ff3333; font-weight:bold; border:none; background:none; cursor:pointer; font-size:1.5rem;" onclick="this.closest('tr').remove(); sortTableRows();">×</button>
+                    <button style="color:#ff3333; font-weight:bold; border:none; background:none; cursor:pointer; font-size:1.5rem;" onclick="this.closest('tr').remove(); processAllTables();">×</button>
                 </td>
             `;
+
+            return tr;
+        }
+
+        function addRow() {
+            if(!siteSelected) return;
+            entryCounter++;
+            const checkedBoxesInForm = Array.from(document.querySelectorAll('#tech-list input:checked')).map(i => i.value);
             
-            body.appendChild(tr);
+            const falla = document.getElementById('sel-falla').value;
+            const estadoSelect = document.getElementById('sel-estado-fila');
+            const estadoActualValue = estadoSelect.value;
+            const comment = document.getElementById('txt-comentario').value;
+            
+            const tr = createRowElement(
+                siteSelected.full,
+                siteSelected.torrero,
+                checkedBoxesInForm,
+                falla,
+                estadoActualValue,
+                comment,
+                entryCounter
+            );
+
+            document.getElementById('table-body').appendChild(tr);
             tr.querySelectorAll('textarea').forEach(tx => autoResize(tx));
             
             document.getElementById('form-site').style.display = 'none';
@@ -504,26 +584,34 @@
             document.querySelectorAll('#tech-list input').forEach(i => i.checked = false);
             siteSelected = null;
 
-            sortTableRows();
+            processAllTables();
         }
 
         async function downloadImg() {
-            sortTableRows();
+            processAllTables();
             const area = document.getElementById('capture-area');
             const btn = document.querySelector('.btn-download');
             
             btn.innerText = "⏳ GENERANDO...";
             btn.disabled = true;
 
-            document.querySelectorAll('#table-body tr').forEach(tr => {
+            // Sincronizar textos
+            document.querySelectorAll('#capture-area tr').forEach(tr => {
                 const selectedTechs = getAssignedText(tr);
-                tr.querySelector('td:nth-child(3) .export-text').innerText = selectedTechs;
+                const expTech = tr.querySelector('td:nth-child(3) .export-text');
+                if (expTech) expTech.innerText = selectedTechs;
                 
-                const selEst = tr.querySelector('td:nth-child(5) .table-select');
-                tr.querySelector('td:nth-child(5) .export-text').innerText = selEst.options[selEst.selectedIndex].text;
+                const selEst = tr.querySelector('.table-select');
+                if (selEst) {
+                    const expEst = selEst.nextElementSibling;
+                    if (expEst) expEst.innerText = selEst.options[selEst.selectedIndex].text;
+                }
                 
-                const txtComm = tr.querySelector('td:nth-child(6) .table-textarea');
-                tr.querySelector('td:nth-child(6) .export-text').innerText = txtComm.value;
+                const txtComm = tr.querySelector('.table-textarea');
+                if (txtComm) {
+                    const expComm = txtComm.nextElementSibling;
+                    if (expComm) expComm.innerText = txtComm.value;
+                }
             });
 
             area.classList.add('is-exporting');
@@ -566,9 +654,10 @@
         }
 
         async function enviarAlHistorial() {
-            sortTableRows();
-            const filas = document.querySelectorAll("#table-body tr");
-            if (filas.length === 0) return alert("⚠️ Agregue datos a la tabla primero.");
+            processAllTables();
+            const mainRows = document.querySelectorAll("#table-body tr");
+            const maintRows = document.querySelectorAll("#maint-table-body tr");
+            if (mainRows.length === 0 && maintRows.length === 0) return alert("⚠️ Agregue datos a la tabla primero.");
 
             const btn = document.querySelector(".btn-cloud");
             btn.innerText = "⏳ GUARDANDO...";
@@ -580,15 +669,18 @@
                 rows: []
             };
 
-            filas.forEach(tr => {
+            [...Array.from(mainRows), ...Array.from(maintRows)].forEach(tr => {
                 const asignados = getAssignedText(tr);
+                const fallaTd = tr.querySelector('td[data-col="falla"]');
+                const fallaVal = fallaTd ? fallaTd.innerText : (tr.dataset.fallaVal || 'MANTENIMIENTO');
+
                 dataReporte.rows.push({
                     sitio: tr.cells[0].innerText,
                     torrero: tr.cells[1].innerText,
                     asignado: asignados,
-                    falla: tr.cells[3].innerText,
-                    estado: tr.querySelector('td:nth-child(5) .table-select').value,
-                    comentarios: tr.querySelector('td:nth-child(6) .table-textarea').value
+                    falla: fallaVal,
+                    estado: tr.querySelector('.table-select').value,
+                    comentarios: tr.querySelector('.table-textarea').value
                 });
             });
 
@@ -624,65 +716,33 @@
                     alert("No se encontraron registros para esta fecha.");
                 } else {
                     document.getElementById('table-body').innerHTML = '';
+                    document.getElementById('maint-table-body').innerHTML = '';
                     document.getElementById('sel-fecha').value = fecha;
                     document.getElementById('sel-tipo').value = tipo;
                     updateHeader();
 
                     data.forEach(item => {
                         entryCounter++;
-                        const body = document.getElementById('table-body');
-                        const tr = document.createElement('tr');
-                        tr.dataset.entryIndex = entryCounter;
+                        const checkedTechs = listaNombresTecnicos.filter(n => item.asignado.includes(n));
                         
-                        let techChecksHtml = '';
-                        listaNombresTecnicos.forEach(nombre => {
-                            const isChecked = item.asignado.includes(nombre) ? 'checked' : '';
-                            techChecksHtml += `<label class="table-tech-option"><input type="checkbox" value="${nombre}" ${isChecked} onchange="sortTableRows()"> ${nombre}</label>`;
-                        });
+                        const tr = createRowElement(
+                            item.sitio,
+                            item.torrero,
+                            checkedTechs,
+                            item.falla,
+                            item.estado,
+                            item.comentarios,
+                            entryCounter
+                        );
 
-                        tr.innerHTML = `
-                            <td><span class="static-cell" style="font-weight:700; color: #004488;">${item.sitio}</span></td>
-                            <td><span class="static-cell">${item.torrero}</span></td>
-                            <td>
-                                <div style="padding:5px;">
-                                    <div class="table-multi-tech">${techChecksHtml}</div>
-                                    <div class="export-text">${item.asignado}</div>
-                                </div>
-                            </td>
-                            <td><span class="static-cell" style="font-weight:700; color: #0077ff;">${item.falla}</span></td>
-                            <td>
-                                <div style="padding:5px;">
-                                    <select class="table-select" onchange="this.nextElementSibling.innerText=this.options[this.selectedIndex].text; sortTableRows();">
-                                        <option value="OPERATIVO" ${item.estado === 'OPERATIVO' ? 'selected' : ''}>✅ OPERATIVO</option>
-                                        <option value="ASIGNADO" ${item.estado === 'ASIGNADO' ? 'selected' : ''}>🔹 ASIGNADO</option>
-                                        <option value="EN RUTA" ${item.estado === 'EN RUTA' ? 'selected' : ''}>🚗 EN RUTA</option>
-                                        <option value="EN SITIO" ${item.estado === 'EN SITIO' ? 'selected' : ''}>📍 EN SITIO</option>
-                                        <option value="PDR" ${item.estado === 'PDR' ? 'selected' : ''}>⏸️ PDR</option>
-                                        <option value="AFECTADO" ${item.estado === 'AFECTADO' ? 'selected' : ''}>❌ AFECTADO</option>
-                                        <option value="LPU" ${item.estado === 'LPU' ? 'selected' : ''}>❌ LPU</option>
-                                        <option value="PENDIENTE" ${item.estado === 'PENDIENTE' ? 'selected' : ''}>⏳ PENDIENTE</option>
-                                        <option value="OBSERVACION" ${item.estado === 'OBSERVACION' ? 'selected' : ''}>✅ OPERATIVO, EN OBSERVACION</option>
-                                        <option value="REASIGNADO" ${item.estado === 'REASIGNADO' ? 'selected' : ''}>🔄 REASIGNADO</option>
-                                        <option value="MANTENIMIENTO PROGRAMADO" ${item.estado === 'MANTENIMIENTO PROGRAMADO' ? 'selected' : ''}>⚙️📅 MANTENIMIENTO PROGRAMADO</option>
-                                    </select>
-                                    <div class="export-text">${item.estado}</div>
-                                </div>
-                            </td>
-                            <td>
-                                <div style="padding:5px;">
-                                    <textarea class="table-textarea" oninput="autoResize(this)">${item.comentarios}</textarea>
-                                    <div class="export-text">${item.comentarios}</div>
-                                </div>
-                            </td>
-                            <td class="no-capture" style="text-align:center;"><button style="color:red; border:none; background:none; cursor:pointer; font-weight:bold; font-size:1.5rem;" onclick="this.closest('tr').remove(); sortTableRows();">×</button></td>
-                        `;
-                        body.appendChild(tr);
+                        document.getElementById('table-body').appendChild(tr);
                         tr.querySelectorAll('textarea').forEach(tx => autoResize(tx));
                     });
 
-                    sortTableRows();
+                    processAllTables();
                 }
             } catch (e) { 
+                console.error(e);
                 alert("Error al conectar con la base de datos."); 
             } finally { 
                 btn.innerText = "BUSCAR"; 
