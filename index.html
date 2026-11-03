@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.6 UNIFICADO</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
             margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center;
         }
 
-        /* TARJETA DE CONFIGURACIÓN (INTERFAZ DE USUARIO) */
+        /* TARJETA DE CONFIGURACIÓN */
         .config-card {
             background: #003366; width: 100%; max-width: 800px;
             padding: 25px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -41,7 +41,7 @@
             border-color: #00d4ff; outline: none; box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
         }
 
-        /* ESTILOS DENTRO DE LA TABLA (EDICIÓN VIVA) */
+        /* ESTILOS DENTRO DE LA TABLA */
         .table-select, .table-textarea {
             width: 100%; border: none; background: transparent; 
             font-family: 'Inter', sans-serif; font-size: 0.78rem; color: #003366; 
@@ -111,7 +111,7 @@
             font-size: 1rem; letter-spacing: 1px;
         }
 
-        /* --- ÁREA DE CAPTURA (FORZADO BLANCO ABSOLUTO) --- */
+        /* ÁREA DE CAPTURA (FORZADO BLANCO ABSOLUTO) */
         #capture-area {
             background: #ffffff !important; color: #002244 !important; padding: 45px; border-radius: 2px;
             width: 1180px; box-sizing: border-box; position: relative; display: block;
@@ -197,23 +197,10 @@
         <hr style="border: 0; border-top: 1px solid #0059b3; margin: 25px 0;">
 
         <h3>1. Configuración de Informe</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-            <div>
-                <label style="font-size: 0.75rem; color: #b3e6ff; font-weight: 700;">Zona de Cobertura:</label>
-                <select id="sel-zona" onchange="updateHeader()">
-                    <option value="ZONAS PARACENTRALES Y ORIENTE" selected>ZONAS PARACENTRALES Y ORIENTE</option>
-                    <option value="ZONAS PARACENTRALES">ZONAS PARACENTRALES</option>
-                    <option value="ZONA ORIENTE">ZONA ORIENTE</option>
-                </select>
-            </div>
-            <div>
-                <label style="font-size: 0.75rem; color: #b3e6ff; font-weight: 700;">Tipo de Reporte:</label>
-                <select id="sel-tipo" onchange="updateHeader()">
-                    <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
-                    <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
-                </select>
-            </div>
-        </div>
+        <select id="sel-tipo" onchange="updateHeader()">
+            <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
+            <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
+        </select>
 
         <div class="date-quick-btns">
             <button class="btn-date" onclick="setQuickDate(0)">HOY</button>
@@ -291,7 +278,7 @@
         <div class="report-header">
             <div>
                 <h1 id="h-titulo">VISITAS REALIZADAS</h1>
-                <span id="h-zona-display" style="font-size:0.8rem; color:#004488; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Equipo técnico de zonas paracentrales y oriente</span>
+                <span id="h-subtitulo" style="font-size:0.8rem; color:#004488; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Equipo técnico de zonas paracentrales y oriente</span>
             </div>
             <div id="h-fecha-display" style="font-weight:900; color: #004488; font-size: 1.6rem; border-left: 6px solid #00d4ff; padding-left: 20px;"></div>
         </div>
@@ -342,6 +329,7 @@
         const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
         const TECNICOS_CSV = 'tecnicos.csv';
         let dbSitios = [];
+        let mapaTecnicos = {}; // Almacena { nombre: zona }
         let listaNombresTecnicos = [];
         let siteSelected = null;
         let entryCounter = 0;
@@ -364,15 +352,26 @@
             });
 
             Papa.parse(TECNICOS_CSV, {
-                download: true, header: true,
+                download: true, header: true, dynamicTyping: true,
                 complete: (r) => {
                     const list = document.getElementById('tech-list');
-                    listaNombresTecnicos = r.data.filter(t => t.Nombre).map(t => t.Nombre);
-                    listaNombresTecnicos.forEach(nombre => {
-                        const label = document.createElement('label');
-                        label.className = 'tech-item';
-                        label.innerHTML = `<input type="checkbox" value="${nombre}"> ${nombre}`;
-                        list.appendChild(label);
+                    list.innerHTML = '';
+                    mapaTecnicos = {};
+                    listaNombresTecnicos = [];
+
+                    r.data.forEach(t => {
+                        const nombre = t.Nombre || t.NOMBRE || t.nombre;
+                        const zona = t.Zona || t.ZONA || t.zona || 'PARACENTRAL';
+                        if (nombre) {
+                            const nombreLimpio = String(nombre).trim();
+                            listaNombresTecnicos.push(nombreLimpio);
+                            mapaTecnicos[nombreLimpio] = String(zona).trim().toUpperCase();
+
+                            const label = document.createElement('label');
+                            label.className = 'tech-item';
+                            label.innerHTML = `<input type="checkbox" value="${nombreLimpio}"> ${nombreLimpio}`;
+                            list.appendChild(label);
+                        }
                     });
                 }
             });
@@ -397,8 +396,31 @@
                 document.getElementById('h-fecha-display').innerText = `${p[2]}/${p[1]}/${p[0]}`;
             }
             document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
-            const zonaVal = document.getElementById('sel-zona').value;
-            document.getElementById('h-zona-display').innerText = `Equipo técnico de ${zonaVal.toLowerCase()}`;
+            actualizarSubtituloZona();
+        }
+
+        function obtenerZonaGlobal() {
+            const allCheckedInputs = document.querySelectorAll('#capture-area td input[type="checkbox"]:checked');
+            const zonasEncontradas = new Set();
+
+            allCheckedInputs.forEach(input => {
+                const zonaTec = mapaTecnicos[input.value];
+                if (zonaTec) zonasEncontradas.add(zonaTec);
+            });
+
+            if (zonasEncontradas.has('PARACENTRAL') && zonasEncontradas.has('ORIENTE')) {
+                return 'ZONAS PARACENTRALES Y ORIENTE';
+            } else if (zonasEncontradas.has('ORIENTE')) {
+                return 'ZONA ORIENTE';
+            } else if (zonasEncontradas.has('PARACENTRAL')) {
+                return 'ZONAS PARACENTRALES';
+            }
+            return 'ZONAS PARACENTRALES Y ORIENTE';
+        }
+
+        function actualizarSubtituloZona() {
+            const zonaResultante = obtenerZonaGlobal();
+            document.getElementById('h-subtitulo').innerText = `Equipo técnico de ${zonaResultante.toLowerCase()}`;
         }
 
         function getAssignedText(tr) {
@@ -442,6 +464,7 @@
 
             sortSingleTable(mainBody);
             sortSingleTable(maintBody);
+            actualizarSubtituloZona();
         }
 
         function sortSingleTable(body) {
@@ -659,7 +682,7 @@
         }
 
         function sendWhatsapp() {
-            window.open(`https://wa.me/?text=${encodeURIComponent("Adjunto envío de reporte técnico diario unificado.")}`, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent("Adjunto envío de reporte técnico diario.")}`, '_blank');
         }
 
         async function enviarAlHistorial() {
@@ -675,7 +698,7 @@
             const dataReporte = {
                 fecha: document.getElementById('sel-fecha').value,
                 tipo: document.getElementById('sel-tipo').value,
-                zona: document.getElementById('sel-zona').value,
+                zona: obtenerZonaGlobal(),
                 rows: []
             };
 
@@ -762,4 +785,3 @@
     </script>
 </body>
 </html>
-   
