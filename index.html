@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.8</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -114,7 +114,7 @@
         /* ÁREA DE CAPTURA (FORZADO BLANCO ABSOLUTO) */
         #capture-area {
             background: #ffffff !important; color: #002244 !important; padding: 45px; border-radius: 2px;
-            width: 1180px; box-sizing: border-box; position: relative; display: block;
+            width: 1280px; box-sizing: border-box; position: relative; display: block;
         }
 
         .report-header { 
@@ -224,7 +224,7 @@
         <div id="form-site" style="display:none; margin-top:15px; padding:25px; border:2px solid #00d4ff44; border-radius:14px; background: rgba(0, 212, 255, 0.05);">
             <p style="font-size: 0.95rem; color:#00d4ff; margin: 0 0 15px 0; border-bottom: 1px solid rgba(0,212,255,0.2); padding-bottom: 10px;">
                 📍 <b>SITIO:</b> <span id="label-site-name" style="color:white;"></span> <br>
-                🏢 <b>TORRERO:</b> <span id="label-torrero" style="color:white;"></span>
+                🏢 <b>TORRERO:</b> <span id="label-torrero" style="color:white;"></span> | 📦 <b>PORTE:</b> <span id="label-porte" style="color:white;"></span>
             </p>
             
             <label style="font-size: 0.75rem; color: #b3e6ff; font-weight:800; text-transform: uppercase;">Seleccione Técnico(s):</label>
@@ -287,12 +287,13 @@
         <table class="excel-table">
             <thead>
                 <tr>
-                    <th style="width:22%">Sitio / Nodo</th>
-                    <th style="width:11%">Torrero</th>
-                    <th style="width:19%">Asignado</th>
-                    <th style="width:13%">Tipo de Falla</th>
-                    <th style="width:16%">Estado</th>
-                    <th style="width:19%">Comentarios</th>
+                    <th style="width:20%">Sitio / Nodo</th>
+                    <th style="width:10%">Torrero</th>
+                    <th style="width:10%">Porte</th>
+                    <th style="width:17%">Asignado</th>
+                    <th style="width:12%">Tipo de Falla</th>
+                    <th style="width:14%">Estado</th>
+                    <th style="width:17%">Comentarios</th>
                     <th class="no-capture" style="width:40px"></th>
                 </tr>
             </thead>
@@ -305,11 +306,12 @@
             <table class="excel-table">
                 <thead>
                     <tr>
-                        <th style="width:25%">Sitio / Nodo</th>
-                        <th style="width:13%">Torrero</th>
-                        <th style="width:22%">Asignado</th>
-                        <th style="width:18%">Estado</th>
-                        <th style="width:22%">Comentarios</th>
+                        <th style="width:22%">Sitio / Nodo</th>
+                        <th style="width:11%">Torrero</th>
+                        <th style="width:20%">Asignado</th>
+                        <th style="width:16%">Estado</th>
+                        <th style="width:11%">Porte</th>
+                        <th style="width:20%">Comentarios</th>
                         <th class="no-capture" style="width:40px"></th>
                     </tr>
                 </thead>
@@ -329,7 +331,7 @@
         const SITIOS_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTE_5CZtD7qHGW5cWHGAjn7ALTphVm5h88lco9cySYoAe2VBW4fq8DQ7-SZY6cd_FHtNQJS3MpE88hs/pub?output=csv';
         const TECNICOS_CSV = 'tecnicos.csv';
         let dbSitios = [];
-        let mapaTecnicos = {}; // Almacena { nombre: zona }
+        let mapaTecnicos = {};
         let listaNombresTecnicos = [];
         let siteSelected = null;
         let entryCounter = 0;
@@ -342,12 +344,18 @@
             Papa.parse(SITIOS_CSV, {
                 download: true, header: true,
                 complete: (r) => { 
-                    dbSitios = r.data.map(row => ({ 
-                        id: String(row.SITEID || "").toLowerCase().trim(),
-                        name: String(row['NOMBRE DE SITIO'] || "").toLowerCase().trim(),
-                        full: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, 
-                        torrero: row.Propietario 
-                    })).filter(x => x.full.length > 5); 
+                    dbSitios = r.data.map(row => {
+                        const keys = Object.keys(row);
+                        // Extrae columna L (índice 11) o encabezado PORTE/Porte
+                        const porteVal = row.PORTE || row.Porte || row.porte || (keys[11] ? row[keys[11]] : '') || 'N/A';
+                        return { 
+                            id: String(row.SITEID || "").toLowerCase().trim(),
+                            name: String(row['NOMBRE DE SITIO'] || "").toLowerCase().trim(),
+                            full: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, 
+                            torrero: row.Propietario || 'N/A',
+                            porte: String(porteVal).trim() || 'N/A'
+                        };
+                    }).filter(x => x.full.length > 5); 
                 }
             });
 
@@ -445,10 +453,16 @@
                 const isCurrentlyMaintTable = tr.parentElement.id === 'maint-table-body';
 
                 if (isMaint && !isCurrentlyMaintTable) {
+                    // Mover a tabla secundaria (Oculta Falla)
                     const fallaTd = tr.querySelector('td[data-col="falla"]');
                     if (fallaTd) fallaTd.style.display = 'none';
+                    
+                    // Asegurar orden de celdas para Mantenimiento:
+                    // 0:Sitio, 1:Torrero, 2:Porte, 3:Asignado, 4:Falla(oculta), 5:Estado, 6:Comentarios, 7:Accion
+                    // Reordenamiento visual si es necesario
                     maintBody.appendChild(tr);
                 } else if (!isMaint && isCurrentlyMaintTable) {
+                    // Mover a tabla principal (Restaura Falla)
                     const fallaTd = tr.querySelector('td[data-col="falla"]');
                     if (fallaTd) fallaTd.style.display = '';
                     mainBody.appendChild(tr);
@@ -514,6 +528,7 @@
                         document.getElementById('site-search').value = m.full.toUpperCase();
                         document.getElementById('label-site-name').innerText = m.full.toUpperCase();
                         document.getElementById('label-torrero').innerText = m.torrero || 'N/A';
+                        document.getElementById('label-porte').innerText = m.porte || 'N/A';
                         document.getElementById('form-site').style.display = 'block';
                         sug.style.display = 'none';
                     };
@@ -522,7 +537,7 @@
             }
         });
 
-        function createRowElement(site, torrero, checkedTechs, falla, estadoValue, comment, entryIndex) {
+        function createRowElement(site, torrero, porte, checkedTechs, falla, estadoValue, comment, entryIndex) {
             const tr = document.createElement('tr');
             tr.dataset.entryIndex = entryIndex;
             tr.dataset.fallaVal = falla;
@@ -561,6 +576,7 @@
             tr.innerHTML = `
                 <td><span class="static-cell" style="color: #004488; font-weight:800;">${site.toUpperCase()}</span></td>
                 <td><span class="static-cell">${torrero || 'N/A'}</span></td>
+                <td data-col="porte"><span class="static-cell">${porte || 'N/A'}</span></td>
                 <td>
                     <div style="padding:5px;">
                         <div class="table-multi-tech">${techChecksHtml}</div>
@@ -601,6 +617,7 @@
             const tr = createRowElement(
                 siteSelected.full,
                 siteSelected.torrero,
+                siteSelected.porte,
                 checkedBoxesInForm,
                 falla,
                 estadoActualValue,
@@ -630,7 +647,7 @@
 
             document.querySelectorAll('#capture-area tr').forEach(tr => {
                 const selectedTechs = getAssignedText(tr);
-                const expTech = tr.querySelector('td:nth-child(3) .export-text');
+                const expTech = tr.querySelector('td:nth-child(4) .export-text');
                 if (expTech) expTech.innerText = selectedTechs;
                 
                 const selEst = tr.querySelector('.table-select');
@@ -706,10 +723,13 @@
                 const asignados = getAssignedText(tr);
                 const fallaTd = tr.querySelector('td[data-col="falla"]');
                 const fallaVal = fallaTd ? fallaTd.innerText : (tr.dataset.fallaVal || 'MANTENIMIENTO');
+                const porteTd = tr.querySelector('td[data-col="porte"]');
+                const porteVal = porteTd ? porteTd.innerText : 'N/A';
 
                 dataReporte.rows.push({
                     sitio: tr.cells[0].innerText,
                     torrero: tr.cells[1].innerText,
+                    porte: porteVal,
                     asignado: asignados,
                     falla: fallaVal,
                     estado: tr.querySelector('.table-select').value,
@@ -761,6 +781,7 @@
                         const tr = createRowElement(
                             item.sitio,
                             item.torrero,
+                            item.porte || 'N/A',
                             checkedTechs,
                             item.falla,
                             item.estado,
