@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.2</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -111,7 +111,7 @@
             font-size: 1rem; letter-spacing: 1px;
         }
 
-        /* ÁREA DE CAPTURA (FORZADO BLANCO ABSOLUTO) */
+        /* ÁREA DE CAPTURA */
         #capture-area {
             background: #ffffff !important; color: #002244 !important; padding: 45px; border-radius: 2px;
             width: 1280px; box-sizing: border-box; position: relative; display: block;
@@ -137,7 +137,6 @@
         
         .static-cell { padding: 12px; font-weight: 600; display: block; word-wrap: break-word; color: #003366 !important; }
         
-        /* ESTILOS DE SECCIÓN DE MANTENIMIENTO PREVENTIVO */
         .section-title {
             margin-top: 35px; margin-bottom: 15px; font-size: 1.2rem; font-weight: 900;
             color: #004488; text-transform: uppercase; border-bottom: 3px solid #004488;
@@ -566,7 +565,7 @@
 
             const allSelectedText = checkedTechs.join(' / ') || 'SIN ASIGNAR';
 
-            // ORDEN EXACTO DE CELDAS EN HTML: 0:Sitio | 1:Torrero | 2:Porte | 3:Asignado | 4:Falla | 5:Estado | 6:Comentarios | 7:Borrar
+            // CELDAS EN ORDEN ESTRICTO: 0:Sitio | 1:Torrero | 2:Porte | 3:Asignado | 4:Falla | 5:Estado | 6:Comentarios | 7:Borrar
             tr.innerHTML = `
                 <td><span class="static-cell" style="color: #004488; font-weight:800;">${site.toUpperCase()}</span></td>
                 <td><span class="static-cell">${torrero || 'N/A'}</span></td>
