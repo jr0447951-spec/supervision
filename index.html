@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.8</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -679,18 +679,27 @@
         }
 
         function obtenerZonaFila(tr) {
-            const checked = Array.from(tr.querySelectorAll('td input[type="checkbox"]:checked')).map(i => i.value);
-            const exportText = tr.querySelector('td .export-text')?.innerText || '';
-            
             const zonas = new Set();
-            Object.keys(mapaTecnicos).forEach(nomNorm => {
-                const textoExportNorm = normalizarTexto(exportText);
-                const tieneCheck = checked.some(c => normalizarTexto(c) === nomNorm);
-                
-                if (tieneCheck || textoExportNorm.includes(nomNorm)) {
-                    zonas.add(mapaTecnicos[nomNorm]);
-                }
+
+            const checked = Array.from(tr.querySelectorAll('td input[type="checkbox"]:checked')).map(i => i.value);
+            checked.forEach(nombre => {
+                const z = mapaTecnicos[normalizarTexto(nombre)];
+                if (z) zonas.add(z);
             });
+
+            const exportText = tr.querySelector('td .export-text')?.innerText || '';
+            if (exportText && exportText !== 'SIN ASIGNAR') {
+                const nombresEnTexto = exportText.split(/[\/\,]/).map(x => x.trim());
+                nombresEnTexto.forEach(nomIngresado => {
+                    const normIngresado = normalizarTexto(nomIngresado);
+                    Object.keys(mapaTecnicos).forEach(nomMap => {
+                        if (normIngresado === nomMap || normIngresado.includes(nomMap) || nomMap.includes(normIngresado)) {
+                            zonas.add(mapaTecnicos[nomMap]);
+                        }
+                    });
+                });
+            }
+
             return zonas;
         }
 
