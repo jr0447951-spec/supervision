@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION  - FULL V6.9</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -306,12 +306,12 @@
             <table class="excel-table">
                 <thead>
                     <tr>
-                        <th style="width:22%">Sitio / Nodo</th>
-                        <th style="width:11%">Torrero</th>
-                        <th style="width:20%">Asignado</th>
-                        <th style="width:16%">Estado</th>
-                        <th style="width:11%">Porte</th>
-                        <th style="width:20%">Comentarios</th>
+                        <th style="width:20%">Sitio / Nodo</th>
+                        <th style="width:10%">Torrero</th>
+                        <th style="width:10%">Porte</th>
+                        <th style="width:17%">Asignado</th>
+                        <th style="width:14%">Estado</th>
+                        <th style="width:29%">Comentarios</th>
                         <th class="no-capture" style="width:40px"></th>
                     </tr>
                 </thead>
@@ -345,14 +345,14 @@
                 download: true, header: true,
                 complete: (r) => { 
                     dbSitios = r.data.map(row => {
-                        const keys = Object.keys(row);
-                        // Extrae columna L (índice 11) o encabezado PORTE/Porte
-                        const porteVal = row.PORTE || row.Porte || row.porte || (keys[11] ? row[keys[11]] : '') || 'N/A';
+                        // Extracción de la columna L ("Porte" en el CSV de Mapa_Base)
+                        const porteVal = row['Porte'] || row['PORTE'] || row['porte'] || row['Porte '] || 'N/A';
+
                         return { 
                             id: String(row.SITEID || "").toLowerCase().trim(),
                             name: String(row['NOMBRE DE SITIO'] || "").toLowerCase().trim(),
                             full: `${row.SITEID} - ${row['NOMBRE DE SITIO']}`, 
-                            torrero: row.Propietario || 'N/A',
+                            torrero: row.Propietario || row.TORRERO || 'N/A',
                             porte: String(porteVal).trim() || 'N/A'
                         };
                     }).filter(x => x.full.length > 5); 
@@ -453,16 +453,12 @@
                 const isCurrentlyMaintTable = tr.parentElement.id === 'maint-table-body';
 
                 if (isMaint && !isCurrentlyMaintTable) {
-                    // Mover a tabla secundaria (Oculta Falla)
+                    // Mover a Mantenimiento: Ocultar columna de Falla
                     const fallaTd = tr.querySelector('td[data-col="falla"]');
                     if (fallaTd) fallaTd.style.display = 'none';
-                    
-                    // Asegurar orden de celdas para Mantenimiento:
-                    // 0:Sitio, 1:Torrero, 2:Porte, 3:Asignado, 4:Falla(oculta), 5:Estado, 6:Comentarios, 7:Accion
-                    // Reordenamiento visual si es necesario
                     maintBody.appendChild(tr);
                 } else if (!isMaint && isCurrentlyMaintTable) {
-                    // Mover a tabla principal (Restaura Falla)
+                    // Mover a Principal: Mostrar columna de Falla
                     const fallaTd = tr.querySelector('td[data-col="falla"]');
                     if (fallaTd) fallaTd.style.display = '';
                     mainBody.appendChild(tr);
@@ -573,10 +569,11 @@
 
             const allSelectedText = checkedTechs.join(' / ') || 'SIN ASIGNAR';
 
+            // ORDEN ESTRICTO: 0:Sitio | 1:Torrero | 2:Porte | 3:Asignado | 4:Falla | 5:Estado | 6:Comentarios | 7:Borrar
             tr.innerHTML = `
                 <td><span class="static-cell" style="color: #004488; font-weight:800;">${site.toUpperCase()}</span></td>
                 <td><span class="static-cell">${torrero || 'N/A'}</span></td>
-                <td data-col="porte"><span class="static-cell">${porte || 'N/A'}</span></td>
+                <td data-col="porte"><span class="static-cell" style="font-weight:700;">${porte || 'N/A'}</span></td>
                 <td>
                     <div style="padding:5px;">
                         <div class="table-multi-tech">${techChecksHtml}</div>
@@ -647,7 +644,7 @@
 
             document.querySelectorAll('#capture-area tr').forEach(tr => {
                 const selectedTechs = getAssignedText(tr);
-                const expTech = tr.querySelector('td:nth-child(4) .export-text');
+                const expTech = tr.querySelector('.table-multi-tech')?.nextElementSibling;
                 if (expTech) expTech.innerText = selectedTechs;
                 
                 const selEst = tr.querySelector('.table-select');
