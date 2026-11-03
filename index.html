@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.6</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.8</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -454,43 +454,11 @@
         }
 
         function obtenerZonaGlobal() {
-            const zonasEncontradas = new Set();
-
-            const checkedInputs = document.querySelectorAll('#capture-area td input[type="checkbox"]:checked');
-            checkedInputs.forEach(input => {
-                const zonaTec = mapaTecnicos[normalizarTexto(input.value)];
-                if (zonaTec) zonasEncontradas.add(zonaTec);
-            });
-
-            const allRows = document.querySelectorAll('#table-body tr, #maint-table-body tr');
-            allRows.forEach(tr => {
-                const celdaAsignado = tr.cells[3];
-                if (celdaAsignado) {
-                    const textoAsignado = normalizarTexto(celdaAsignado.innerText);
-                    Object.keys(mapaTecnicos).forEach(nomNorm => {
-                        if (textoAsignado.includes(nomNorm)) {
-                            zonasEncontradas.add(mapaTecnicos[nomNorm]);
-                        }
-                    });
-                }
-            });
-
-            const tieneParacentral = zonasEncontradas.has('PARACENTRAL');
-            const tieneOriente = zonasEncontradas.has('ORIENTE');
-
-            if (tieneParacentral && tieneOriente) {
-                return 'zonas paracentrales y oriente';
-            } else if (tieneOriente) {
-                return 'zona oriente';
-            } else if (tieneParacentral) {
-                return 'zonas paracentrales';
-            }
             return 'zonas paracentrales y oriente';
         }
 
         function actualizarSubtituloZona() {
-            const zonaResultante = obtenerZonaGlobal();
-            document.getElementById('h-subtitulo').innerText = `Equipo técnico de ${zonaResultante}`;
+            document.getElementById('h-subtitulo').innerText = "Equipo técnico de zonas paracentrales y oriente";
         }
 
         function getAssignedText(tr) {
@@ -736,12 +704,11 @@
             btn.innerText = "⏳ GENERANDO...";
             btn.disabled = true;
 
-            const allRows = document.querySelectorAll('#capture-area tr');
+            const allRows = document.querySelectorAll('#capture-area tbody tr');
             const estadoVisibilidad = [];
 
+            // 1. Ocultar o mostrar filas según la zona elegida
             allRows.forEach(tr => {
-                if (!tr.closest('tbody')) return;
-                
                 estadoVisibilidad.push({ row: tr, display: tr.style.display });
                 const zonasFila = obtenerZonaFila(tr);
 
@@ -759,8 +726,17 @@
                 }
             });
 
+            // 2. Comprobar si quedaron filas de mantenimiento visibles para ocultar la sección si está vacía
+            const maintSection = document.getElementById('maint-section');
+            const maintSectionOriginalDisplay = maintSection.style.display;
+            const maintVisibleRows = Array.from(document.querySelectorAll('#maint-table-body tr')).filter(r => r.style.display !== 'none');
+            
+            if (maintVisibleRows.length === 0) {
+                maintSection.style.display = 'none';
+            }
+
+            // 3. Cambiar título del subtítulo según el filtro para la captura
             const subtituloElem = document.getElementById('h-subtitulo');
-            const subtituloOriginal = subtituloElem.innerText;
 
             if (zonaFiltro === 'PARACENTRAL') {
                 subtituloElem.innerText = "Equipo técnico de zonas paracentrales";
@@ -770,6 +746,7 @@
                 subtituloElem.innerText = "Equipo técnico de zonas paracentrales y oriente";
             }
 
+            // Preparar textos limpios para la captura
             document.querySelectorAll('#capture-area tr').forEach(tr => {
                 const selectedTechs = getAssignedText(tr);
                 const expTech = tr.querySelector('.table-multi-tech')?.nextElementSibling;
@@ -818,10 +795,13 @@
                 alert("Error al generar la imagen.");
             } finally {
                 area.classList.remove('is-exporting');
+                
+                // Restaurar estado visual original en pantalla
                 estadoVisibilidad.forEach(item => {
                     item.row.style.display = item.display;
                 });
-                subtituloElem.innerText = subtituloOriginal;
+                maintSection.style.display = maintSectionOriginalDisplay;
+                actualizarSubtituloZona();
                 processAllTables();
 
                 btn.innerText = "💾 DESCARGAR PNG HD";
