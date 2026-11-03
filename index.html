@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.4</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V6.6 UNIFICADO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -197,10 +197,23 @@
         <hr style="border: 0; border-top: 1px solid #0059b3; margin: 25px 0;">
 
         <h3>1. Configuración de Informe</h3>
-        <select id="sel-tipo" onchange="updateHeader()">
-            <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
-            <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
-        </select>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+                <label style="font-size: 0.75rem; color: #b3e6ff; font-weight: 700;">Zona de Cobertura:</label>
+                <select id="sel-zona" onchange="updateHeader()">
+                    <option value="ZONAS PARACENTRALES Y ORIENTE" selected>ZONAS PARACENTRALES Y ORIENTE</option>
+                    <option value="ZONAS PARACENTRALES">ZONAS PARACENTRALES</option>
+                    <option value="ZONA ORIENTE">ZONA ORIENTE</option>
+                </select>
+            </div>
+            <div>
+                <label style="font-size: 0.75rem; color: #b3e6ff; font-weight: 700;">Tipo de Reporte:</label>
+                <select id="sel-tipo" onchange="updateHeader()">
+                    <option value="VISITAS REALIZADAS">VISITAS REALIZADAS</option>
+                    <option value="PROGRAMACIÓN">PROGRAMACIÓN</option>
+                </select>
+            </div>
+        </div>
 
         <div class="date-quick-btns">
             <button class="btn-date" onclick="setQuickDate(0)">HOY</button>
@@ -235,7 +248,7 @@
                     <label style="font-size: 0.75rem; color: #b3e6ff; font-weight: 700;">Tipo de Falla:</label>
                     <select id="sel-falla">
                         <option value="FDS">FDS</option>
-                        <option value="FDS">DEPENDENCIA FDS</option>
+                        <option value="DEPENDENCIA FDS">DEPENDENCIA FDS</option>
                         <option value="LTE FDS">LTE FDS</option>
                         <option value="3G FDS">3G FDS</option>
                         <option value="2G FDS">2G FDS</option>
@@ -243,12 +256,12 @@
                         <option value="FALLA DE AC">FALLA DE AC</option>
                         <option value="CORTE PROGRAMADO">CORTE PROGRAMADO</option>
                         <option value="ALARMAS EXTERNAS">ALARMAS EXTERNAS</option>
-                        <option value="REVISIÓN DE MOTOGENERADOR">REVISIÓN DE MOTO.</option>
+                        <option value="REVISIÓN DE MOTO.">REVISIÓN DE MOTO.</option>
                         <option value="VISITA TÉCNICA">VISITA TÉCNICA</option>
                         <option value="INTERMITENCIA">INTERMITENCIA</option>
                         <option value="ALTA TEMPERATURA">ALTA TEMPERATURA</option>
                         <option value="MANTENIMIENTO">MANTENIMIENTO</option>
-                        <option value="REV CLIENTE B2B">REV. CLIENTE B2B</option>
+                        <option value="REV. CLIENTE B2B">REV. CLIENTE B2B</option>
                     </select>
                 </div>
                 <div>
@@ -278,7 +291,7 @@
         <div class="report-header">
             <div>
                 <h1 id="h-titulo">VISITAS REALIZADAS</h1>
-                <span style="font-size:0.8rem; color:#004488; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Equipo técnico de zonas paracentrales</span>
+                <span id="h-zona-display" style="font-size:0.8rem; color:#004488; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Equipo técnico de zonas paracentrales y oriente</span>
             </div>
             <div id="h-fecha-display" style="font-weight:900; color: #004488; font-size: 1.6rem; border-left: 6px solid #00d4ff; padding-left: 20px;"></div>
         </div>
@@ -384,6 +397,8 @@
                 document.getElementById('h-fecha-display').innerText = `${p[2]}/${p[1]}/${p[0]}`;
             }
             document.getElementById('h-titulo').innerText = document.getElementById('sel-tipo').value;
+            const zonaVal = document.getElementById('sel-zona').value;
+            document.getElementById('h-zona-display').innerText = `Equipo técnico de ${zonaVal.toLowerCase()}`;
         }
 
         function getAssignedText(tr) {
@@ -398,7 +413,6 @@
             return estado === 'MANTENIMIENTO PROGRAMADO' || fallaVal === 'MANTENIMIENTO';
         }
 
-        // EVALUA Y MUEVE FILAS ENTRE AMBAS TABLAS DE FORMA DINÁMICA
         function processAllTables() {
             const mainBody = document.getElementById('table-body');
             const maintBody = document.getElementById('maint-table-body');
@@ -409,19 +423,16 @@
                 const isCurrentlyMaintTable = tr.parentElement.id === 'maint-table-body';
 
                 if (isMaint && !isCurrentlyMaintTable) {
-                    // Convertir a estructura de 5 columnas para la tabla secundaria
                     const fallaTd = tr.querySelector('td[data-col="falla"]');
                     if (fallaTd) fallaTd.style.display = 'none';
                     maintBody.appendChild(tr);
                 } else if (!isMaint && isCurrentlyMaintTable) {
-                    // Restaurar columna de Falla para la tabla principal
                     const fallaTd = tr.querySelector('td[data-col="falla"]');
                     if (fallaTd) fallaTd.style.display = '';
                     mainBody.appendChild(tr);
                 }
             });
 
-            // MOSTRAR U OCULTAR SECCIÓN DE MANTENIMIENTO SI TIENE REGISTROS
             const maintSection = document.getElementById('maint-section');
             if (maintBody.children.length > 0) {
                 maintSection.style.display = 'block';
@@ -429,7 +440,6 @@
                 maintSection.style.display = 'none';
             }
 
-            // ORDENAR AMBAS TABLAS INDEPENDIENTEMENTE
             sortSingleTable(mainBody);
             sortSingleTable(maintBody);
         }
@@ -595,7 +605,6 @@
             btn.innerText = "⏳ GENERANDO...";
             btn.disabled = true;
 
-            // Sincronizar textos
             document.querySelectorAll('#capture-area tr').forEach(tr => {
                 const selectedTechs = getAssignedText(tr);
                 const expTech = tr.querySelector('td:nth-child(3) .export-text');
@@ -650,7 +659,7 @@
         }
 
         function sendWhatsapp() {
-            window.open(`https://wa.me/?text=${encodeURIComponent("Adjunto envío de reporte técnico diario.")}`, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent("Adjunto envío de reporte técnico diario unificado.")}`, '_blank');
         }
 
         async function enviarAlHistorial() {
@@ -666,6 +675,7 @@
             const dataReporte = {
                 fecha: document.getElementById('sel-fecha').value,
                 tipo: document.getElementById('sel-tipo').value,
+                zona: document.getElementById('sel-zona').value,
                 rows: []
             };
 
@@ -752,3 +762,4 @@
     </script>
 </body>
 </html>
+   
