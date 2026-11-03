@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.5</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -166,9 +166,48 @@
         .btn-cloud { background: #f39c12; color: white; box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3); }
         
         .btn-action:hover { transform: translateY(-3px); filter: brightness(1.1); }
+
+        /* MODAL DE SELECCIÓN DE ZONA PARA IMAGEN */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 15, 30, 0.85); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: center; z-index: 9999;
+        }
+        .modal-card {
+            background: #002b54; border: 2px solid #00d4ff; border-radius: 16px;
+            padding: 30px; width: 90%; max-width: 480px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8); color: white; position: relative;
+        }
+        .modal-card h2 { color: #00d4ff; margin-top: 0; font-size: 1.3rem; text-transform: uppercase; }
+        .modal-card p { font-size: 0.9rem; color: #b3e6ff; margin-bottom: 22px; }
+        .modal-btn-group { display: flex; flex-direction: column; gap: 12px; }
+        .modal-btn {
+            background: rgba(0, 212, 255, 0.1); border: 1px solid #00d4ff; color: #00d4ff;
+            padding: 16px; border-radius: 10px; font-size: 0.95rem; font-weight: 800;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase;
+        }
+        .modal-btn:hover { background: #00d4ff; color: #001a33; transform: scale(1.02); }
+        .modal-close {
+            position: absolute; top: 12px; right: 16px; background: none; border: none;
+            color: #ff5555; font-size: 1.5rem; font-weight: bold; cursor: pointer;
+        }
     </style>
 </head>
 <body>
+
+    <!-- VENTANA EMERGENTE (MODAL) PARA DESCARGA DE IMAGEN -->
+    <div id="export-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close" onclick="cerrarModalExport()">×</button>
+            <h2>📷 GENERAR IMAGEN PNG</h2>
+            <p>Seleccione la zona geográfica que desea incluir en el reporte descargable:</p>
+            <div class="modal-btn-group">
+                <button class="modal-btn" onclick="ejecutarDescargaZona('AMBAS')">🌐 PARACENTRAL Y ORIENTE</button>
+                <button class="modal-btn" onclick="ejecutarDescargaZona('PARACENTRAL')">📍 SOLO PARACENTRAL</button>
+                <button class="modal-btn" onclick="ejecutarDescargaZona('ORIENTE')">📍 SOLO ORIENTE</button>
+            </div>
+        </div>
+    </div>
 
     <div class="config-card">
         <div class="query-panel">
@@ -409,14 +448,12 @@
         function obtenerZonaGlobal() {
             const zonasEncontradas = new Set();
 
-            // 1. Buscar en los checkboxes marcados dentro de las tablas
             const checkedInputs = document.querySelectorAll('#capture-area td input[type="checkbox"]:checked');
             checkedInputs.forEach(input => {
                 const zonaTec = mapaTecnicos[input.value];
                 if (zonaTec) zonasEncontradas.add(zonaTec);
             });
 
-            // 2. Buscar en el texto exportable/estático de asignados (útil en cargas desde la nube)
             const exportTexts = document.querySelectorAll('#capture-area td .export-text');
             exportTexts.forEach(div => {
                 const texto = div.innerText || '';
@@ -646,14 +683,82 @@
             processAllTables();
         }
 
-        async function downloadImg() {
+        /* MANEJO DE VENTANA EMERGENTE (MODAL) Y DESCARGA DE ZONAS */
+
+        function downloadImg() {
+            const mainRows = document.querySelectorAll('#table-body tr');
+            const maintRows = document.querySelectorAll('#maint-table-body tr');
+            if (mainRows.length === 0 && maintRows.length === 0) {
+                return alert("⚠️ Agregue datos a la tabla antes de descargar la imagen.");
+            }
+            document.getElementById('export-modal').style.display = 'flex';
+        }
+
+        function cerrarModalExport() {
+            document.getElementById('export-modal').style.display = 'none';
+        }
+
+        function obtenerZonaFila(tr) {
+            const checked = Array.from(tr.querySelectorAll('td input[type="checkbox"]:checked')).map(i => i.value);
+            const exportText = tr.querySelector('td .export-text')?.innerText || '';
+            
+            const zonas = new Set();
+            listaNombresTecnicos.forEach(nombre => {
+                if (checked.includes(nombre) || exportText.includes(nombre)) {
+                    const z = mapaTecnicos[nombre];
+                    if (z) zonas.add(z);
+                }
+            });
+            return zonas;
+        }
+
+        async function ejecutarDescargaZona(zonaFiltro) {
+            cerrarModalExport();
             processAllTables();
+
             const area = document.getElementById('capture-area');
             const btn = document.querySelector('.btn-download');
             
             btn.innerText = "⏳ GENERANDO...";
             btn.disabled = true;
 
+            const allRows = document.querySelectorAll('#capture-area tr');
+            const estadoVisibilidad = [];
+
+            // 1. Ocultar filas que no pertenecen a la zona seleccionada
+            allRows.forEach(tr => {
+                if (!tr.closest('tbody')) return; // Ignorar filas thead
+                
+                estadoVisibilidad.push({ row: tr, display: tr.style.display });
+                const zonasFila = obtenerZonaFila(tr);
+
+                let visible = true;
+                if (zonaFiltro === 'PARACENTRAL') {
+                    visible = zonasFila.has('PARACENTRAL');
+                } else if (zonaFiltro === 'ORIENTE') {
+                    visible = zonasFila.has('ORIENTE');
+                } else if (zonaFiltro === 'AMBAS') {
+                    visible = true;
+                }
+
+                if (!visible) {
+                    tr.style.display = 'none';
+                }
+            });
+
+            // 2. Forzar actualización del subtítulo para la imagen
+            const subtituloElem = document.getElementById('h-subtitulo');
+            const subtituloOriginal = subtituloElem.innerText;
+
+            if (zonaFiltro === 'PARACENTRAL') {
+                subtituloElem.innerText = "Equipo técnico de zonas paracentrales";
+            } else if (zonaFiltro === 'ORIENTE') {
+                subtituloElem.innerText = "Equipo técnico de zona oriente";
+            } else {
+                subtituloElem.innerText = "Equipo técnico de zonas paracentrales y oriente";
+            }
+
+            // Preparar textos para exportación limpia
             document.querySelectorAll('#capture-area tr').forEach(tr => {
                 const selectedTechs = getAssignedText(tr);
                 const expTech = tr.querySelector('.table-multi-tech')?.nextElementSibling;
@@ -694,14 +799,21 @@
                 });
                 
                 const a = document.createElement('a');
-                a.download = `REPORTE_${document.getElementById('sel-tipo').value}_${Date.now()}.png`;
+                a.download = `REPORTE_${document.getElementById('sel-tipo').value}_${zonaFiltro}_${Date.now()}.png`;
                 a.href = canvas.toDataURL("image/png");
                 a.click();
             } catch (e) {
                 console.error(e);
-                alert("Error al generar imagen. Intente limpiar caché.");
+                alert("Error al generar la imagen.");
             } finally {
+                // Restaurar estado original de filas y subtítulo
                 area.classList.remove('is-exporting');
+                estadoVisibilidad.forEach(item => {
+                    item.row.style.display = item.display;
+                });
+                subtituloElem.innerText = subtituloOriginal;
+                processAllTables();
+
                 btn.innerText = "💾 DESCARGAR PNG HD";
                 btn.disabled = false;
             }
@@ -786,7 +898,6 @@
                     data.forEach(item => {
                         entryCounter++;
                         
-                        // Parsear texto asignado traído de la nube y marcar checkboxes correspondientes
                         const asignadosArray = item.asignado ? item.asignado.split('/').map(x => x.trim()) : [];
                         const checkedTechs = listaNombresTecnicos.filter(n => 
                             asignadosArray.some(a => a.toLowerCase() === n.toLowerCase())
