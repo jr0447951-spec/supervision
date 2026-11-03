@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.4</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -407,27 +407,43 @@
         }
 
         function obtenerZonaGlobal() {
-            const allCheckedInputs = document.querySelectorAll('#capture-area td input[type="checkbox"]:checked');
             const zonasEncontradas = new Set();
 
-            allCheckedInputs.forEach(input => {
+            // 1. Buscar en los checkboxes marcados dentro de las tablas
+            const checkedInputs = document.querySelectorAll('#capture-area td input[type="checkbox"]:checked');
+            checkedInputs.forEach(input => {
                 const zonaTec = mapaTecnicos[input.value];
                 if (zonaTec) zonasEncontradas.add(zonaTec);
             });
 
-            if (zonasEncontradas.has('PARACENTRAL') && zonasEncontradas.has('ORIENTE')) {
-                return 'ZONAS PARACENTRALES Y ORIENTE';
-            } else if (zonasEncontradas.has('ORIENTE')) {
-                return 'ZONA ORIENTE';
-            } else if (zonasEncontradas.has('PARACENTRAL')) {
-                return 'ZONAS PARACENTRALES';
+            // 2. Buscar en el texto exportable/estático de asignados (útil en cargas desde la nube)
+            const exportTexts = document.querySelectorAll('#capture-area td .export-text');
+            exportTexts.forEach(div => {
+                const texto = div.innerText || '';
+                listaNombresTecnicos.forEach(nombre => {
+                    if (texto.includes(nombre)) {
+                        const zonaTec = mapaTecnicos[nombre];
+                        if (zonaTec) zonasEncontradas.add(zonaTec);
+                    }
+                });
+            });
+
+            const tieneParacentral = zonasEncontradas.has('PARACENTRAL');
+            const tieneOriente = zonasEncontradas.has('ORIENTE');
+
+            if (tieneParacentral && tieneOriente) {
+                return 'zonas paracentrales y oriente';
+            } else if (tieneOriente) {
+                return 'zona oriente';
+            } else if (tieneParacentral) {
+                return 'zonas paracentrales';
             }
-            return 'ZONAS PARACENTRALES Y ORIENTE';
+            return 'zonas paracentrales y oriente';
         }
 
         function actualizarSubtituloZona() {
             const zonaResultante = obtenerZonaGlobal();
-            document.getElementById('h-subtitulo').innerText = `Equipo técnico de ${zonaResultante.toLowerCase()}`;
+            document.getElementById('h-subtitulo').innerText = `Equipo técnico de ${zonaResultante}`;
         }
 
         function getAssignedText(tr) {
@@ -566,7 +582,6 @@
 
             const allSelectedText = checkedTechs.join(' / ') || 'SIN ASIGNAR';
 
-            // CELDAS EN ORDEN ESTRICTO: 0:Sitio | 1:Torrero | 2:Porte | 3:Asignado | 4:Falla | 5:Estado | 6:Comentarios | 7:Borrar
             tr.innerHTML = `
                 <td><span class="static-cell" style="color: #004488; font-weight:800;">${site.toUpperCase()}</span></td>
                 <td><span class="static-cell">${torrero || 'N/A'}</span></td>
@@ -765,19 +780,17 @@
                     document.getElementById('table-body').innerHTML = '';
                     document.getElementById('maint-table-body').innerHTML = '';
                     
-                    // Sincronizar selectores
                     document.getElementById('sel-fecha').value = fecha;
                     document.getElementById('sel-tipo').value = tipo;
-                    
-                    // Forzar actualización visual del encabezado (Título + Subtítulo)
-                    updateHeader();
 
                     data.forEach(item => {
                         entryCounter++;
                         
-                        // Separar asignados por barras y limpiar espacios
+                        // Parsear texto asignado traído de la nube y marcar checkboxes correspondientes
                         const asignadosArray = item.asignado ? item.asignado.split('/').map(x => x.trim()) : [];
-                        const checkedTechs = listaNombresTecnicos.filter(n => asignadosArray.includes(n));
+                        const checkedTechs = listaNombresTecnicos.filter(n => 
+                            asignadosArray.some(a => a.toLowerCase() === n.toLowerCase())
+                        );
 
                         const tr = createRowElement(
                             item.sitio,
@@ -794,6 +807,7 @@
                         tr.querySelectorAll('textarea').forEach(tx => autoResize(tx));
                     });
 
+                    updateHeader();
                     processAllTables();
                 }
             } catch (e) { 
