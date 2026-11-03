@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V7.9</title>
+    <title>REPORTE DE SUPERVISION INTERACTIVO - FULL V8.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -404,8 +404,9 @@
                 }
             });
 
+            // LECTURA DEL CSV DE TÉCNICOS (CORREGIDO CON DELIMITADOR PUNTO Y COMA ';')
             Papa.parse(TECNICOS_CSV, {
-                download: true, header: true, dynamicTyping: true,
+                download: true, header: true, dynamicTyping: true, delimiter: ";",
                 complete: (r) => {
                     const list = document.getElementById('tech-list');
                     list.innerHTML = '';
@@ -413,8 +414,14 @@
                     listaNombresTecnicos = [];
 
                     r.data.forEach(t => {
-                        const nombre = t.Nombre || t.NOMBRE || t.nombre;
-                        const zonaBruta = t.Zona || t.ZONA || t.zona || 'PARACENTRAL';
+                        // Detectar columnas sin importar mayúsculas/minúsculas
+                        const keys = Object.keys(t);
+                        const kNombre = keys.find(k => k.toLowerCase().includes('nombre')) || keys[0];
+                        const kZona = keys.find(k => k.toLowerCase().includes('zona')) || keys[2];
+
+                        const nombre = t[kNombre];
+                        const zonaBruta = t[kZona] || 'PARACENTRAL';
+
                         if (nombre) {
                             const nombreLimpio = String(nombre).trim();
                             const zonaLimpia = String(zonaBruta).trim().toUpperCase();
@@ -685,8 +692,12 @@
 
             const checked = Array.from(tr.querySelectorAll('td input[type="checkbox"]:checked')).map(i => i.value);
             checked.forEach(nombre => {
-                const z = mapaTecnicos[normalizarTexto(nombre)];
-                if (z) zonas.add(z);
+                const normNom = normalizarTexto(nombre);
+                Object.keys(mapaTecnicos).forEach(keyMap => {
+                    if (normNom.includes(keyMap) || keyMap.includes(normNom)) {
+                        zonas.add(mapaTecnicos[keyMap]);
+                    }
+                });
             });
 
             const exportText = tr.querySelector('td .export-text')?.innerText || '';
@@ -694,9 +705,9 @@
                 const nombresEnTexto = exportText.split(/[\/\,]/).map(x => x.trim());
                 nombresEnTexto.forEach(nomIngresado => {
                     const normIngresado = normalizarTexto(nomIngresado);
-                    Object.keys(mapaTecnicos).forEach(nomMap => {
-                        if (normIngresado === nomMap || normIngresado.includes(nomMap) || nomMap.includes(normIngresado)) {
-                            zonas.add(mapaTecnicos[nomMap]);
+                    Object.keys(mapaTecnicos).forEach(keyMap => {
+                        if (normIngresado === keyMap || normIngresado.includes(keyMap) || keyMap.includes(normIngresado)) {
+                            zonas.add(mapaTecnicos[keyMap]);
                         }
                     });
                 });
