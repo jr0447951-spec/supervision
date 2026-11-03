@@ -414,11 +414,13 @@
 
                     r.data.forEach(t => {
                         const nombre = t.Nombre || t.NOMBRE || t.nombre;
-                        const zona = t.Zona || t.ZONA || t.zona || 'PARACENTRAL';
+                        const zonaBruta = t.Zona || t.ZONA || t.zona || 'PARACENTRAL';
                         if (nombre) {
                             const nombreLimpio = String(nombre).trim();
+                            const zonaLimpia = String(zonaBruta).trim().toUpperCase();
+                            
                             listaNombresTecnicos.push(nombreLimpio);
-                            mapaTecnicos[normalizarTexto(nombreLimpio)] = String(zona).trim().toUpperCase();
+                            mapaTecnicos[normalizarTexto(nombreLimpio)] = zonaLimpia;
 
                             const label = document.createElement('label');
                             label.className = 'tech-item';
@@ -716,7 +718,6 @@
             const allRows = document.querySelectorAll('#capture-area tbody tr');
             const estadoVisibilidad = [];
 
-            // 1. Ocultar o mostrar filas según la zona elegida
             allRows.forEach(tr => {
                 estadoVisibilidad.push({ row: tr, display: tr.style.display });
                 const zonasFila = obtenerZonaFila(tr);
@@ -735,7 +736,6 @@
                 }
             });
 
-            // 2. Ocultar sección de Mantenimiento Preventivo si no quedan filas visibles en esa categoría
             const maintSection = document.getElementById('maint-section');
             const maintSectionOriginalDisplay = maintSection.style.display;
             const maintVisibleRows = Array.from(document.querySelectorAll('#maint-table-body tr')).filter(r => r.style.display !== 'none');
@@ -744,7 +744,6 @@
                 maintSection.style.display = 'none';
             }
 
-            // 3. Cambiar título del subtítulo según la opción seleccionada para la imagen PNG
             const subtituloElem = document.getElementById('h-subtitulo');
 
             if (zonaFiltro === 'PARACENTRAL') {
@@ -755,7 +754,6 @@
                 subtituloElem.innerText = "Equipo técnico de zonas paracentrales y oriente";
             }
 
-            // Preparar textos planos en la captura
             document.querySelectorAll('#capture-area tr').forEach(tr => {
                 const selectedTechs = getAssignedText(tr);
                 const expTech = tr.querySelector('.table-multi-tech')?.nextElementSibling;
@@ -805,7 +803,6 @@
             } finally {
                 area.classList.remove('is-exporting');
                 
-                // Restaurar visibilidad original de filas y subtítulo en pantalla
                 estadoVisibilidad.forEach(item => {
                     item.row.style.display = item.display;
                 });
